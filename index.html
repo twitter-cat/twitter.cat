@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>(999) / Kitter</title>
+		<script>
+			setInterval(function(){
+                const n = Math.floor(Math.random() * 900) + 100;
+				document.title = `(${n}) / Kitter`;
+            }, 100);
+		</script>
+
+		<meta charset="UTF-8">
+
+		<meta property="og:type" content="image">
+		<link rel="icon" type="image/x-icon" href="/assets/svgs/face.svg">
+
+		<meta itemprop="name" content="twitter (dot) cat">
+
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:title" content="twitter (dot) cat">
+        <meta name="twitter:site" content="@cvsilly_">
+        <meta name="twitter:description" content="small tools for twitter">
+        <meta name="twitter:image" content="https://twitter.cat/assets/images/rocking.gif">
+        <style>
+            @font-face {
+                font-family: "chirp"; src: url("assets/fonts/chirp.woff2") format("woff2");
+                font-weight: 400; font-style: normal;
+            }
+            @font-face {
+                font-family: "chirp"; src: url("assets/fonts/chirpmedium.woff2") format("woff2");
+                font-weight: 500; font-style: normal;
+            }
+            @font-face {
+                font-family: "chirp"; src: url("assets/fonts/chirpbold.woff2") format("woff2");
+                font-weight: 700; font-style: normal;
+            }
+            @font-face {
+                font-family: "chirp"; src: url("assets/fonts/chirpheavy.woff2") format("woff2");
+                font-weight: 900; font-style: normal;
+            }
+
+            body {
+                background-color: #14171A; color: white;
+                margin: 0; overflow: hidden; font-size: 20px;
+            }
+            .center {
+                display: flex; justify-content: center; align-items: center;
+                flex-direction: column;
+                width: 600px; max-width: 90%; height: 90%;
+                margin: auto; position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+            }
+
+            a, span {
+                font-family: "chirp", sans-serif;
+            }
+            .bold {
+                font-weight: 500;
+            }
+            .small {
+                font-size: 12.5px; opacity: 0.3;
+            }
+            
+        </style>
+	</head>
+	<body>
+        <div class="center">
+            <div class="bold"><span style="color: #ff0000">i</span><span style="color: #ff1900">'</span><span style="color: #ff3300">m</span><span style="color: #ff4c00"> </span><span style="color: #ff6600">a</span><span style="color: #ff7f00"> </span><span style="color: #ff9900">g</span><span style="color: #ffb200">o</span><span style="color: #ffcc00">o</span><span style="color: #ffe500">f</span><span style="color: #ffff00">y</span><span style="color: #ccff00"> </span><span style="color: #99ff00">g</span><span style="color: #66ff00">o</span><span style="color: #33ff00">o</span><span style="color: #00ff00">b</span><span style="color: #00ff33">e</span><span style="color: #00ff66">r</span><span style="color: #00ff99"> </span><span style="color: #00ffcc">o</span><span style="color: #00ffff">h</span><span style="color: #00ccff"> </span><span style="color: #0099ff">y</span><span style="color: #0066ff">e</span><span style="color: #0033ff">a</span><span style="color: #0000ff">h</span></div>
+            <a class="small">(what are you doing here?)</a>
+        </div>
+    </body>
+</html>
