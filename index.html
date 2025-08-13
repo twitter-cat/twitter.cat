@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>(999) / Kitter</title>
+		<title>(999) / twitter.cat</title>
 		<script>
+			const equality = Math.floor(Math.random() * 1000) === 0;
 			setInterval(function(){
                 const n = Math.floor(Math.random() * 900) + 100;
-				document.title = `(${n}) / Kitter`;
+				document.title = `(${n}) / twitter.${equality ? "dog":"cat"}`;
             }, 100);
 		</script>
 
@@ -20,7 +21,7 @@
         <meta name="twitter:title" content="twitter (dot) cat">
         <meta name="twitter:site" content="@cvsilly_">
         <meta name="twitter:description" content="small tools for twitter">
-        <meta name="twitter:image" content="https://twitter.cat/assets/images/rocking.gif">
+        <meta name="twitter:image" content="https://twitter.cat/assets/images/bouncing.gif">
         <style>
             @font-face {
                 font-family: "chirp"; src: url("assets/fonts/chirp.woff2") format("woff2");
@@ -39,9 +40,13 @@
                 font-weight: 900; font-style: normal;
             }
 
+            /*//////////////////////////////////////////////////////////////*/
+
             body {
                 background-color: #14171A; color: white;
-                margin: 0; overflow: hidden; font-size: 20px;
+                margin: 0; overflow: hidden;
+                font-family: "chirp", sans-serif; font-size: 20px;
+                -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; font-smooth: always;
             }
             .center {
                 display: flex; justify-content: center; align-items: center;
@@ -50,23 +55,489 @@
                 margin: auto; position: fixed;
                 top: 0; left: 0; right: 0; bottom: 0;
             }
+            .logo {
+                display: flex; justify-content: center; align-items: center;
+                font-size: 2.5em; gap: 10px;
+            }
+            .logo img {
+                height: 1.5em;
+                animation: jump 1s ease-in infinite;
+            }
+            @keyframes jump {
+                0% {transform: translateY(5px) rotateZ(0deg)}
+                10% {transform: translateY(-5px) rotateZ(0deg)}
+                25% {transform: translateY(-15px) rotateZ(10deg)}
+                40% {transform: translateY(-5px) rotateZ(0deg)}
+                50% {transform: translateY(5px) rotateZ(0deg)}
+                60% {transform: translateY(-5px) rotateZ(0deg)}
+                75% {transform: translateY(-15px) rotateZ(-10deg)}
+                90% {transform: translateY(-5px) rotateZ(0deg)}
+                100% {transform: translateY(5px) rotateZ(0deg)}
+            }
 
-            a, span {
-                font-family: "chirp", sans-serif;
+            /*//////////////////////////////////////////////////////////////*/
+
+            .search {
+                position: relative;
+                display: inline-block;
             }
-            .bold {
-                font-weight: 500;
+            .searchbar {
+                font-family: "chirp", sans-serif; font-size: 0.8em;
+                padding-left: 40px; width: 500px; height: 40px;
+                background-color: rgba(0,0,0,0); color: white;
+                border-radius: 50px; border: none; outline: 1px solid #3e4144; 
+                transition: outline-color 0.2s; caret-color: #1da1f2;
             }
-            .small {
-                font-size: 12.5px; opacity: 0.3;
+            .searchbar::placeholder {color: white}
+            .searchbar:focus {
+                outline: 2px solid #1da1f2;
+                outline-offset: 0;
             }
-            
+            .searchicon {
+                position: absolute;
+                left: 14px; top: 50%; transform: translateY(-50%);
+                width: 18px; height: 18px;
+            }
+
+            /*//////////////////////////////////////////////////////////////*/
+
+            .buttons {
+                display: flex; flex-direction: row;
+                gap: 10px; margin-top: 20px;
+            }
+            .buttons button {
+                position: relative;
+                display: flex; align-items: center; justify-content: center;
+                background-color: inherit; color: #71767B;
+                font-family: "chirp", sans-serif; font-size: 0.7em;
+                padding: 1em; gap: 3px;
+                border: 1px solid #3e4144; border-radius: 50px;
+                cursor: pointer;
+                overflow: hidden;
+                transition: border-color 0.2s;
+            }
+
+            .svgwrapper {
+                position: relative;
+                display: flex; align-items: center; justify-content: center;
+                width: 20px; height: 20px;
+                margin-right: 3px;
+            }
+            .togglebg {
+                position: absolute;
+                left: 50%; top: 50%;
+                transform: translate(-50%, -50%);
+                width: 32px; height: 32px;
+                border-radius: 50%;
+                opacity: 0;
+                z-index: 0;
+                transition: background 0.2s, opacity 0.2s;
+            }
+
+            /*//////////////////////////////////////////////////////////////*/
+
+            .accountsbg {background: rgba(29,161,242,0.15)}
+            .tweetsbg {background: rgba(0,186,124,0.15)}
+            .listsbg {background: rgba(120,86,255,0.15)}
+            .adsbg {background: rgba(255,122,0,0.15)}
+
+            .buttonicon {
+                position: relative;
+                width: 20px; height: 20px; transition: color 0.2s;
+                color: #71767B; fill: currentColor;
+            }
+
+            .toggle[data-toggle="accounts"]:hover .buttonicon,
+            .toggle[data-toggle="accounts"][pressed="maybe"] .buttonicon {color: #1da1f2}
+            .toggle[data-toggle="tweets"]:hover .buttonicon,
+            .toggle[data-toggle="tweets"][pressed="maybe"] .buttonicon {color: #00ba7c}
+            .toggle[data-toggle="lists"]:hover .buttonicon,
+            .toggle[data-toggle="lists"][pressed="maybe"] .buttonicon {color: #7856ff}
+            .toggle[data-toggle="ads"]:hover .buttonicon,
+            .toggle[data-toggle="ads"][pressed="maybe"] .buttonicon {color: #ff7a00}
+
+            .toggle {outline: none}
+            .toggle:focus {outline: 2px solid #1da1f2; outline-offset: 0}
+            .toggle:hover .togglebg, .toggle:focus .togglebg {opacity: 1}
+
+            .toggle[data-toggle="accounts"][pressed="maybe"] {border-color: #1da1f2}
+            .toggle[data-toggle="tweets"][pressed="maybe"] {border-color: #00ba7c}
+            .toggle[data-toggle="lists"][pressed="maybe"] {border-color: #7856ff}
+            .toggle[data-toggle="ads"][pressed="maybe"] {border-color: #ff7a00}
+
+            /*//////////////////////////////////////////////////////////////*/
+
+            .bottom {
+                display: flex; position: fixed;
+                justify-content: center; align-items: center;
+                bottom: 0; left: 0; right: 0;
+                height: 40px; width: 100%; gap: 10px;
+                font-size: 0.6em; background-color: inherit; z-index: 999;
+            }
+
+            /*//////////////////////////////////////////////////////////////*/
+
+            :any-link {
+                color: #1da1f2;
+                text-decoration: none;
+            }
+            :any-link:hover {
+                text-decoration: underline;
+            }
+            .medium {font-weight: 500}
+            .bold {font-weight: 700}
+            .heavy {font-weight: 900}
+            .dark {color: #71767b}
+
+            sup {vertical-align: text-top}
+            sub {vertical-align: text-bottom}
+            .small {font-size: 12.5px; opacity: 0.3}
+
+            br, svg, img[draggable=false], .white, .word {
+                user-select: none; pointer-events: none;
+            }
+
+            /*//////////////////////////////////////////////////////////////*/
+
+            @font-face {
+                font-family: "determination"; src: url("assets/fonts/determination.woff2") format("woff2");
+                font-weight: 400; font-style: normal;
+            }
+
+            .white {
+                display: flex; position: fixed;
+                justify-content: center; align-items: center;
+                top: 0; left: 0; width: 100vw; height: 100vh;
+                background: white; z-index: 99999; opacity: 0;
+                transition: opacity 3s;
+            }
+
+            .wipoverlay {
+                display: flex; position: fixed; flex-direction: column;
+                justify-content: center; align-items: center;
+                image-rendering: crisp-edges; image-rendering: pixelated;
+                top: 0; left: 0; width: 100vw; height: 100vh;
+                background: rgba(0,0,0,0.75); z-index: 9999;
+            }
+            .wipcaption {
+                font-family: "determination", sans-serif;
+                letter-spacing: -0.04em; image-rendering: pixelated;
+                -webkit-font-smoothing: none; -moz-osx-font-smoothing: grayscale;
+                padding-bottom: 1em; font-size: 1.8em; opacity: 0;
+                display: flex; gap: 0.5em;
+            }
+            .word {opacity: 1}
+            .hiddenword {opacity: 0}
+
+            .shake {
+                display: inline-block;
+                animation: shake 0.3s cubic-bezier(.55,0,.1,1) both, shake 0.08s linear both infinite; 
+            }
+            @keyframes shake {
+                0% {transform: translate(0, 0)}
+                10% {transform: translate(3px, 0)}
+                20% {transform: translate(3px, 3px)}
+                30% {transform: translate(0, 3px)}
+                40% {transform: translate(-3px, 3px)}
+                50% {transform: translate(-3px, 0)}
+                60% {transform: translate(-3px, -3px)}
+                70% {transform: translate(0, -3px)}
+                80% {transform: translate(3px, -3px)}
+                90% {transform: translate(0, 0)}
+                100% {transform: translate(0, 0)}
+            }
+
+            .jackcry {
+                display: none;
+            }
+
+            .jackmouth.sad {
+                animation: sad 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 1 forwards;
+                transform-origin: 49% 73%;
+            }
+            @keyframes sad {
+                from {transform: rotate(0deg)}
+                to {transform: rotate(-180deg)}
+            }
+
+            .jackenstein {
+                position: relative;
+                width: 210px; height: 168px;
+            }
+            .jackenstein.animated {
+                animation: jackstretch 3s forwards;
+            }
+            @keyframes jackstretch {
+                0% {transform: scaleY(1)}
+                12.5% {transform: scaleY(1.3)}
+                25% {transform: scaleY(1)}
+                37.5% {transform: scaleY(1.3)}
+                50% {transform: scaleY(1)}
+                100% {transform: scaleY(2)}
+            }
+
+            .jackenstein img {
+                position: absolute;
+                width: 100%; height: 100%;
+                object-fit: contain;
+            }
         </style>
 	</head>
 	<body>
-        <div class="center">
-            <div class="bold"><span style="color: #ff0000">i</span><span style="color: #ff1900">'</span><span style="color: #ff3300">m</span><span style="color: #ff4c00"> </span><span style="color: #ff6600">a</span><span style="color: #ff7f00"> </span><span style="color: #ff9900">g</span><span style="color: #ffb200">o</span><span style="color: #ffcc00">o</span><span style="color: #ffe500">f</span><span style="color: #ffff00">y</span><span style="color: #ccff00"> </span><span style="color: #99ff00">g</span><span style="color: #66ff00">o</span><span style="color: #33ff00">o</span><span style="color: #00ff00">b</span><span style="color: #00ff33">e</span><span style="color: #00ff66">r</span><span style="color: #00ff99"> </span><span style="color: #00ffcc">o</span><span style="color: #00ffff">h</span><span style="color: #00ccff"> </span><span style="color: #0099ff">y</span><span style="color: #0066ff">e</span><span style="color: #0033ff">a</span><span style="color: #0000ff">h</span></div>
-            <a class="small">(what are you doing here?)</a>
+
+        <div class="white"></div>
+        <div class="wipoverlay">
+            <a class="wipcaption">
+                <span class="word hiddenword your">
+                    <span>Y</span><span>O</span><span>U</span><span>R</span>
+                </span>
+                <span class="word hiddenword too">
+                    <span>T</span><span>O</span><span>O</span>
+                </span>
+                <span class="word hiddenword early">
+                    <span>E</span><span>A</span><span>R</span><span>L</span><span>Y</span>
+                </span>
+            </a>
+            <div class="jackenstein">
+                <img draggable="false" class="jackface" src="assets/images/spr_jackenpumpkinlaugh_nomouth.png">
+                <img draggable="false" class="jackmouth" src="assets/images/spr_guywhoappearswhenyouhavetakentoolonginaghosthousebutjustthemouth.png">
+                <img draggable="false" class="jackcry" src="assets/images/spr_jackolantern_cry.gif">
+            </div>
+            <audio class="earlysound" src="assets/audio/snd_your_too_early.wav" style="display:none" preload="auto"></audio>
+            <audio class="mamasound" src="assets/audio/snd_pumpkin_scream_mama_fast.wav" style="display:none" preload="auto"></audio>
+            <audio class="revivalsound" src="assets/audio/snd_revival.wav" style="display:none" preload="auto"></audio>
         </div>
+
+        <div class="center">
+            <div class="logo">
+                <img src="assets/svgs/kitty.svg" draggable="false">
+                <div><a class="dark">@</a><a class="heavy">twitter.cat</a></div>
+            </div>
+            <br>
+            <div class="search">
+                <img src="assets/svgs/search.svg" class="searchicon" draggable="false">
+                <input class="searchbar" placeholder="search">
+            </div>
+            
+            <!-- these aren't linked as normal files because i can't get them to recolor otherwise 😭 god dammit -->
+            <div class="buttons">
+                <button class="toggle" data-toggle="accounts" pressed="false">
+                    <span class="svgwrapper">
+                        <span class="togglebg accountsbg"></span>
+                        <svg class="buttonicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                          <path d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19m.486-5.56C7.627 11.85 9.648 11 12 11s4.373.85 5.863 2.44c1.477 1.58 2.366 3.8 2.632 6.46l.11 1.1H3.395l.11-1.1c.266-2.66 1.155-4.88 2.632-6.46M12 4c-1.105 0-2 .9-2 2s.895 2 2 2 2-.9 2-2-.895-2-2-2M8 6a4 4 0 1 1 8 0 4 4 0 0 1-8 0"/>
+                        </svg>
+                    </span>
+                    accounts
+                </button>
+                <button class="toggle" data-toggle="tweets" pressed="false">
+                    <span class="svgwrapper">
+                        <span class="togglebg tweetsbg"></span>
+                        <svg class="buttonicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                          <path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366a8.13 8.13 0 0 1 8.129 8.13c0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067A8.005 8.005 0 0 1 1.751 10m8.005-6a6.005 6.005 0 1 0 .133 12.01l.351-.01h1.761v2.3l5.087-2.81A6.127 6.127 0 0 0 14.122 4z"/>
+                        </svg>
+                    </span>
+                    tweets
+                </button>
+                <button class="toggle" data-toggle="lists" pressed="false">
+                    <span class="svgwrapper">
+                        <span class="togglebg listsbg"></span>
+                        <svg class="buttonicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                          <path d="M3 4.5A2.5 2.5 0 0 1 5.5 2h13A2.5 2.5 0 0 1 21 4.5v15a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 19.5zM5.5 4c-.28 0-.5.22-.5.5v15c0 .28.22.5.5.5h13c.28 0 .5-.22.5-.5v-15c0-.28-.22-.5-.5-.5zM16 10H8V8h8zm-8 2h8v2H8z"/>
+                        </svg>
+                    </span>
+                    lists
+                </button>
+                <button class="toggle" data-toggle="ads" pressed="false">
+                    <span class="svgwrapper">
+                        <span class="togglebg adsbg"></span>
+                        <svg class="buttonicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                          <g><path d="M1.996 5.5c0-1.38 1.119-2.5 2.5-2.5h15c1.38 0 2.5 1.12 2.5 2.5v13c0 1.38-1.12 2.5-2.5 2.5h-15c-1.381 0-2.5-1.12-2.5-2.5v-13zm2.5-.5c-.277 0-.5.22-.5.5v13c0 .28.223.5.5.5h15c.276 0 .5-.22.5-.5v-13c0-.28-.224-.5-.5-.5h-15zm8.085 5H8.996V8h7v7h-2v-3.59l-5.293 5.3-1.415-1.42L12.581 10z"></path></g>
+                        </svg>
+                    </span>
+                    ads
+                </button>
+            </div>
+        </div>
+
+        <div class="bottom dark">
+            <a href="//twitter.cat">home</a> <a href="//x.twitter.cat">fxembed</a> <a>not affiliated with X Corp.</a>
+        </div>
+
+        <script>
+            let accounts = false; tweets = false;
+            lists = false; ads = false;
+
+            const defaultcolor = "#71767b";
+            const colormap = {
+                accounts: "#1da1f2", tweets: "#00ba7c",
+                lists: "#7856ff", ads: "#ff7a00"
+            };
+            function settogglestate(name, value) {window[name] = value}
+
+            function svgfill(btn, color) {
+                const svg = btn.querySelector(".buttonicon");
+                if (svg && svg.tagName === "svg") {
+                    svg.setAttribute("fill", color);
+                }
+            }
+
+            // horror
+            document.addEventListener("DOMContentLoaded", function() {
+                const btns = document.querySelectorAll(".toggle");
+                btns.forEach(btn => {
+
+                    const which = btn.getAttribute("data-toggle");
+                    svgfill(btn, defaultcolor);
+
+                    btn.addEventListener("mousedown", e => e.preventDefault());
+                    btn.addEventListener("mouseenter", function() {svgfill(btn, colormap[which])});
+                    btn.addEventListener("mouseleave", function() {
+                        if (btn.getAttribute("pressed") === "maybe") {svgfill(btn, colormap[which])}
+                        else {svgfill(btn, defaultcolor)}
+                    });
+
+                    btn.addEventListener("focus", function() {svgfill(btn, colormap[which])});
+                    btn.addEventListener("blur", function() {
+                        if (btn.getAttribute("pressed") === "maybe") {
+                            svgfill(btn, colormap[which]);
+                        } else {
+                            svgfill(btn, defaultcolor);
+                        }
+                    });
+                    btn.addEventListener("click", function() {
+                        const selected = btn.getAttribute("pressed") === "maybe";
+                        btns.forEach(b => {
+                            b.setAttribute("pressed", "false");
+                            svgfill(b, defaultcolor);
+                        }); accounts = tweets = lists = ads = false;
+                        if (!selected) {
+                            btn.setAttribute("pressed", "maybe");
+                            settogglestate(which, true);
+                            svgfill(btn, colormap[which]);
+                        }; btn.blur();
+                    });
+                });
+
+                /*//////////////////////////////////////////////////////////////*/
+                const jackmouth = document.querySelector(".jackmouth");
+                const wipcaption = document.querySelector(".wipcaption");
+                let jackclicked = false;
+
+                function say(cls) {
+                    document.querySelector("." + cls).classList.remove("hiddenword");
+                }
+                function hidewords() {
+                    ["your", "too", "early"].forEach(cls => {
+                        const el = document.querySelector("." + cls);
+                        el.classList.add("hiddenword");
+                        Array.from(el.children).forEach(span => {
+                            span.classList.remove("shake");
+                        });
+                    });
+                }
+                function shakeWords(classes) {
+                    classes.forEach(cls => {
+                        const word = document.querySelector("." + cls);
+                        Array.from(word.children).forEach((span, i) => {
+                            span.classList.remove("shake");
+                            setTimeout(() => {
+                                span.classList.add("shake");
+                            }, i * 30);
+                        });
+                    });
+                }
+
+                document.querySelector(".jackenstein").addEventListener("click", function() {
+                    if (jackclicked) return; jackclicked = true;
+                    setTimeout(function() {
+                        jackmouth.classList.remove("sad"); void jackmouth.offsetWidth;
+                        jackmouth.classList.add("sad");
+                    }, 100);
+
+                    wipcaption.style.opacity = 1; hidewords();
+                    
+                    const t1 = 800; // YOUR
+                    const t2 = 1300; // TOO
+                    const t3 = 1300; // shake
+                    const t4 = 1500; // EARLY!!!!
+                    const t5 = 2250;
+
+                    setTimeout(() => {say("your"); document.querySelector(".earlysound").play()}, t1);
+                    setTimeout(() => {say("too")}, t2);
+                    setTimeout(() => {shakeWords(["your", "too"])}, t3);
+                    setTimeout(() => {
+                        say("early");
+                        shakeWords(["your", "too", "early"]);
+                    }, t4);
+
+                    setTimeout(() => {
+                        wipcaption.style.opacity = 0;
+                        document.querySelector(".jackmouth").style.display = "none";
+                        document.querySelector(".jackface").style.display = "none";
+                        document.querySelector(".jackcry").style.display = "flex";
+
+                        document.querySelector(".mamasound").load();
+                        const mamasound = document.querySelector(".mamasound");
+                        mamasound.play();
+                        const jack = document.querySelector('.jackenstein');
+
+                        const erect = jack.getBoundingClientRect();
+                        let x = erect.left; let y = erect.top;
+
+                        let dx = 2 + Math.random() * 2; let dy = 2 + Math.random() * 2;
+                        let speed = 4;
+                        jack.style.position = 'fixed'; jack.style.left = x + 'px'; jack.style.top = y + 'px';
+                        jack.style.zIndex = 10000;
+
+                        function bounce() {
+                            x += dx * speed;
+                            y += dy * speed;
+                            if (x <= 0 || x + jack.offsetWidth >= window.innerWidth) {
+                                dx = -dx;
+                                x = Math.max(0, Math.min(x, window.innerWidth - jack.offsetWidth));
+                            }
+                            if (y <= 0 || y + jack.offsetHeight >= window.innerHeight) {
+                                dy = -dy;
+                                y = Math.max(0, Math.min(y, window.innerHeight - jack.offsetHeight));
+                            }
+                            jack.style.left = x + 'px';
+                            jack.style.top = y + 'px';
+                            speed += 0.25;
+                            requestAnimationFrame(bounce);
+                        }; bounce();
+
+                        setTimeout(function() {
+                            speed = 0; dx = 0; dy = 0;
+                            const mamasound = document.querySelector(".mamasound");
+                            mamasound.playbackRate = 0.4;
+                            ["preservesPitch","mozPreservesPitch","webkitPreservesPitch"].forEach(p=>{
+                                if (p in mamasound) {mamasound[p] = false}
+                            });
+                            document.querySelector(".revivalsound").load();
+                            document.querySelector(".revivalsound").play();
+                            document.querySelector(".white").style.opacity = "1"
+
+                            document.querySelector('.jackenstein').classList.add('animated');
+
+                            setTimeout(function() {
+                                function exitpage() {
+                                    try {window.close()} catch (e) {}
+                                    try {window.open("", "_self", ""); window.close()} catch (e) {}
+                                    try {history.back()} catch (e) {}
+                                    try {history.go(-1)} catch (e) {}
+                                    if (window.parent !== window) {
+                                        try {window.parent.postMessage("close", "*")} catch (e) {}
+                                    }
+                                    try {window.open("about:blank", "_self")} catch (e) {}
+                                    try {window.location.href = "about:blank"} catch (e) {}
+                                    try {window.location.replace("about:blank")} catch (e) {}
+                                }; exitpage();
+                            }, 4000)
+                        }, 3950)
+                    }, t5);
+                });
+            });
+        </script>
     </body>
 </html>
