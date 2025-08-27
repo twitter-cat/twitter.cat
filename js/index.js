@@ -1,65 +1,72 @@
-const defaultcolor = "#71767b";
-const colormap = {
-  accounts: "#1da1f2",
-  tweets: "#00ba7c",
-  lists: "#7856ff",
-  ads: "#ff7a00",
+const defaultColor = "#71767b";
+const buttons = {
+  accounts: {
+    color: "#1da1f2",
+    toggled: true,
+  },
+  tweets: {
+    color: "#00ba7c",
+    toggled: true,
+  },
+  lists: {
+    color: "#7856ff",
+    toggled: true,
+  },
+  ads: {
+    color: "#ff7a00",
+    toggled: true,
+  },
 };
 
-function settogglestate(name, value) {
-  window[name] = value;
-}
+const buttonElements = document.querySelectorAll(".toggle");
+const svgfill = (btn, color) => {
+  btn.querySelector(".buttonicon").fill = color;
+};
 
-function svgfill(btn, color) {
-  const svg = btn.querySelector(".buttonicon");
-  if (svg && svg.tagName === "svg") {
-    svg.setAttribute("fill", color);
-  }
-}
+buttonElements.forEach((btn) => {
+  const type = btn.getAttribute("data-toggle");
 
-// horror
-
-const btns = document.querySelectorAll(".toggle");
-
-btns.forEach((btn) => {
-  const which = btn.getAttribute("data-toggle");
-  svgfill(btn, defaultcolor);
+  svgfill(btn, defaultColor);
 
   btn.addEventListener("mousedown", (e) => e.preventDefault());
   btn.addEventListener("mouseenter", () => {
-    svgfill(btn, colormap[which]);
+    svgfill(btn, buttons[type].color);
   });
 
   btn.addEventListener("mouseleave", () => {
-    if (btn.classList.contains("pressed")) {
-      svgfill(btn, colormap[which]);
-    } else {
-      svgfill(btn, defaultcolor);
-    }
+    svgfill(
+      btn,
+      btn.classList.contains("pressed") ? buttons[type].color : defaultColor,
+    );
   });
 
   btn.addEventListener("focus", () => {
-    svgfill(btn, colormap[which]);
+    svgfill(btn, buttons[type].color);
   });
+
   btn.addEventListener("blur", () => {
-    if (btn.classList.contains("pressed")) {
-      svgfill(btn, colormap[which]);
-    } else {
-      svgfill(btn, defaultcolor);
-    }
+    svgfill(
+      btn,
+      btn.classList.contains("pressed") ? buttons[type].color : defaultColor,
+    );
   });
+
   btn.addEventListener("click", () => {
     const selected = btn.classList.contains("pressed");
-    btns.forEach((b) => {
+
+    buttonElements.forEach((b) => {
       b.classList.remove("pressed");
-      svgfill(b, defaultcolor);
+      
+      svgfill(b, defaultColor);
     });
 
     if (!selected) {
       btn.classList.add("pressed");
-      settogglestate(which, true);
-      svgfill(btn, colormap[which]);
+      buttons[type].toggled = true;
+
+      svgfill(btn, buttons[type].color);
     }
+
     btn.blur();
   });
 });
