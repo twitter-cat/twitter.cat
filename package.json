@@ -1,5 +1,5 @@
 {
   "scripts": {
-    "dev": "bun ./index.html"
+    "dev": "bun ./**.html"
   }
 }
