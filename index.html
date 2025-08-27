@@ -30,8 +30,6 @@
     <link rel="stylesheet" href="/css/youretooearly.css" />
   </head>
   <body>
-    <div class="white"></div>
-
     <div class="center">
       <div class="logo">
         <img src="assets/svgs/kitty.svg" draggable="false" />
@@ -48,12 +46,12 @@
           class="searchicon"
           draggable="false"
         />
-        <input class="searchbar" placeholder="search" />
+        <input class="searchbar" placeholder="search" autofocus autocorrect="off"/>
       </div>
 
       <!-- these aren't linked as normal files because i can't get them to recolor otherwise 😭 god dammit -->
       <div class="buttons">
-        <button class="toggle" data-toggle="accounts" pressed="false">
+        <button class="toggle" data-toggle="accounts">
           <span class="svgwrapper">
             <span class="togglebg accountsbg"></span>
             <svg
@@ -68,7 +66,7 @@
           </span>
           accounts
         </button>
-        <button class="toggle" data-toggle="tweets" pressed="false">
+        <button class="toggle" data-toggle="tweets">
           <span class="svgwrapper">
             <span class="togglebg tweetsbg"></span>
             <svg
@@ -83,7 +81,7 @@
           </span>
           tweets
         </button>
-        <button class="toggle" data-toggle="lists" pressed="false">
+        <button class="toggle" data-toggle="lists">
           <span class="svgwrapper">
             <span class="togglebg listsbg"></span>
             <svg
@@ -98,7 +96,7 @@
           </span>
           lists
         </button>
-        <button class="toggle" data-toggle="ads" pressed="false">
+        <button class="toggle" data-toggle="ads">
           <span class="svgwrapper">
             <span class="togglebg adsbg"></span>
             <svg

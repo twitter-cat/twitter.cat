@@ -1,39 +1,21 @@
-@font-face {
-  font-family: "chirp";
-  src: url("../assets/fonts/chirp.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
-@font-face {
-  font-family: "chirp";
-  src: url("../assets/fonts/chirpmedium.woff2") format("woff2");
-  font-weight: 500;
-  font-style: normal;
-}
-@font-face {
-  font-family: "chirp";
-  src: url("../assets/fonts/chirpbold.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-}
-@font-face {
-  font-family: "chirp";
-  src: url("../assets/fonts/chirpheavy.woff2") format("woff2");
-  font-weight: 900;
-  font-style: normal;
-}
-
-/*//////////////////////////////////////////////////////////////*/
 
 body {
   background-color: #14171a;
   color: white;
   margin: 0;
-  overflow: hidden;
+  overflow-x: hidden;
   font-family: "chirp", sans-serif;
   font-size: 20px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 
 .center {
@@ -41,15 +23,12 @@ body {
   justify-content: center;
   align-items: center;
   flex-direction: column;
+
   width: 600px;
   max-width: 90%;
-  height: 90%;
+  height: 100%;
+
   margin: auto;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
 }
 
 .logo {
@@ -65,38 +44,6 @@ body {
   animation: jump 1s ease-in infinite;
 }
 
-@keyframes jump {
-  0% {
-    transform: translateY(5px) rotateZ(0deg);
-  }
-  10% {
-    transform: translateY(-5px) rotateZ(0deg);
-  }
-  25% {
-    transform: translateY(-15px) rotateZ(10deg);
-  }
-  40% {
-    transform: translateY(-5px) rotateZ(0deg);
-  }
-  50% {
-    transform: translateY(5px) rotateZ(0deg);
-  }
-  60% {
-    transform: translateY(-5px) rotateZ(0deg);
-  }
-  75% {
-    transform: translateY(-15px) rotateZ(-10deg);
-  }
-  90% {
-    transform: translateY(-5px) rotateZ(0deg);
-  }
-  100% {
-    transform: translateY(5px) rotateZ(0deg);
-  }
-}
-
-/*//////////////////////////////////////////////////////////////*/
-
 .search {
   position: relative;
   display: inline-block;
@@ -106,7 +53,7 @@ body {
   font-size: 0.8em;
   padding-left: 40px;
   width: 500px;
-  height: 40px;
+  height: 43px;
   background-color: rgba(0, 0, 0, 0);
   color: white;
   border-radius: 50px;
@@ -116,7 +63,7 @@ body {
   caret-color: #1da1f2;
 }
 .searchbar::placeholder {
-  color: white;
+  color: rgba(255, 255, 255, 0.5);
 }
 .searchbar:focus {
   outline: 2px solid #1da1f2;
@@ -130,8 +77,6 @@ body {
   width: 18px;
   height: 18px;
 }
-
-/*//////////////////////////////////////////////////////////////*/
 
 .buttons {
   display: flex;
@@ -178,8 +123,6 @@ body {
   z-index: 0;
   transition: background 0.2s, opacity 0.2s;
 }
-
-/*//////////////////////////////////////////////////////////////*/
 
 .accountsbg {
   background: rgba(29, 161, 242, 0.15);
@@ -245,16 +188,10 @@ body {
   border-color: #ff7a00;
 }
 
-/*//////////////////////////////////////////////////////////////*/
-
 .bottom {
   display: flex;
-  position: fixed;
   justify-content: center;
   align-items: center;
-  bottom: 0;
-  left: 0;
-  right: 0;
   height: 40px;
   width: 100%;
   gap: 10px;
@@ -263,8 +200,6 @@ body {
   z-index: 999;
 }
 
-/*//////////////////////////////////////////////////////////////*/
-
 :any-link {
   color: #1da1f2;
   text-decoration: none;
@@ -272,6 +207,7 @@ body {
 :any-link:hover {
   text-decoration: underline;
 }
+
 .medium {
   font-weight: 500;
 }
@@ -303,4 +239,59 @@ img[draggable="false"],
 .word {
   user-select: none;
   pointer-events: none;
+}
+
+@font-face {
+  font-family: "chirp";
+  src: url("../assets/fonts/chirp.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "chirp";
+  src: url("../assets/fonts/chirpmedium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+}
+@font-face {
+  font-family: "chirp";
+  src: url("../assets/fonts/chirpbold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: "chirp";
+  src: url("../assets/fonts/chirpheavy.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+}
+
+@keyframes jump {
+  0% {
+    transform: translateY(5px) rotateZ(0deg);
+  }
+  10% {
+    transform: translateY(-5px) rotateZ(0deg);
+  }
+  25% {
+    transform: translateY(-15px) rotateZ(10deg);
+  }
+  40% {
+    transform: translateY(-5px) rotateZ(0deg);
+  }
+  50% {
+    transform: translateY(5px) rotateZ(0deg);
+  }
+  60% {
+    transform: translateY(-5px) rotateZ(0deg);
+  }
+  75% {
+    transform: translateY(-15px) rotateZ(-10deg);
+  }
+  90% {
+    transform: translateY(-5px) rotateZ(0deg);
+  }
+  100% {
+    transform: translateY(5px) rotateZ(0deg);
+  }
 }

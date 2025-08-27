@@ -1,11 +1,12 @@
-// im too lazy to fix the warnings
-// edit: ended up fixing them because they haunt me at night
-
 (() => {
   if (location.hostname === "localhost") return;
 
   const _d = document.createElement("div");
   document.body.appendChild(_d);
+
+  const _white = document.createElement("div");
+  _white.className = "white";
+  document.body.appendChild(_white);
 
   // i love writing html in js!!
 

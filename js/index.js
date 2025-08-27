@@ -23,7 +23,7 @@ const svgfill = (btn, color) => {
   btn.querySelector(".buttonicon").fill = color;
 };
 
-buttonElements.forEach((btn) => {
+buttonElements.forEach((btn, i) => {
   const type = btn.getAttribute("data-toggle");
 
   svgfill(btn, defaultColor);
@@ -58,15 +58,17 @@ buttonElements.forEach((btn) => {
       b.classList.remove("pressed");
 
       svgfill(b, defaultColor);
+      b.style.color = defaultColor;
     });
 
     if (!selected) {
       btn.classList.add("pressed");
       buttons[type].toggled = true;
 
+      btn.style.color = buttons[type].color;
       svgfill(btn, buttons[type].color);
     }
-
-    btn.blur();
   });
+
+  if (i === 0) btn.click();
 });
