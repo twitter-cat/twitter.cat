@@ -703,6 +703,11 @@
           });
         });
 
+        if (location.hostname === "localhost") {
+          document.querySelector(".wipoverlay").remove(); // BYE
+          return;
+        }
+
         /*//////////////////////////////////////////////////////////////*/
         const jackmouth = document.querySelector(".jackmouth");
         const wipcaption = document.querySelector(".wipcaption");
