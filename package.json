@@ -1,5 +1,5 @@
 {
   "scripts": {
-    "dev": "bunx serve"
+    "dev": "bun ./index.html"
   }
 }
