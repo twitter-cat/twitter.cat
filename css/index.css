@@ -57,6 +57,7 @@ body {
   gap: 10px;
   margin-bottom: 18px;
   user-select: none;
+  cursor: pointer;
 }
 
 .center:has(.results) .logo {
@@ -97,7 +98,7 @@ body {
   border-radius: 50px;
   border: none;
   outline: 1px solid #3e4144;
-  transition: outline-color 0.2s;
+  transition: outline-color 0.2s, box-shadow 0.2s;
   caret-color: #1da1f2;
 }
 .searchbar::placeholder {
@@ -106,6 +107,7 @@ body {
 .searchbar:focus {
   outline: 2px solid #1da1f2;
   outline-offset: 0;
+  box-shadow: 0 0 5px rgba(29, 161, 242, 0.5);
 }
 .searchicon {
   position: absolute;
@@ -126,7 +128,7 @@ body {
 
 .center:has(.results) .buttons {
   margin-top: 10px;
-  gap: 2px;
+  gap: 6px;
 }
 
 .buttons button {
@@ -146,19 +148,20 @@ body {
   overflow: hidden;
   height: 40px;
   padding: 10px;
-  transition: width 0.2s, border-color 0.2s, color 0.2s;
+  transition: width 0.2s, border-color 0.2s, color 0.2s, transform 0.15s;
+}
+
+.buttons button:active {
+  transform: scale(0.98);
 }
 
 .buttons button > span:not(.svgwrapper) {
   margin-left: 25px;
 }
 
-.center:has(.results) .buttons button:not(.pressed) {
-  width: 40px;
-  gap: 0px;
-
-  color: transparent!important;
-  border: 1px solid transparent;
+.center:has(.results) .buttons {
+  max-width: 500px;
+  width: 100%;
 }
 
 @media (max-width: 410px) {
