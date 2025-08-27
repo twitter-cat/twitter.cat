@@ -56,7 +56,7 @@ buttonElements.forEach((btn) => {
 
     buttonElements.forEach((b) => {
       b.classList.remove("pressed");
-      
+
       svgfill(b, defaultColor);
     });
 
