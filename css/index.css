@@ -1,0 +1,306 @@
+@font-face {
+  font-family: "chirp";
+  src: url("../assets/fonts/chirp.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "chirp";
+  src: url("../assets/fonts/chirpmedium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+}
+@font-face {
+  font-family: "chirp";
+  src: url("../assets/fonts/chirpbold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: "chirp";
+  src: url("../assets/fonts/chirpheavy.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+}
+
+/*//////////////////////////////////////////////////////////////*/
+
+body {
+  background-color: #14171a;
+  color: white;
+  margin: 0;
+  overflow: hidden;
+  font-family: "chirp", sans-serif;
+  font-size: 20px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width: 600px;
+  max-width: 90%;
+  height: 90%;
+  margin: auto;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2.5em;
+  gap: 10px;
+}
+
+.logo img {
+  height: 1.5em;
+  animation: jump 1s ease-in infinite;
+}
+
+@keyframes jump {
+  0% {
+    transform: translateY(5px) rotateZ(0deg);
+  }
+  10% {
+    transform: translateY(-5px) rotateZ(0deg);
+  }
+  25% {
+    transform: translateY(-15px) rotateZ(10deg);
+  }
+  40% {
+    transform: translateY(-5px) rotateZ(0deg);
+  }
+  50% {
+    transform: translateY(5px) rotateZ(0deg);
+  }
+  60% {
+    transform: translateY(-5px) rotateZ(0deg);
+  }
+  75% {
+    transform: translateY(-15px) rotateZ(-10deg);
+  }
+  90% {
+    transform: translateY(-5px) rotateZ(0deg);
+  }
+  100% {
+    transform: translateY(5px) rotateZ(0deg);
+  }
+}
+
+/*//////////////////////////////////////////////////////////////*/
+
+.search {
+  position: relative;
+  display: inline-block;
+}
+.searchbar {
+  font-family: "chirp", sans-serif;
+  font-size: 0.8em;
+  padding-left: 40px;
+  width: 500px;
+  height: 40px;
+  background-color: rgba(0, 0, 0, 0);
+  color: white;
+  border-radius: 50px;
+  border: none;
+  outline: 1px solid #3e4144;
+  transition: outline-color 0.2s;
+  caret-color: #1da1f2;
+}
+.searchbar::placeholder {
+  color: white;
+}
+.searchbar:focus {
+  outline: 2px solid #1da1f2;
+  outline-offset: 0;
+}
+.searchicon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+}
+
+/*//////////////////////////////////////////////////////////////*/
+
+.buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  margin-top: 20px;
+}
+.buttons button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: inherit;
+  color: #71767b;
+  font-family: "chirp", sans-serif;
+  font-size: 0.7em;
+  padding: 1em;
+  gap: 3px;
+  border: 1px solid #3e4144;
+  border-radius: 50px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.svgwrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 3px;
+}
+.togglebg {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  opacity: 0;
+  z-index: 0;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+/*//////////////////////////////////////////////////////////////*/
+
+.accountsbg {
+  background: rgba(29, 161, 242, 0.15);
+}
+.tweetsbg {
+  background: rgba(0, 186, 124, 0.15);
+}
+.listsbg {
+  background: rgba(120, 86, 255, 0.15);
+}
+.adsbg {
+  background: rgba(255, 122, 0, 0.15);
+}
+
+.buttonicon {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  transition: color 0.2s;
+  color: #71767b;
+  fill: currentColor;
+}
+
+.toggle[data-toggle="accounts"]:hover .buttonicon,
+.toggle[data-toggle="accounts"].pressed .buttonicon {
+  color: #1da1f2;
+}
+.toggle[data-toggle="tweets"]:hover .buttonicon,
+.toggle[data-toggle="tweets"].pressed .buttonicon {
+  color: #00ba7c;
+}
+.toggle[data-toggle="lists"]:hover .buttonicon,
+.toggle[data-toggle="lists"].pressed .buttonicon {
+  color: #7856ff;
+}
+.toggle[data-toggle="ads"]:hover .buttonicon,
+.toggle[data-toggle="ads"].pressed .buttonicon {
+  color: #ff7a00;
+}
+
+.toggle {
+  outline: none;
+}
+.toggle:focus {
+  outline: 2px solid #1da1f2;
+  outline-offset: 0;
+}
+.toggle:hover .togglebg,
+.toggle:focus .togglebg {
+  opacity: 1;
+}
+
+.toggle[data-toggle="accounts"].pressed {
+  border-color: #1da1f2;
+}
+.toggle[data-toggle="tweets"].pressed {
+  border-color: #00ba7c;
+}
+.toggle[data-toggle="lists"].pressed {
+  border-color: #7856ff;
+}
+.toggle[data-toggle="ads"].pressed {
+  border-color: #ff7a00;
+}
+
+/*//////////////////////////////////////////////////////////////*/
+
+.bottom {
+  display: flex;
+  position: fixed;
+  justify-content: center;
+  align-items: center;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  width: 100%;
+  gap: 10px;
+  font-size: 0.6em;
+  background-color: inherit;
+  z-index: 999;
+}
+
+/*//////////////////////////////////////////////////////////////*/
+
+:any-link {
+  color: #1da1f2;
+  text-decoration: none;
+}
+:any-link:hover {
+  text-decoration: underline;
+}
+.medium {
+  font-weight: 500;
+}
+.bold {
+  font-weight: 700;
+}
+.heavy {
+  font-weight: 900;
+}
+.dark {
+  color: #71767b;
+}
+
+sup {
+  vertical-align: text-top;
+}
+sub {
+  vertical-align: text-bottom;
+}
+.small {
+  font-size: 12.5px;
+  opacity: 0.3;
+}
+
+br,
+svg,
+img[draggable="false"],
+.white,
+.word {
+  user-select: none;
+  pointer-events: none;
+}
