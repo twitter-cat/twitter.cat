@@ -1,3 +1,7 @@
+:root {
+  interpolate-size: allow-keywords;
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -32,6 +36,19 @@ body {
   margin: auto;
 }
 
+.center:has(.results) {
+  justify-content: flex-start;
+  padding-top: 1em;
+  padding-bottom: 2em;
+  overflow-y: auto;
+}
+
+.results {
+  width: 100%;
+  text-align: left;
+  margin-top: 1em;
+}
+
 .logo {
   display: flex;
   justify-content: center;
@@ -39,6 +56,13 @@ body {
   font-size: 2.5em;
   gap: 10px;
   margin-bottom: 18px;
+  user-select: none;
+}
+
+.center:has(.results) .logo {
+  font-size: 1.4em;
+  gap: 5px;
+  margin-top: 0.8em;
 }
 
 @media (max-width: 410px) {
@@ -50,6 +74,11 @@ body {
 .logo img {
   height: 1.5em;
   animation: jump 1s ease-in infinite;
+}
+
+.center:has(.results) .logo img {
+  height: 1.5em;
+  animation: none;
 }
 
 .search {
@@ -92,6 +121,44 @@ body {
   flex-direction: row;
   gap: 10px;
   margin-top: 20px;
+  user-select: none;
+}
+
+.center:has(.results) .buttons {
+  margin-top: 10px;
+  gap: 2px;
+}
+
+.buttons button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: inherit;
+  color: #71767b;
+  font-family: "chirp", sans-serif;
+  font-size: 0.7em;
+  flex-shrink: 0;
+  gap: 3px;
+  border: 1px solid #3e4144;
+  border-radius: 50px;
+  cursor: pointer;
+  overflow: hidden;
+  height: 40px;
+  padding: 10px;
+  transition: width 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.buttons button > span:not(.svgwrapper) {
+  margin-left: 25px;
+}
+
+.center:has(.results) .buttons button:not(.pressed) {
+  width: 40px;
+  gap: 0px;
+
+  color: transparent!important;
+  border: 1px solid transparent;
 }
 
 @media (max-width: 410px) {
@@ -113,27 +180,9 @@ body {
   }
 }
 
-.buttons button {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: inherit;
-  color: #71767b;
-  font-family: "chirp", sans-serif;
-  font-size: 0.7em;
-  padding: 1em;
-  flex-shrink: 0;
-  gap: 3px;
-  border: 1px solid #3e4144;
-  border-radius: 50px;
-  cursor: pointer;
-  overflow: hidden;
-  transition: border-color 0.2s;
-}
-
 .svgwrapper {
-  position: relative;
+  position: absolute;
+  left: 10px;
   display: flex;
   align-items: center;
   justify-content: center;

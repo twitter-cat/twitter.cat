@@ -1,3 +1,5 @@
+import "./query.js";
+
 const defaultColor = "#71767b";
 const buttons = {
   accounts: {
@@ -53,6 +55,8 @@ buttonElements.forEach((btn, i) => {
 
   btn.addEventListener("click", () => {
     const selected = btn.classList.contains("pressed");
+
+    if (selected) return;
 
     buttonElements.forEach((b) => {
       b.classList.remove("pressed");
