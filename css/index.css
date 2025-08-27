@@ -37,6 +37,7 @@ body {
   align-items: center;
   font-size: 2.5em;
   gap: 10px;
+  margin-bottom: 18px;
 }
 
 .logo img {
