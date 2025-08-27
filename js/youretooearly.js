@@ -2,10 +2,71 @@
 // edit: ended up fixing them because they haunt me at night
 
 (() => {
-  if (location.hostname === "localhost") {
-    document.querySelector(".wipoverlay").remove(); // BYE
-    return;
-  }
+  if (location.hostname === "localhost") return;
+
+  const _d = document.createElement("div");
+  document.body.appendChild(_d);
+
+  // i love writing html in js!!
+
+  _d.outerHTML = `
+    <div class="wipoverlay">
+      <a class="wipcaption">
+        <span class="word hiddenword your">
+          <span>Y</span>
+          <span>O</span>
+          <span>U</span>
+          <span>R</span>
+        </span>
+        <span class="word hiddenword too">
+          <span>T</span>
+          <span>O</span>
+          <span>O</span>
+        </span>
+        <span class="word hiddenword early">
+          <span>E</span>
+          <span>A</span>
+          <span>R</span>
+          <span>L</span>
+          <span>Y</span>
+        </span>
+      </a>
+      <div class="jackenstein">
+        <img
+          draggable="false"
+          class="jackface"
+          src="assets/images/spr_jackenpumpkinlaugh_nomouth.png"
+        />
+        <img
+          draggable="false"
+          class="jackmouth"
+          src="assets/images/spr_guywhoappearswhenyouhavetakentoolonginaghosthousebutjustthemouth.png"
+        />
+        <img
+          draggable="false"
+          class="jackcry"
+          src="assets/images/spr_jackolantern_cry.gif"
+        />
+      </div>
+      <audio
+        class="earlysound"
+        src="assets/audio/snd_your_too_early.wav"
+        style="display: none"
+        preload="auto"
+      ></audio>
+      <audio
+        class="mamasound"
+        src="assets/audio/snd_pumpkin_scream_mama_fast.wav"
+        style="display: none"
+        preload="auto"
+      ></audio>
+      <audio
+        class="revivalsound"
+        src="assets/audio/snd_revival.wav"
+        style="display: none"
+        preload="auto"
+      ></audio>
+    </div>`;
 
   const jackmouth = document.querySelector(".jackmouth");
   const wipcaption = document.querySelector(".wipcaption");
