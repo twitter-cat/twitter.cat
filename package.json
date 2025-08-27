@@ -1,5 +1,6 @@
 {
   "scripts": {
-    "dev": "bun ./**.html"
+    "dev": "bun ./**.html --console",
+    "build": "bun build ./**.html --minify --outdir=dist"
   }
 }
