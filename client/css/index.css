@@ -72,6 +72,18 @@ body {
   }
 }
 
+@media (max-width: 340px) {
+  .logo {
+    font-size: 2em;
+  }
+}
+
+@media (max-width: 240px) {
+  .logo {
+    font-size: 1.5em;
+  }
+}
+
 .logo img {
   height: 1.5em;
   animation: jump 1s ease-in infinite;
