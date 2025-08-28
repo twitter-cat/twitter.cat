@@ -1,6 +1,6 @@
 {
   "scripts": {
     "client:dev": "bun ./**.html --console",
-    "client:build": "bun build ./**.html --minify --outdir=dist"
+    "client:push": "git subtree push --prefix client origin gh-pages"
   }
 }
