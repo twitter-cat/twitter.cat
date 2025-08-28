@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>(999) / twitter.cat</title>
+
+    <meta charset="UTF-8" />
+
+    <meta property="og:type" content="image" />
+    <link rel="icon" type="image/x-icon" href="/assets/svgs/face.svg" />
+
+    <meta itemprop="name" content="twitter (dot) cat" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="twitter (dot) cat" />
+    <meta name="twitter:site" content="@cvsilly_" />
+    <meta name="twitter:description" content="small tools for twitter" />
+    <meta
+      name="twitter:image"
+      content="https://twitter.cat/assets/images/bouncing.gif"
+    />
+
+    <link rel="stylesheet" href="/css/index.css" />
+    <link rel="stylesheet" href="/css/youretooearly.css" />
+  </head>
+  <body>
+    <div class="center">
+      <div class="logo">
+        <img src="assets/svgs/kitty.svg" draggable="false" />
+
+        <!-- prettier-ignore -->
+        <div>
+          <a class="dark">@</a><a class="heavy">twitter.cat</a>
+        </div>
+      </div>
+
+      <div class="search">
+        <img
+          src="assets/svgs/search.svg"
+          class="searchicon"
+          draggable="false"
+        />
+        <input
+          class="searchbar"
+          placeholder="search"
+          autofocus
+          autocorrect="off"
+        />
+      </div>
+
+      <!-- these aren't linked as normal files because i can't get them to recolor otherwise 😭 god dammit -->
+      <div class="buttons">
+        <button class="toggle" data-toggle="accounts">
+          <span class="svgwrapper">
+            <span class="togglebg accountsbg"></span>
+            <svg
+              class="buttonicon"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19m.486-5.56C7.627 11.85 9.648 11 12 11s4.373.85 5.863 2.44c1.477 1.58 2.366 3.8 2.632 6.46l.11 1.1H3.395l.11-1.1c.266-2.66 1.155-4.88 2.632-6.46M12 4c-1.105 0-2 .9-2 2s.895 2 2 2 2-.9 2-2-.895-2-2-2M8 6a4 4 0 1 1 8 0 4 4 0 0 1-8 0"
+              />
+            </svg>
+          </span>
+          <span>accounts</span>
+        </button>
+        <button class="toggle" data-toggle="tweets">
+          <span class="svgwrapper">
+            <span class="togglebg tweetsbg"></span>
+            <svg
+              class="buttonicon"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366a8.13 8.13 0 0 1 8.129 8.13c0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067A8.005 8.005 0 0 1 1.751 10m8.005-6a6.005 6.005 0 1 0 .133 12.01l.351-.01h1.761v2.3l5.087-2.81A6.127 6.127 0 0 0 14.122 4z"
+              />
+            </svg>
+          </span>
+          <span>tweets</span>
+        </button>
+        <button class="toggle" data-toggle="lists">
+          <span class="svgwrapper">
+            <span class="togglebg listsbg"></span>
+            <svg
+              class="buttonicon"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M3 4.5A2.5 2.5 0 0 1 5.5 2h13A2.5 2.5 0 0 1 21 4.5v15a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 19.5zM5.5 4c-.28 0-.5.22-.5.5v15c0 .28.22.5.5.5h13c.28 0 .5-.22.5-.5v-15c0-.28-.22-.5-.5-.5zM16 10H8V8h8zm-8 2h8v2H8z"
+              />
+            </svg>
+          </span>
+          <span>lists</span>
+        </button>
+        <button class="toggle" data-toggle="ads">
+          <span class="svgwrapper">
+            <span class="togglebg adsbg"></span>
+            <svg
+              class="buttonicon"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+            >
+              <g>
+                <path
+                  d="M1.996 5.5c0-1.38 1.119-2.5 2.5-2.5h15c1.38 0 2.5 1.12 2.5 2.5v13c0 1.38-1.12 2.5-2.5 2.5h-15c-1.381 0-2.5-1.12-2.5-2.5v-13zm2.5-.5c-.277 0-.5.22-.5.5v13c0 .28.223.5.5.5h15c.276 0 .5-.22.5-.5v-13c0-.28-.224-.5-.5-.5h-15zm8.085 5H8.996V8h7v7h-2v-3.59l-5.293 5.3-1.415-1.42L12.581 10z"
+                ></path>
+              </g>
+            </svg>
+          </span>
+          <span>ads</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="bottom dark">
+      <a href="/">home</a>
+      <a href="//x.twitter.cat">fxembed</a>
+      <a>not affiliated with X Corp.</a>
+    </div>
+  </body>
+
+  <script src="/js/index.js"></script>
+  <script src="/js/youretooearly.js"></script>
+</html>
