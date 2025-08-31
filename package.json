@@ -1,7 +1,7 @@
 {
   "scripts": {
     "server:dev": "cd server && bun dev",
-    "client:dev": "cd client && bun ./**.html --console",
+    "client:dev": "cd client && bun ./**/*.html --console",
     "client:push": "git subtree push --prefix client origin gh-pages"
   }
 }
