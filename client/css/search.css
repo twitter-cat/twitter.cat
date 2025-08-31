@@ -1,0 +1,49 @@
+.results .result.account {
+  display: flex;
+  margin-bottom: 10px;
+  align-items: flex-start;
+  gap: 12px;
+  color: inherit;
+}
+
+.results .result.account .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.results .result.account .info {
+  display: flex;
+  flex-direction: column;
+}
+
+.results .result.account .name {
+  font-weight: 600;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: #e7e9ea;
+}
+
+.results .result.account .username {
+  font-size: 15px;
+  margin-top: 0px;
+  color: #71767a;
+}
+
+.results .result.account .bio {
+  font-size: 14px;
+  margin-top: 5px;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.results .result.account:hover {
+  text-decoration: none;
+}
+
+.results .result.account:hover .info .name {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
