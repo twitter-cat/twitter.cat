@@ -1,6 +1,6 @@
 .results .result.account {
   display: flex;
-  margin-bottom: 10px;
+  margin-bottom: 13px;
   align-items: flex-start;
   gap: 12px;
   color: inherit;
@@ -9,7 +9,7 @@
 .results .result.account .avatar {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: 50%;
 }
 
 .results .result.account .info {
@@ -39,6 +39,39 @@
   margin-bottom: 4px;
 }
 
+.results .result.account .location {
+  color: #71767a;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 3px;
+}
+
+.stats {
+  color: #71767a;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.stats .stat {
+  display: flex;
+  gap: 3px;
+}
+
+.stats .stat-label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.stats .stat-number {
+  color: #e7e9ea;
+}
+
 .results .result.account:hover {
   text-decoration: none;
 }
@@ -46,4 +79,40 @@
 .results .result.account:hover .info .name {
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+.time-card {
+  width: fit-content;
+  background-color: #1c2024;
+  border-radius: 7px;
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px,
+    rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px,
+    rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
+  padding: 8px;
+  padding-bottom: 4px;
+  animation: timecardIn 0.3s ease;
+}
+
+.time-card small {
+  color: #8b8f93;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.time-card p {
+  font-size: 14px;
+  color: rgb(255, 255, 255);
+  margin: 0px;
+  margin-bottom: 4px;
+}
+
+@keyframes timecardIn {
+  from {
+    opacity: 0;
+    margin-top: 4px;
+  }
+  to {
+    opacity: 1;
+    margin-top: 0px;
+  }
 }
