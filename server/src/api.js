@@ -31,7 +31,7 @@ SELECT *,
   ) + (
     log(
       greatest(followers, 1)
-    ) * 0.05
+    ) * 0.5
   ) AS rank 
 FROM profiles 
 WHERE 
