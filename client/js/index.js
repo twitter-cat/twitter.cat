@@ -61,6 +61,8 @@ const query = async (text) => {
       })
     ).json();
 
+    if (results.error) throw new Error(results.error);
+
     resultsEl.innerText = JSON.stringify(results);
   } catch (e) {
     console.error(e);
