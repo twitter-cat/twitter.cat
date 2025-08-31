@@ -3,6 +3,7 @@ import { Elysia } from "elysia";
 import { rateLimit } from "elysia-rate-limit";
 
 import api from "./api.js";
+import { compression } from "./compress";
 
 new Elysia()
   .use(
@@ -10,6 +11,7 @@ new Elysia()
       origin: ["localhost:3000", "twitter.cat"],
     }),
   )
+  .use(compression)
   .use(
     rateLimit({
       duration: 15_000,
@@ -32,6 +34,7 @@ new Elysia()
      ++++++  +++++
      ++++     ++++
     +++++    +++++\x1b[0m
-\nrunning on \x1b[38;2;29;161;242m\x1b[1m\x1b[4mhttp://localhost:${process.env.PORT || 3001}\x1b[0m`,
+
+running on \x1b[38;2;29;161;242m\x1b[1m\x1b[4mhttp://localhost:${process.env.PORT || 3001}\x1b[0m`,
     );
   });
