@@ -4,9 +4,6 @@ import { rateLimit } from "elysia-rate-limit";
 
 import api from "./api.js";
 
-if (!process.env.SECRET_KEY)
-  throw new Error("jwt signing key not found. set it as SECRET_KEY");
-
 new Elysia()
   .use(
     cors({

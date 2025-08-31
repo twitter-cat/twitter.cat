@@ -1,5 +1,4 @@
 import { API_URL } from "./config.js";
-import { getSession } from "./session.js";
 
 const defaultColor = "#71767b";
 const buttons = {
@@ -46,23 +45,30 @@ const query = async (text) => {
 
   history.pushState({}, "", `?q=${encodeURIComponent(text)}`);
 
-  const results = await (
-    await fetch(`${API_URL}/query`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: await getSession(),
-      },
-      body: JSON.stringify({
-        q: text,
-        type:
-          Object.entries(buttons).find(([_, b]) => b.toggled)?.[0] ||
-          "accounts",
-      }),
-    })
-  ).json();
+  try {
+    const results = await (
+      await fetch(`${API_URL}/query`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          q: text,
+          type:
+            Object.entries(buttons).find(([_, b]) => b.toggled)?.[0] ||
+            "accounts",
+        }),
+      })
+    ).json();
 
-  resultsEl.innerText = JSON.stringify(results);
+    resultsEl.innerText = JSON.stringify(results);
+  } catch (e) {
+    console.error(e);
+    resultsEl.innerHTML = `<div class="error-zone">
+    <img src="assets/svgs/woozy.svg">
+    <p>${e.message}</p>
+    <small>An error occurred. Please try again later.</small></div>`;
+  }
 };
 
 buttonElements.forEach((btn, i) => {

@@ -176,6 +176,25 @@ body {
   width: 100%;
 }
 
+.error-zone {
+  display: flex;
+  flex-direction: column;
+}
+
+.error-zone img {
+  width: 48px;
+}
+
+.error-zone p {
+  font-weight: 500;
+  margin-bottom: 0px;
+}
+
+.error-zone small {
+  margin-top: 6px;
+  opacity: 0.9;
+}
+
 @media (max-width: 410px) {
   .buttons {
     max-width: 100%;
