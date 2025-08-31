@@ -11,7 +11,6 @@ body {
   background-color: #14171a;
   color: white;
   margin: 0;
-  overflow-x: hidden;
   font-family: "chirp", sans-serif;
   font-size: 20px;
   -webkit-font-smoothing: antialiased;
@@ -20,6 +19,16 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  overflow: hidden;
+  color-scheme: dark;
+}
+
+.center-wrapper {
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  height: 100%;
 }
 
 .center {
@@ -40,7 +49,6 @@ body {
   justify-content: flex-start;
   padding-top: 1em;
   padding-bottom: 2em;
-  overflow-y: auto;
 }
 
 .results {
@@ -179,6 +187,9 @@ body {
 .error-zone {
   display: flex;
   flex-direction: column;
+  max-width: 500px;
+  margin: 0px auto;
+  margin-top: 1em;
 }
 
 .error-zone img {
@@ -305,12 +316,17 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 40px;
+  padding-bottom: 10px;
+  height: 24.5px;
   width: 100%;
   gap: 10px;
   font-size: 0.6em;
   background-color: inherit;
   z-index: 999;
+}
+
+body:has(.results) .bottom {
+  display: none;
 }
 
 :any-link {

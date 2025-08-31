@@ -5,6 +5,8 @@ const postgres = new SQL(
   `postgres://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:5432/twitter`,
 );
 
+const LIMIT = 80;
+
 /* db schema:
 CREATE TABLE IF NOT EXISTS profiles (id TEXT PRIMARY KEY, avatar TEXT, square_avatar INTEGER, banner TEXT, bio TEXT, can_media_tag INTEGER, created_at timestamptz, location TEXT, name TEXT, parody_commentary_fan_label TEXT, professional_type TEXT, professional_category TEXT, profile_interstitial TEXT, protected INTEGER, rawId TEXT, sensitive INTEGER, followers INTEGER, following INTEGER, fast_followers INTEGER, likes INTEGER, media_count INTEGER, listed_count INTEGER, tweets INTEGER, url TEXT, username TEXT, verified INTEGER, withheld TEXT) */
 
@@ -35,7 +37,7 @@ FROM profiles
 WHERE 
   search_tsv @@ plainto_tsquery('simple', ${q}) 
 ORDER BY rank DESC 
-LIMIT 50;`;
+LIMIT ${LIMIT};`;
 
   return {
     rows: rows.map((row) => {
