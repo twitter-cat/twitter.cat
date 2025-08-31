@@ -26,6 +26,9 @@ const svgfill = (btn, color) => {
 };
 
 let searchQuery;
+let currentOffset = 0;
+let isLoading = false;
+let hasMore = true;
 
 function formatNumber(num) {
   if (!num) return "0";
@@ -35,23 +38,47 @@ function formatNumber(num) {
   return `${Math.floor(num / 1_000_000_000)}B`;
 }
 
-const query = async (text) => {
-  if (document.querySelector(".results")) {
-    document.querySelector(".results").remove();
+const query = async (text, loadMore = false) => {
+  if (isLoading) return;
+
+  if (!loadMore) {
+    if (document.querySelector(".results")) {
+      document.querySelector(".results").remove();
+    }
+    currentOffset = 0;
+    hasMore = true;
   }
+
   if (!text) return;
 
-  document.querySelector(".searchbar").blur();
+  isLoading = true;
 
-  searchQuery = text;
+  if (!loadMore) {
+    document.querySelector(".searchbar").blur();
+    searchQuery = text;
+  }
 
-  const resultsEl = document.createElement("div");
-  resultsEl.className = "results";
-  resultsEl.innerHTML = `<div style="text-align:center;margin-top:.5em"><svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><style>.spinner_ajPY{transform-origin:center;animation:spinner_AtaB .5s infinite linear}@keyframes spinner_AtaB{100%{transform:rotate(360deg)}}</style><path d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25" fill="#1EA1F1"/><path d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z" fill="#1EA1F1" class="spinner_ajPY"/></svg></div>`;
+  let resultsEl = document.querySelector(".results");
+  if (!resultsEl) {
+    resultsEl = document.createElement("div");
+    resultsEl.className = "results";
+    document.querySelector(".center").appendChild(resultsEl);
+  }
 
-  document.querySelector(".center").appendChild(resultsEl);
+  const loadingEl = document.createElement("div");
+  loadingEl.className = "loading-indicator";
+  loadingEl.innerHTML = `<div style="text-align:center;margin-top:.5em"><svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><style>.spinner_ajPY{transform-origin:center;animation:spinner_AtaB .5s infinite linear}@keyframes spinner_AtaB{100%{transform:rotate(360deg)}}</style><path d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25" fill="#1EA1F1"/><path d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z" fill="#1EA1F1" class="spinner_ajPY"/></svg></div>`;
 
-  history.pushState({}, "", `?q=${encodeURIComponent(text)}`);
+  if (loadMore) {
+    const existingLoadMore = document.querySelector(".load-more");
+    if (existingLoadMore) existingLoadMore.remove();
+
+    resultsEl.appendChild(loadingEl);
+  } else {
+    resultsEl.innerHTML = "";
+    resultsEl.appendChild(loadingEl);
+    history.pushState({}, "", `?q=${encodeURIComponent(text)}`);
+  }
 
   try {
     const _results = await (
@@ -65,6 +92,8 @@ const query = async (text) => {
           type:
             Object.entries(buttons).find(([_, b]) => b.toggled)?.[0] ||
             "accounts",
+          limit: 20,
+          offset: currentOffset,
         }),
       })
     ).json();
@@ -75,15 +104,21 @@ const query = async (text) => {
       Object.fromEntries(row.map((val, i) => [_results.map[i], val])),
     );
 
-    if (results.length === 0) {
+    // Remove loading indicator
+    loadingEl.remove();
+
+    if (!loadMore && results.length === 0) {
       resultsEl.innerHTML = `<div class="error-zone">
     <img src="/assets/svgs/woozy.svg">
     <p>no results found</p>
     <small>try different keywords or check your spelling</small></div>`;
+      isLoading = false;
       return;
     }
 
-    resultsEl.innerText = "";
+    // Update pagination state
+    hasMore = _results.pagination?.hasMore || false;
+    currentOffset += results.length;
 
     results.forEach((result) => {
       if (result.username) {
@@ -212,12 +247,28 @@ const query = async (text) => {
         });
       }
     });
+
+    if (hasMore) {
+      const loadMoreBtn = document.createElement("button");
+      loadMoreBtn.className = "load-more";
+      loadMoreBtn.innerHTML = `<span>more results</span>`;
+      loadMoreBtn.addEventListener("click", () => {
+        query(searchQuery, true);
+      });
+      resultsEl.appendChild(loadMoreBtn);
+    }
+
+    isLoading = false;
   } catch (e) {
     console.error(e);
-    resultsEl.innerHTML = `<div class="error-zone">
+    loadingEl.remove();
+    if (!loadMore) {
+      resultsEl.innerHTML = `<div class="error-zone">
     <img src="assets/svgs/woozy.svg">
     <p>${e.message}</p>
     <small>an error occurred. please try again later</small></div>`;
+    }
+    isLoading = false;
   }
 };
 
@@ -298,6 +349,8 @@ window.addEventListener("popstate", () => {
   } else if (document.querySelector(".results")) {
     document.querySelector(".results").remove();
     searchQuery = null;
+    currentOffset = 0;
+    hasMore = true;
   }
 });
 
@@ -317,6 +370,8 @@ document.querySelector(".logo").addEventListener("click", () => {
   if (document.querySelector(".results")) {
     document.querySelector(".results").remove();
     searchQuery = null;
+    currentOffset = 0;
+    hasMore = true;
   }
 });
 
