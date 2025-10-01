@@ -8,9 +8,6 @@ const postgres = new SQL(
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
-/* db schema:
-CREATE TABLE IF NOT EXISTS profiles (id TEXT PRIMARY KEY, avatar TEXT, square_avatar INTEGER, banner TEXT, bio TEXT, can_media_tag INTEGER, created_at timestamptz, location TEXT, name TEXT, parody_commentary_fan_label TEXT, professional_type TEXT, professional_category TEXT, profile_interstitial TEXT, protected INTEGER, rawId TEXT, sensitive INTEGER, followers INTEGER, following INTEGER, fast_followers INTEGER, likes INTEGER, media_count INTEGER, listed_count INTEGER, tweets INTEGER, url TEXT, username TEXT, verified INTEGER, withheld TEXT) */
-
 export default new Elysia().post("/query", async ({ body }) => {
   const { type, q, limit = DEFAULT_LIMIT, offset = 0 } = body;
 
