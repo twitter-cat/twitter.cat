@@ -1,25 +1,23 @@
-import { brotliCompressSync } from "node:zlib";
 import { Elysia } from "elysia";
 
 export const compression = new Elysia({ name: "compressResponses" })
-  .mapResponse(({ request, response, set }) => {
+  .mapResponse(async ({ request, response, set }) => {
     const isJson = typeof response === "object";
     const compressionRequested = request.headers
       .get("Accept-Encoding")
-      ?.includes("br");
+      ?.includes("zstd");
 
-    const text = isJson
-      ? JSON.stringify(response)
-      : (response?.toString() ?? "");
+    const text = isJson ? JSON.stringify(response) : response?.toString() ?? "";
 
-    // Only compress if content is larger than 2KB and compression is requested
     if (!compressionRequested || text.length < 2048) {
       return response;
     }
 
-    set.headers["Content-Encoding"] = "br";
+    set.headers["Content-Encoding"] = "zstd";
 
-    return new Response(brotliCompressSync(Buffer.from(text, "utf8")), {
+    const compressed = await Bun.zstdCompress(text, { level: 5 });
+
+    return new Response(compressed, {
       headers: {
         "Content-Type": `${
           isJson ? "application/json" : "text/plain"

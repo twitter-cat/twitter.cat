@@ -7,6 +7,11 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html {
+  scrollbar-width: thin;
+  scrollbar-color: hsla(255 0 255 / 15%) #14171a;
+}
+
 body {
   background-color: #14171a;
   color: white;
@@ -54,7 +59,7 @@ body {
 .results {
   width: 100%;
   text-align: left;
-  margin-top: 1em;
+  margin-top: 1.5em;
 }
 
 .logo {
