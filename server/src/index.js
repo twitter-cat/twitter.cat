@@ -19,7 +19,7 @@ new Elysia()
       generator: (c) => c.headers.get("CF-Connecting-IP"),
     }),
   )
-  .get("/", () => ":3")
+  .get("/", () => "meow :3")
   .use(api)
   .listen(process.env.PORT || 3001, () => {
     console.log(

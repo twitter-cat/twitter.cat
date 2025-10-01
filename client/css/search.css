@@ -1,6 +1,6 @@
 .results .result.account {
   display: flex;
-  margin-bottom: 13px;
+  margin-bottom: 20px;
   align-items: flex-start;
   gap: 12px;
   color: inherit;
@@ -9,7 +9,9 @@
 .results .result.account .avatar {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  aspect-ratio: 1 / 1;
 }
 
 .results .result.account .info {
@@ -19,7 +21,7 @@
 
 .results .result.account .name {
   font-weight: 600;
-  font-size: 16px;
+  font-size: 15px;
   display: flex;
   align-items: center;
   gap: 3px;
@@ -36,7 +38,7 @@
   font-size: 14px;
   margin-top: 5px;
   line-height: 1.4;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .results .result.account .location {
@@ -78,7 +80,7 @@
 
 .results .result.account:hover .info .name {
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-underline-offset: 3px;
 }
 
 .time-card {
@@ -121,8 +123,7 @@
   display: block;
   width: 100%;
   max-width: 200px;
-  margin: 20px auto;
-  margin-top: 30px;
+  margin: 40px auto;
   padding: 12px 24px;
   background-color: transparent;
   color: #1da1f2;
