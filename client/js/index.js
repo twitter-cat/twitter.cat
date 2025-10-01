@@ -198,6 +198,10 @@ const query = async (text, loadMore = false) => {
           nameDiv.appendChild(protectedSvg);
         }
 
+        if (result.profile_interstitial) {
+          el.style.backgroundColor = "red";
+        }
+
         const usernameDiv = document.createElement("div");
         usernameDiv.className = "username";
         usernameDiv.textContent = `@${result.username}`;
