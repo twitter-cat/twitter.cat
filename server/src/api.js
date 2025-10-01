@@ -24,7 +24,10 @@ export default new Elysia().post("/query", async ({ body }) => {
       error: "missing query",
     };
 
-  const validatedLimit = Math.min(Math.max(parseInt(limit) || DEFAULT_LIMIT, 1), MAX_LIMIT);
+  const validatedLimit = Math.min(
+    Math.max(parseInt(limit) || DEFAULT_LIMIT, 1),
+    MAX_LIMIT,
+  );
   const validatedOffset = Math.max(parseInt(offset) || 0, 0);
 
   const rows = await postgres`
