@@ -607,7 +607,10 @@ window.addEventListener("popstate", () => {
 
   if (q.length > 0) {
     query(q);
-  } else if (document.querySelector(".results")) {
+    return;
+  }
+
+  if (document.querySelector(".results")) {
     document.querySelector(".results").remove();
     filtersPanel.classList.remove("expanded");
     filterToggle.classList.remove("pressed");
