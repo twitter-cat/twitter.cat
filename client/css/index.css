@@ -217,6 +217,7 @@ body {
 .error-zone small {
   margin-top: 6px;
   opacity: 0.9;
+  line-height: 1.4;
 }
 
 @media (max-width: 410px) {
@@ -272,6 +273,10 @@ body {
 }
 .adsbg {
   background: rgba(255, 122, 0, 0.15);
+}
+
+.filterbg {
+  background: rgba(29, 161, 242, 0.15);
 }
 
 .buttonicon {

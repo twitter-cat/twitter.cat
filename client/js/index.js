@@ -29,6 +29,185 @@ let searchQuery;
 let currentCursor = null;
 let isLoading = false;
 let hasMore = true;
+let currentFilters = {};
+
+const filtersPanel = document.querySelector("#filters-panel");
+const filterToggle = document.querySelector("#filter-toggle");
+const clearFiltersBtn = document.querySelector("#clear-filters");
+
+document.addEventListener("DOMContentLoaded", () => {
+  const filterInputs = document.querySelectorAll(
+    ".filter-select, .priority-select, .text-mode-select, .special-select, .min-input, .max-input, .text-input, .date-input"
+  );
+
+  filterInputs.forEach((input) => {
+    const eventType = input.tagName === "SELECT" ? "change" : "input";
+
+    input.addEventListener(eventType, () => {
+      currentFilters = collectFilters();
+      updateFilterIndicator();
+
+      if (searchQuery) {
+        if (input.tagName === "INPUT" && input.type === "text") {
+          clearTimeout(input.debounceTimer);
+          input.debounceTimer = setTimeout(() => {
+            query(searchQuery);
+          }, 500);
+        } else {
+          query(searchQuery);
+        }
+      }
+    });
+  });
+});
+
+filterToggle?.addEventListener("click", () => {
+  const isExpanded = filtersPanel.classList.contains("expanded");
+
+  if (isExpanded) {
+    filtersPanel.classList.remove("expanded");
+    filterToggle.classList.remove("pressed");
+  } else {
+    filtersPanel.classList.add("expanded");
+    filterToggle.classList.add("pressed");
+  }
+});
+
+clearFiltersBtn?.addEventListener("click", () => {
+  document
+    .querySelectorAll(
+      ".filter-select, .priority-select, .text-mode-select, .special-select"
+    )
+    .forEach((select) => {
+      select.value = "";
+    });
+
+  document
+    .querySelectorAll(".min-input, .max-input, .text-input, .date-input")
+    .forEach((input) => {
+      input.value = "";
+    });
+
+  currentFilters = {};
+  updateFilterIndicator();
+
+  if (searchQuery) {
+    query(searchQuery);
+  }
+});
+
+function collectFilters() {
+  const filters = {};
+
+  const booleanFields = [
+    "verified",
+    "protected",
+    "square_avatar",
+    "fast_followers",
+  ];
+  booleanFields.forEach((field) => {
+    const filterSelect = document.querySelector(
+      `.filter-select[data-field="${field}"]`
+    );
+    const prioritySelect = document.querySelector(
+      `.priority-select[data-field="${field}"]`
+    );
+
+    if (filterSelect?.value || prioritySelect?.value) {
+      filters[field] = {
+        mode: filterSelect?.value || undefined,
+        priority: prioritySelect?.value || undefined,
+      };
+    }
+  });
+
+  const numericFields = [
+    "followers",
+    "following",
+    "tweets",
+    "likes",
+    "media_count",
+    "listed_count",
+  ];
+  numericFields.forEach((field) => {
+    const minInput = document.querySelector(
+      `.min-input[data-field="${field}"]`
+    );
+    const maxInput = document.querySelector(
+      `.max-input[data-field="${field}"]`
+    );
+    const prioritySelect = document.querySelector(
+      `.priority-select[data-field="${field}"]`
+    );
+
+    const minRaw = minInput?.value?.trim();
+    const maxRaw = maxInput?.value?.trim();
+    const minNum = Number(minRaw);
+    const maxNum = Number(maxRaw);
+    const min = minRaw && Number.isFinite(minNum) ? minNum : undefined;
+    const max = maxRaw && Number.isFinite(maxNum) ? maxNum : undefined;
+    const priority = prioritySelect?.value || undefined;
+
+    if (min !== undefined || max !== undefined || priority) {
+      filters[field] = { min, max, priority };
+    }
+  });
+
+  const textFields = ["name", "bio", "location"];
+  textFields.forEach((field) => {
+    const textInput = document.querySelector(
+      `.text-input[data-field="${field}"]`
+    );
+    const modeSelect = document.querySelector(
+      `.text-mode-select[data-field="${field}"]`
+    );
+
+    if (textInput?.value?.trim()) {
+      filters[field] = {
+        value: textInput.value.trim(),
+        mode: modeSelect?.value || "contains",
+      };
+    }
+  });
+
+  const avatarInput = document.querySelector(
+    '.text-input[data-field="avatar_url"]'
+  );
+  if (avatarInput?.value?.trim()) {
+    filters.avatar_url = avatarInput.value.trim();
+  }
+
+  const createdAfter = document.querySelector(
+    '.date-input[data-field="created_after"]'
+  )?.value;
+  const createdBefore = document.querySelector(
+    '.date-input[data-field="created_before"]'
+  )?.value;
+
+  if (createdAfter) filters.created_after = createdAfter;
+  if (createdBefore) filters.created_before = createdBefore;
+
+  const hasLocation = document.querySelector(
+    '.special-select[data-field="has_location"]'
+  )?.value;
+  const hasBio = document.querySelector(
+    '.special-select[data-field="has_bio"]'
+  )?.value;
+  const hasUrl = document.querySelector(
+    '.special-select[data-field="has_url"]'
+  )?.value;
+
+  if (hasLocation) filters.has_location = hasLocation === "true";
+  if (hasBio) filters.has_bio = hasBio === "true";
+  if (hasUrl) filters.has_url = hasUrl === "true";
+
+  return filters;
+}
+
+function updateFilterIndicator() {
+  const hasFilters = Object.keys(currentFilters).length > 0;
+  filterToggle?.classList.toggle("has-filters", hasFilters);
+}
 
 function formatNumber(num) {
   if (!num) return "0";
@@ -93,6 +272,7 @@ const query = async (text, loadMore = false) => {
             Object.entries(buttons).find(([_, b]) => b.toggled)?.[0] ||
             "accounts",
           cursor: currentCursor,
+          filters: currentFilters || {},
         }),
       })
     ).json();
@@ -109,7 +289,7 @@ const query = async (text, loadMore = false) => {
       resultsEl.innerHTML = `<div class="error-zone">
     <img src="/assets/svgs/woozy.svg">
     <p>no results found</p>
-    <small>try different keywords or check your spelling</small></div>`;
+    <small>try different keywords or check your spelling. some accounts may also not be indexed yet.</small></div>`;
       isLoading = false;
       return;
     }
@@ -162,7 +342,7 @@ const query = async (text, loadMore = false) => {
           avatar.style.borderRadius = "2px";
         }
 
-        if (result.verified) {
+        if (result.verified || result.square_avatar) {
           const verifiedSvg = document.createElementNS(
             "http://www.w3.org/2000/svg",
             "svg"
@@ -186,7 +366,7 @@ const query = async (text, loadMore = false) => {
           nameDiv.appendChild(verifiedSvg);
 
           if (result.square_avatar) {
-            verifiedSvg.innerHTML = `<svg viewBox="0 0 22 22" aria-label="Verified account" role="img" class="r-4qtqp9 r-yyyyoo r-1xvli5t r-bnwqim r-lrvibr r-m6rgpd r-f9ja8p r-og9te1" data-testid="icon-verified"><g><linearGradient gradientUnits="userSpaceOnUse" id="1-a" x1="4.411" x2="18.083" y1="2.495" y2="21.508"><stop offset="0" stop-color="#f4e72a"></stop><stop offset=".539" stop-color="#cd8105"></stop><stop offset=".68" stop-color="#cb7b00"></stop><stop offset="1" stop-color="#f4ec26"></stop><stop offset="1" stop-color="#f4e72a"></stop></linearGradient><linearGradient gradientUnits="userSpaceOnUse" id="1-b" x1="5.355" x2="16.361" y1="3.395" y2="19.133"><stop offset="0" stop-color="#f9e87f"></stop><stop offset=".406" stop-color="#e2b719"></stop><stop offset=".989" stop-color="#e2b719"></stop></linearGradient><g clip-rule="evenodd" fill-rule="evenodd"><path d="M13.324 3.848L11 1.6 8.676 3.848l-3.201-.453-.559 3.184L2.06 8.095 3.48 11l-1.42 2.904 2.856 1.516.559 3.184 3.201-.452L11 20.4l2.324-2.248 3.201.452.559-3.184 2.856-1.516L18.52 11l1.42-2.905-2.856-1.516-.559-3.184zm-7.09 7.575l3.428 3.428 5.683-6.206-1.347-1.247-4.4 4.795-2.072-2.072z" fill="url(#1-a)"></path><path d="M13.101 4.533L11 2.5 8.899 4.533l-2.895-.41-.505 2.88-2.583 1.37L4.2 11l-1.284 2.627 2.583 1.37.505 2.88 2.895-.41L11 19.5l2.101-2.033 2.895.41.505-2.88 2.583-1.37L17.8 11l1.284-2.627-2.583-1.37-.505-2.88zm-6.868 6.89l3.429 3.428 5.683-6.206-1.347-1.247-4.4 4.795-2.072-2.072z" fill="url(#1-b)"></path><path d="M6.233 11.423l3.429 3.428 5.65-6.17.038-.033-.005 1.398-5.683 6.206-3.429-3.429-.003-1.405.005.003z" fill="#d18800"></path></g></g></svg>`;
+            verifiedSvg.innerHTML = `<g><linearGradient gradientUnits="userSpaceOnUse" id="1-a" x1="4.411" x2="18.083" y1="2.495" y2="21.508"><stop offset="0" stop-color="#f4e72a"></stop><stop offset=".539" stop-color="#cd8105"></stop><stop offset=".68" stop-color="#cb7b00"></stop><stop offset="1" stop-color="#f4ec26"></stop><stop offset="1" stop-color="#f4e72a"></stop></linearGradient><linearGradient gradientUnits="userSpaceOnUse" id="1-b" x1="5.355" x2="16.361" y1="3.395" y2="19.133"><stop offset="0" stop-color="#f9e87f"></stop><stop offset=".406" stop-color="#e2b719"></stop><stop offset=".989" stop-color="#e2b719"></stop></linearGradient><g clip-rule="evenodd" fill-rule="evenodd"><path d="M13.324 3.848L11 1.6 8.676 3.848l-3.201-.453-.559 3.184L2.06 8.095 3.48 11l-1.42 2.904 2.856 1.516.559 3.184 3.201-.452L11 20.4l2.324-2.248 3.201.452.559-3.184 2.856-1.516L18.52 11l1.42-2.905-2.856-1.516-.559-3.184zm-7.09 7.575l3.428 3.428 5.683-6.206-1.347-1.247-4.4 4.795-2.072-2.072z" fill="url(#1-a)"></path><path d="M13.101 4.533L11 2.5 8.899 4.533l-2.895-.41-.505 2.88-2.583 1.37L4.2 11l-1.284 2.627 2.583 1.37.505 2.88 2.895-.41L11 19.5l2.101-2.033 2.895.41.505-2.88 2.583-1.37L17.8 11l1.284-2.627-2.583-1.37-.505-2.88zm-6.868 6.89l3.429 3.428 5.683-6.206-1.347-1.247-4.4 4.795-2.072-2.072z" fill="url(#1-b)"></path><path d="M6.233 11.423l3.429 3.428 5.65-6.17.038-.033-.005 1.398-5.683 6.206-3.429-3.429-.003-1.405.005.003z" fill="#d18800"></path></g></g>`;
           }
         }
 
