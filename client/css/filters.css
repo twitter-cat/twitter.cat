@@ -18,6 +18,19 @@
   padding: 20px;
   overflow-y: auto;
   display: block;
+  transform-origin: top right;
+  animation: filtersIn 0.2s ease;
+}
+
+@keyframes filtersIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0px);
+  }
 }
 
 .filters-header {
@@ -169,7 +182,7 @@
   height: 8px;
   border-radius: 50%;
   background: #1da1f2;
-  box-shadow: 0 0 6px rgba(156, 39, 176, 0.4);
+  box-shadow: 0 0 6px rgba(29, 161, 242, 0.4);
 }
 
 .filter-toggle:hover .buttonicon,
@@ -184,11 +197,6 @@
   aspect-ratio: 1 / 1;
 }
 
-.filter-toggle .buttonicon {
-  width: 18px;
-  height: 18px;
-}
-
 .filter-toggle .svgwrapper {
   position: relative;
   left: unset;
@@ -196,7 +204,7 @@
 }
 
 .center:not(.center:has(.results)) .filter-toggle {
-  display: none!important;
+  display: none !important;
 }
 
 @media (max-width: 600px) {
