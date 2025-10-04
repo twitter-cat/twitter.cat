@@ -67,7 +67,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (
     !document.cookie
       .split("; ")
-      .find((row) => row.startsWith(`${COOKIE_NAME}=`))
+      .find((row) => row.startsWith(`${COOKIE_NAME}=`)) &&
+    !location.search.includes("?q=")
   ) {
     fetch(`${API_URL}/query`, {
       method: "POST",
