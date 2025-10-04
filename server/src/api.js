@@ -163,6 +163,10 @@ export default new Elysia()
     try {
       const { type, q, cursor, filters = {} } = body;
 
+      if (type === "dummy") {
+        return "OK";
+      }
+
       if (type !== "accounts") {
         return { error: "only accounts are supported yet" };
       }

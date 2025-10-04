@@ -9,6 +9,7 @@ new Elysia()
   .use(
     cors({
       origin: ["localhost:3000", "twitter.cat"],
+      maxAge: 86400,
     }),
   )
   .use(compression)
