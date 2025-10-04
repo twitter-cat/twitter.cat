@@ -70,13 +70,21 @@ body {
   gap: 10px;
   margin-bottom: 18px;
   user-select: none;
-  cursor: pointer;
+  pointer-events: none;
 }
 
 .center:has(.results) .logo {
   font-size: 1.4em;
   gap: 5px;
   margin-top: 0.8em;
+  pointer-events: all;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.center:has(.results) .logo:active {
+  opacity: 0.8;
+  transform: scale(0.98);
 }
 
 @media (max-width: 410px) {
