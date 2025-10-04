@@ -59,6 +59,32 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
+
+  // dummy request to trigger cors preflight caching
+
+  const COOKIE_NAME = "__cors-preflight-cached";
+
+  if (
+    !document.cookie
+      .split("; ")
+      .find((row) => row.startsWith(`${COOKIE_NAME}=`))
+  ) {
+    fetch(`${API_URL}/query`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "dummy" }),
+    }).then(() => {
+      if (typeof cookieStore === "object") {
+        cookieStore.set({ name: COOKIE_NAME, value: "1", maxAge: 86399 });
+        return;
+      }
+
+      const expires = new Date(Date.now() + 86399 * 1000).toUTCString();
+
+      // biome-ignore lint/suspicious/noDocumentCookie: fallback for cookieStore
+      document.cookie = `${COOKIE_NAME}=1; expires=${expires}; path=/`;
+    });
+  }
 });
 
 filterToggle?.addEventListener("click", () => {
