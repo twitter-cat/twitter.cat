@@ -26,7 +26,7 @@ const svgfill = (btn, color) => {
 };
 
 let searchQuery;
-let currentOffset = 0;
+let currentCursor = null;
 let isLoading = false;
 let hasMore = true;
 
@@ -45,7 +45,7 @@ const query = async (text, loadMore = false) => {
     if (document.querySelector(".results")) {
       document.querySelector(".results").remove();
     }
-    currentOffset = 0;
+    currentCursor = null;
     hasMore = true;
   }
 
@@ -92,8 +92,7 @@ const query = async (text, loadMore = false) => {
           type:
             Object.entries(buttons).find(([_, b]) => b.toggled)?.[0] ||
             "accounts",
-          limit: 20,
-          offset: currentOffset,
+          cursor: currentCursor,
         }),
       })
     ).json();
@@ -101,7 +100,7 @@ const query = async (text, loadMore = false) => {
     if (_results.error) throw new Error(_results.error);
 
     const results = _results.rows.map((row) =>
-      Object.fromEntries(row.map((val, i) => [_results.map[i], val]))
+      Object.fromEntries(row.map((val, i) => [_results.map.split(",")[i], val]))
     );
 
     loadingEl.remove();
@@ -115,8 +114,8 @@ const query = async (text, loadMore = false) => {
       return;
     }
 
-    hasMore = _results.pagination?.hasMore || false;
-    currentOffset += results.length;
+    hasMore = !!_results.cursor || false;
+    currentCursor = _results.cursor || null;
 
     results.forEach((result) => {
       if (result.username) {
@@ -132,14 +131,23 @@ const query = async (text, loadMore = false) => {
         avatar.width = 40;
         avatar.height = 40;
         avatar.src =
-          result.avatar?.replaceAll("_normal.jpg", "_bigger.jpg") ||
+          `https://pbs.twimg.com/profile_images/${result.avatar?.replaceAll(
+            ";",
+            "_bigger."
+          )}` ||
           "https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png";
+
         if (result.square_avatar) {
           avatar.style.borderRadius = "2px";
         }
+
         avatar.onerror = async function () {
-          this.onerror = null;
-          // this.src = "https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png";
+          this.onerror = async () => {
+            this.src =
+              "https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png";
+            this.onerror = null;
+          };
+
           this.src = `${API_URL}/${result.username}/avfetch.jpg`;
         };
 
@@ -149,8 +157,6 @@ const query = async (text, loadMore = false) => {
         const nameDiv = document.createElement("div");
         nameDiv.className = "name";
         nameDiv.textContent = result.name || result.username;
-
-        console.log(result);
 
         if (result.square_avatar) {
           avatar.style.borderRadius = "2px";
@@ -424,7 +430,7 @@ window.addEventListener("popstate", () => {
   } else if (document.querySelector(".results")) {
     document.querySelector(".results").remove();
     searchQuery = null;
-    currentOffset = 0;
+    currentCursor = null;
     hasMore = true;
   }
 });
@@ -445,7 +451,7 @@ document.querySelector(".logo").addEventListener("click", () => {
   if (document.querySelector(".results")) {
     document.querySelector(".results").remove();
     searchQuery = null;
-    currentOffset = 0;
+    currentCursor = null;
     hasMore = true;
   }
 });

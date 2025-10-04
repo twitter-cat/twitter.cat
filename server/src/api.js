@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { SQL } from "bun";
 import { Elysia } from "elysia";
 
@@ -10,7 +11,7 @@ const MAX_LIMIT = 100;
 
 export default new Elysia()
   .post("/query", async ({ body }) => {
-    const { type, q, limit = DEFAULT_LIMIT, offset = 0 } = body;
+    const { type, q, cursor } = body;
 
     if (type !== "accounts")
       return {
@@ -22,16 +23,88 @@ export default new Elysia()
         error: "missing query",
       };
 
-    const validatedLimit = Math.min(
-      Math.max(parseInt(limit) || DEFAULT_LIMIT, 1),
-      MAX_LIMIT
-    );
-    const validatedOffset = Math.max(parseInt(offset) || 0, 0);
+    let lastRank = null;
+    let lastUsername = null;
 
-    const rows = await postgres`
+    const base64urlEncode = (input) => {
+      let binary = "";
+
+      if (typeof input === "string") {
+        for (let i = 0; i < input.length; i++) {
+          binary += String.fromCharCode(input.charCodeAt(i) & 0xff);
+        }
+      } else if (input instanceof Uint8Array) {
+        for (let i = 0; i < input.length; i++) {
+          binary += String.fromCharCode(input[i]);
+        }
+      }
+
+      return btoa(binary)
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+    };
+
+    const base64urlDecodeToBuffer = (b64url) => {
+      let b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
+      while (b64.length % 4) b64 += "=";
+
+      return atob(b64);
+    };
+
+    const signPayload = (payloadB64, key) =>
+      crypto.createHmac("sha256", key).update(payloadB64).digest();
+
+    if (cursor && typeof cursor === "string") {
+      const key = process.env.CURSOR_SIGNING_KEY;
+
+      const parts = cursor.split(".");
+      if (parts.length !== 2) throw new Error("invalid cursor format");
+      const [payloadB64url, sigB64url] = parts;
+
+      const sigBuf = Buffer.from(base64urlDecodeToBuffer(sigB64url), "latin1");
+      const expectedSigBuf = signPayload(payloadB64url, key);
+
+      if (
+        sigBuf.length !== expectedSigBuf.length ||
+        !crypto.timingSafeEqual(sigBuf, expectedSigBuf)
+      ) {
+        throw new Error("invalid cursor signature");
+      }
+
+      const decoded = JSON.parse(
+        Buffer.from(base64urlDecodeToBuffer(payloadB64url), "latin1").toString()
+      );
+
+      lastRank = decoded[0];
+      lastUsername = decoded[1];
+    }
+
+    let rows;
+    if (lastRank !== null && lastUsername) {
+      rows = await postgres`
+SELECT * FROM (
+  SELECT *, 
+    ts_rank_cd(
+      search_tsv, 
+      plainto_tsquery('simple', ${q})
+    ) + (
+      log(
+        greatest(followers, 1)
+      ) * 0.5
+    ) AS rank 
+  FROM profiles 
+  WHERE 
+    search_tsv @@ plainto_tsquery('simple', ${q})
+) t
+WHERE (t.rank < ${lastRank} OR (t.rank = ${lastRank} AND t.username < ${lastUsername}))
+ORDER BY t.rank DESC, t.username DESC
+LIMIT ${DEFAULT_LIMIT + 1};`;
+    } else {
+      rows = await postgres`
 SELECT *, 
   ts_rank_cd(
-  search_tsv, 
+    search_tsv, 
     plainto_tsquery('simple', ${q})
   ) + (
     log(
@@ -41,31 +114,43 @@ SELECT *,
 FROM profiles 
 WHERE 
   search_tsv @@ plainto_tsquery('simple', ${q}) 
-ORDER BY rank DESC 
-LIMIT ${validatedLimit}
-OFFSET ${validatedOffset};`;
+ORDER BY rank DESC, username DESC
+LIMIT ${DEFAULT_LIMIT + 1};`;
+    }
 
-    const countResult = await postgres`
-SELECT COUNT(*) as total 
-FROM profiles 
-WHERE 
-  search_tsv @@ plainto_tsquery('simple', ${q});`;
+    let hasMore = false;
+    if (rows.length > DEFAULT_LIMIT) {
+      hasMore = true;
+      rows.pop();
+    }
+    let nextCursor = null;
+    if (hasMore && rows.length > 0) {
+      const lastRow = rows[rows.length - 1];
+      const payload = JSON.stringify([lastRow.rank, lastRow.username]);
 
-    const total = parseInt(countResult[0]?.total || 0);
-    const hasMore = validatedOffset + validatedLimit < total;
+      const payloadB64url = base64urlEncode(payload);
+      const sig = signPayload(payloadB64url, process.env.CURSOR_SIGNING_KEY);
+
+      const sigB64url = base64urlEncode(sig);
+      nextCursor = `${payloadB64url}.${sigB64url}`;
+    }
 
     return {
       rows: rows.map((row) => {
         delete row.search_tsv;
+        delete row.rank;
+        delete row.last_roi_discovery;
+        row.avatar = row.avatar
+          ?.replace("_normal.", ";")
+          ?.replace("https://pbs.twimg.com/profile_images/", "");
+        row.banner = row.banner?.replace(
+          "https://pbs.twimg.com/profile_banners/",
+          ""
+        );
         return Object.values(row);
       }),
-      map: Object.keys(rows[0] || {}),
-      pagination: {
-        limit: validatedLimit,
-        offset: validatedOffset,
-        total,
-        hasMore,
-      },
+      map: Object.keys(rows[0] || {}).join(","),
+      cursor: hasMore ? nextCursor : null,
     };
   })
   .get("/:u/avfetch.jpg", async ({ params }) => {
@@ -137,5 +222,5 @@ UPDATE profiles SET
 WHERE username = ${username};
 `;
 
-    return Response.redirect(pfp);
+    return Response.redirect(pfp.replace("_normal", "_bigger"));
   });
