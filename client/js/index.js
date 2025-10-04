@@ -609,6 +609,8 @@ window.addEventListener("popstate", () => {
     query(q);
   } else if (document.querySelector(".results")) {
     document.querySelector(".results").remove();
+    filtersPanel.classList.remove("expanded");
+    filterToggle.classList.remove("pressed");
     searchQuery = null;
     currentCursor = null;
     hasMore = true;
@@ -630,6 +632,8 @@ document.querySelector(".logo").addEventListener("click", () => {
   document.querySelector(".searchbar").value = "";
   if (document.querySelector(".results")) {
     document.querySelector(".results").remove();
+    filtersPanel.classList.remove("expanded");
+    filterToggle.classList.remove("pressed");
     searchQuery = null;
     currentCursor = null;
     hasMore = true;
