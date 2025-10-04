@@ -4,7 +4,8 @@
   "module": "src/index.js",
   "scripts": {
     "start": "bun run ./src/index.js",
-    "dev": "bun run --watch src/index.js"
+    "dev": "bun run --watch src/index.js",
+    "forever": "pm2 start src/index.js --name twittercat"
   },
   "devDependencies": {
     "@types/bun": "latest"
