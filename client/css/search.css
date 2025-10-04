@@ -39,6 +39,10 @@
   margin-top: 5px;
   line-height: 1.4;
   margin-bottom: 6px;
+
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .results .result.account .location {
