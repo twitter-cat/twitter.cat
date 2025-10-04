@@ -74,6 +74,22 @@
   color: #e7e9ea;
 }
 
+.interstitial-warning {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: white;
+  background-color: #9f7a152b;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.interstitial-warning svg {
+  width: 20px;
+  height: 20px;
+  color: #c09727;
+}
+
 .results .result.account:hover {
   text-decoration: none;
 }
