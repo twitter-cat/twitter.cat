@@ -23,6 +23,7 @@
 
     <link rel="stylesheet" href="/css/index.css" />
     <link rel="stylesheet" href="/css/search.css" />
+    <link rel="stylesheet" href="/css/filters.css" />
     <link rel="stylesheet" href="/css/youretooearly.css" />
   </head>
   <body>
@@ -68,6 +69,7 @@
             </span>
             <span>accounts</span>
           </button>
+
           <button class="toggle" data-toggle="tweets">
             <span class="svgwrapper">
               <span class="togglebg tweetsbg"></span>
@@ -115,6 +117,315 @@
             </span>
             <span>ads</span>
           </button>
+
+          <button
+            class="filter-toggle"
+            id="filter-toggle"
+            title="Advanced filters"
+          >
+            <span class="svgwrapper">
+              <span class="togglebg filterbg"></span>
+              <svg
+                class="buttonicon"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M4.25 5.61C6.27 8.2 10 13 10 13v6c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-6s3.73-4.8 5.75-7.39c.51-.66.04-1.61-.79-1.61H5.04c-.83 0-1.3.95-.79 1.61z"
+                />
+              </svg>
+            </span>
+          </button>
+        </div>
+
+        <div class="filters-panel" id="filters-panel">
+          <div class="filters-header">
+            <h3>Filters</h3>
+            <button class="clear-filters" id="clear-filters">Clear all</button>
+          </div>
+
+          <div class="filters-content">
+            <div class="filter-section">
+              <h4>Account Properties</h4>
+              <div class="filter-grid">
+                <div class="filter-item">
+                  <label>Verified</label>
+                  <select class="filter-select" data-field="verified">
+                    <option value="">Any</option>
+                    <option value="matches_only">Verified Only</option>
+                    <option value="exclude">Exclude Verified</option>
+                  </select>
+                  <select class="priority-select" data-field="verified">
+                    <option value="">No Priority</option>
+                    <option value="up">Prioritize ↑</option>
+                    <option value="down">Deprioritize ↓</option>
+                  </select>
+                </div>
+
+                <div class="filter-item">
+                  <label>Protected</label>
+                  <select class="filter-select" data-field="protected">
+                    <option value="">Any</option>
+                    <option value="matches_only">Protected Only</option>
+                    <option value="exclude">Exclude Protected</option>
+                  </select>
+                  <select class="priority-select" data-field="protected">
+                    <option value="">No Priority</option>
+                    <option value="up">Prioritize ↑</option>
+                    <option value="down">Deprioritize ↓</option>
+                  </select>
+                </div>
+
+                <div class="filter-item">
+                  <label>Square Profile Pic</label>
+                  <select class="filter-select" data-field="square_avatar">
+                    <option value="">Any</option>
+                    <option value="matches_only">Square Only</option>
+                    <option value="exclude">Exclude Square</option>
+                  </select>
+                  <select class="priority-select" data-field="square_avatar">
+                    <option value="">No Priority</option>
+                    <option value="up">Prioritize ↑</option>
+                    <option value="down">Deprioritize ↓</option>
+                  </select>
+                </div>
+
+                <div class="filter-item">
+                  <label>Fast Followers</label>
+                  <select class="filter-select" data-field="fast_followers">
+                    <option value="">Any</option>
+                    <option value="matches_only">Fast Followers Only</option>
+                    <option value="exclude">Exclude Fast Followers</option>
+                  </select>
+                  <select class="priority-select" data-field="fast_followers">
+                    <option value="">No Priority</option>
+                    <option value="up">Prioritize ↑</option>
+                    <option value="down">Deprioritize ↓</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="filter-section">
+              <h4>Numbers & stats</h4>
+              <div class="filter-grid">
+                <div class="filter-item numeric">
+                  <label>Followers</label>
+                  <div class="numeric-inputs">
+                    <input
+                      type="number"
+                      class="min-input"
+                      placeholder="Min"
+                      data-field="followers"
+                      data-type="min"
+                    />
+                    <input
+                      type="number"
+                      class="max-input"
+                      placeholder="Max"
+                      data-field="followers"
+                      data-type="max"
+                    />
+                  </div>
+                  <select class="priority-select" data-field="followers">
+                    <option value="">No Priority</option>
+                    <option value="up">More First ↑</option>
+                    <option value="down">Less First ↓</option>
+                  </select>
+                </div>
+
+                <div class="filter-item numeric">
+                  <label>Following</label>
+                  <div class="numeric-inputs">
+                    <input
+                      type="number"
+                      class="min-input"
+                      placeholder="Min"
+                      data-field="following"
+                      data-type="min"
+                    />
+                    <input
+                      type="number"
+                      class="max-input"
+                      placeholder="Max"
+                      data-field="following"
+                      data-type="max"
+                    />
+                  </div>
+                  <select class="priority-select" data-field="following">
+                    <option value="">No Priority</option>
+                    <option value="up">More First ↑</option>
+                    <option value="down">Less First ↓</option>
+                  </select>
+                </div>
+
+                <div class="filter-item numeric">
+                  <label>Tweets</label>
+                  <div class="numeric-inputs">
+                    <input
+                      type="number"
+                      class="min-input"
+                      placeholder="Min"
+                      data-field="tweets"
+                      data-type="min"
+                    />
+                    <input
+                      type="number"
+                      class="max-input"
+                      placeholder="Max"
+                      data-field="tweets"
+                      data-type="max"
+                    />
+                  </div>
+                  <select class="priority-select" data-field="tweets">
+                    <option value="">No Priority</option>
+                    <option value="up">More First ↑</option>
+                    <option value="down">Less First ↓</option>
+                  </select>
+                </div>
+
+                <div class="filter-item numeric">
+                  <label>Likes</label>
+                  <div class="numeric-inputs">
+                    <input
+                      type="number"
+                      class="min-input"
+                      placeholder="Min"
+                      data-field="likes"
+                      data-type="min"
+                    />
+                    <input
+                      type="number"
+                      class="max-input"
+                      placeholder="Max"
+                      data-field="likes"
+                      data-type="max"
+                    />
+                  </div>
+                  <select class="priority-select" data-field="likes">
+                    <option value="">No Priority</option>
+                    <option value="up">More First ↑</option>
+                    <option value="down">Less First ↓</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="filter-section">
+              <h4>Profile Content</h4>
+              <div class="filter-grid">
+                <div class="filter-item text">
+                  <label>Name</label>
+                  <input
+                    type="text"
+                    class="text-input"
+                    placeholder="Search names..."
+                    data-field="name"
+                  />
+                  <select class="text-mode-select" data-field="name">
+                    <option value="contains">Contains</option>
+                    <option value="exact">Exact</option>
+                    <option value="starts_with">Starts With</option>
+                    <option value="exclude">Exclude</option>
+                  </select>
+                </div>
+
+                <div class="filter-item text">
+                  <label>Bio</label>
+                  <input
+                    type="text"
+                    class="text-input"
+                    placeholder="Search bios..."
+                    data-field="bio"
+                  />
+                  <select class="text-mode-select" data-field="bio">
+                    <option value="contains">Contains</option>
+                    <option value="exact">Exact</option>
+                    <option value="starts_with">Starts With</option>
+                    <option value="exclude">Exclude</option>
+                  </select>
+                </div>
+
+                <div class="filter-item text">
+                  <label>Location</label>
+                  <input
+                    type="text"
+                    class="text-input"
+                    placeholder="Search locations..."
+                    data-field="location"
+                  />
+                  <select class="text-mode-select" data-field="location">
+                    <option value="contains">Contains</option>
+                    <option value="exact">Exact</option>
+                    <option value="starts_with">Starts With</option>
+                    <option value="exclude">Exclude</option>
+                  </select>
+                </div>
+
+                <div class="filter-item text">
+                  <label>Profile Picture URL</label>
+                  <input
+                    type="text"
+                    class="text-input"
+                    placeholder="Part of image URL..."
+                    data-field="avatar_url"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="filter-section">
+              <h4>Account Age</h4>
+              <div class="filter-grid">
+                <div class="filter-item">
+                  <label>Created After</label>
+                  <input
+                    type="date"
+                    class="date-input"
+                    data-field="created_after"
+                  />
+                </div>
+                <div class="filter-item">
+                  <label>Created Before</label>
+                  <input
+                    type="date"
+                    class="date-input"
+                    data-field="created_before"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="filter-section">
+              <h4>Profile Completeness</h4>
+              <div class="filter-grid">
+                <div class="filter-item">
+                  <label>Has Location</label>
+                  <select class="special-select" data-field="has_location">
+                    <option value="">Any</option>
+                    <option value="true">Has Location</option>
+                    <option value="false">No Location</option>
+                  </select>
+                </div>
+                <div class="filter-item">
+                  <label>Has Bio</label>
+                  <select class="special-select" data-field="has_bio">
+                    <option value="">Any</option>
+                    <option value="true">Has Bio</option>
+                    <option value="false">No Bio</option>
+                  </select>
+                </div>
+                <div class="filter-item">
+                  <label>Has Website</label>
+                  <select class="special-select" data-field="has_url">
+                    <option value="">Any</option>
+                    <option value="true">Has Website</option>
+                    <option value="false">No Website</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -122,7 +433,11 @@
     <div class="bottom dark">
       <a href="/">home</a>
       <a href="//x.twitter.cat">fxembed</a>
-      <a>not affiliated with X Corp.</a>
+      <a
+        title="This service is independently operated and is not affiliated with, endorsed by, or sponsored by any company formerly or currently known as Twitter, X, X Corp, or any related entity. Use at your own risk."
+      >
+        not affiliated with X Corp.
+      </a>
     </div>
   </body>
 
