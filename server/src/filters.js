@@ -5,36 +5,38 @@ const FIELD_TYPES = {
   can_media_tag: "boolean",
   sensitive: "boolean",
   fast_followers: "boolean",
-  
+
   followers: "integer",
   following: "integer",
   likes: "integer",
   media_count: "integer",
   listed_count: "integer",
   tweets: "integer",
-  
+
   name: "text",
   bio: "text",
   location: "text",
   url: "text",
   professional_type: "text",
   professional_category: "text",
-  
+
   created_at: "timestamp",
-  
+
   avatar: "text",
 };
 
 const ALLOWED_BOOLEAN_FIELDS = new Set(
-  Object.keys(FIELD_TYPES).filter(key => FIELD_TYPES[key] === "boolean")
+  Object.keys(FIELD_TYPES).filter((key) => FIELD_TYPES[key] === "boolean")
 );
 
 const ALLOWED_NUMERIC_FIELDS = new Set(
-  Object.keys(FIELD_TYPES).filter(key => FIELD_TYPES[key] === "integer")
+  Object.keys(FIELD_TYPES).filter((key) => FIELD_TYPES[key] === "integer")
 );
 
 const ALLOWED_TEXT_FIELDS = new Set(
-  Object.keys(FIELD_TYPES).filter(key => FIELD_TYPES[key] === "text" && !["avatar"].includes(key))
+  Object.keys(FIELD_TYPES).filter(
+    (key) => FIELD_TYPES[key] === "text" && !["avatar"].includes(key)
+  )
 );
 
 const ALLOWED_TEXT_MODES = new Set([
@@ -66,12 +68,12 @@ const validateField = (field, expectedType) => {
 const buildFilterConditions = (filters) => {
   const conditions = [];
   const params = [];
-  
+
   const getParamIndex = () => params.length + 2;
 
   for (const field of ALLOWED_BOOLEAN_FIELDS) {
     if (!validateField(field, "boolean")) continue;
-    
+
     if (filters[field]) {
       const filter = filters[field];
       if (
@@ -90,7 +92,7 @@ const buildFilterConditions = (filters) => {
 
   for (const field of ALLOWED_NUMERIC_FIELDS) {
     if (!validateField(field, "integer")) continue;
-    
+
     if (filters[field]) {
       const filter = filters[field];
       const minVal = sanitizeNumeric(filter.min);
@@ -124,7 +126,7 @@ const buildFilterConditions = (filters) => {
 
   for (const field of ALLOWED_TEXT_FIELDS) {
     if (!validateField(field, "text")) continue;
-    
+
     if (filters[field]?.value?.trim?.()) {
       const value = filters[field].value.trim();
       const mode = filters[field].mode || "contains";
@@ -188,7 +190,7 @@ const buildPriorityOrder = (filters) => {
 
   for (const field of ALLOWED_BOOLEAN_FIELDS) {
     if (!validateField(field, "boolean")) continue;
-    
+
     if (filters[field]?.priority === "up") {
       priorityUp.push(`${field} DESC`);
     } else if (filters[field]?.priority === "down") {
@@ -198,7 +200,7 @@ const buildPriorityOrder = (filters) => {
 
   for (const field of ALLOWED_NUMERIC_FIELDS) {
     if (!validateField(field, "integer")) continue;
-    
+
     if (filters[field]?.priority === "up") {
       priorityUp.push(`${field} DESC`);
     } else if (filters[field]?.priority === "down") {
