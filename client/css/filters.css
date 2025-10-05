@@ -10,6 +10,8 @@
   border: 1px solid #3e4144;
 
   display: none;
+  scrollbar-width: thin;
+  scrollbar-color: hsla(255 0 255 / 15%) #1c2024;
 }
 
 .filters-panel.expanded {
