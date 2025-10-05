@@ -28,10 +28,12 @@
   from {
     opacity: 0;
     transform: translateY(-6px) scale(0.98);
+    filter: blur(2px);
   }
   to {
     opacity: 1;
     transform: translateY(0px);
+    filter: blur(0px);
   }
 }
 
@@ -59,12 +61,16 @@
   padding: 6px 12px;
   font-size: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s, transform 0.2s;
   font-family: "chirp", sans-serif;
 }
 
 .clear-filters:hover {
   background: rgba(29, 161, 242, 0.1);
+}
+
+.clear-filters:active {
+  transform: scale(0.98)
 }
 
 .filter-section {
