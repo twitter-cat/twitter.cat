@@ -139,38 +139,6 @@
   }
 }
 
-.load-more {
-  display: block;
-  width: 100%;
-  max-width: 200px;
-  margin: 40px auto;
-  padding: 12px 24px;
-  background-color: transparent;
-  color: #1da1f2;
-  border: 1px solid #1da1f2;
-  border-radius: 50px;
-  font-family: "chirp", sans-serif;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  outline: none;
-}
-
-.load-more:hover {
-  background-color: rgba(29, 161, 242, 0.1);
-}
-
-.load-more:focus {
-  outline: 2px solid #1da1f2;
-  outline-offset: 2px;
-}
-
-.load-more:active {
-  transform: translateY(0px);
-  background-color: rgba(29, 161, 242, 0.2);
-}
-
-.loading-indicator {
+.loading-indicator, .load-more {
   margin: 20px 0;
 }
