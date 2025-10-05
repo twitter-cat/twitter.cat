@@ -71,6 +71,14 @@ body {
   margin-bottom: 18px;
   user-select: none;
   pointer-events: none;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+@starting-style {
+  .logo {
+    opacity: 0;
+    transform: scale(0.98);
+  }
 }
 
 .center:has(.results) .logo {
@@ -79,7 +87,6 @@ body {
   margin-top: 0.8em;
   pointer-events: all;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.15s;
 }
 
 .center:has(.results) .logo:active {
@@ -228,15 +235,9 @@ body {
     overflow: auto;
     position: relative;
     padding-right: 20px;
-  }
-  .buttons:after {
-    content: "";
-    position: fixed;
-    right: 0;
-    height: 50px;
-    width: 50px;
-    background: linear-gradient(to right, rgba(20, 23, 26, 0) 0%, #14171a 100%);
-    pointer-events: none;
+    height: 40px;
+    min-height: 40px;
+    scrollbar-width: none;
   }
 }
 
