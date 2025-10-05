@@ -552,7 +552,7 @@ const query = async (text, loadMore = false) => {
     if (!loadMore) {
       resultsEl.innerHTML = `<div class="error-zone">
     <img src="assets/svgs/woozy.svg">
-    <p>${e.message}</p>
+    <p>${e.message === `Unexpected token 'r', "rate-limit reached" is not valid JSON` ? "rate limit reached!" : e.message}</p>
     <small>an error occurred. please try again later</small></div>`;
     }
     isLoading = false;
