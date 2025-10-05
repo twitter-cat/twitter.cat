@@ -1,29 +1,41 @@
-const ALLOWED_BOOLEAN_FIELDS = new Set([
-  "verified",
-  "protected",
-  "square_avatar",
-  "can_media_tag",
-  "sensitive",
-  "fast_followers",
-]);
+const FIELD_TYPES = {
+  verified: "boolean",
+  protected: "boolean",
+  square_avatar: "boolean",
+  can_media_tag: "boolean",
+  sensitive: "boolean",
+  fast_followers: "boolean",
+  
+  followers: "integer",
+  following: "integer",
+  likes: "integer",
+  media_count: "integer",
+  listed_count: "integer",
+  tweets: "integer",
+  
+  name: "text",
+  bio: "text",
+  location: "text",
+  url: "text",
+  professional_type: "text",
+  professional_category: "text",
+  
+  created_at: "timestamp",
+  
+  avatar: "text",
+};
 
-const ALLOWED_NUMERIC_FIELDS = new Set([
-  "followers",
-  "following",
-  "likes",
-  "media_count",
-  "listed_count",
-  "tweets",
-]);
+const ALLOWED_BOOLEAN_FIELDS = new Set(
+  Object.keys(FIELD_TYPES).filter(key => FIELD_TYPES[key] === "boolean")
+);
 
-const ALLOWED_TEXT_FIELDS = new Set([
-  "name",
-  "bio",
-  "location",
-  "url",
-  "professional_type",
-  "professional_category",
-]);
+const ALLOWED_NUMERIC_FIELDS = new Set(
+  Object.keys(FIELD_TYPES).filter(key => FIELD_TYPES[key] === "integer")
+);
+
+const ALLOWED_TEXT_FIELDS = new Set(
+  Object.keys(FIELD_TYPES).filter(key => FIELD_TYPES[key] === "text" && !["avatar"].includes(key))
+);
 
 const ALLOWED_TEXT_MODES = new Set([
   "contains",
@@ -35,7 +47,10 @@ const ALLOWED_BOOLEAN_MODES = new Set(["matches_only", "exclude"]);
 
 const sanitizeNumeric = (value) => {
   const num = Number(value);
-  return Number.isFinite(num) && num >= 0 ? num : null;
+  if (Number.isFinite(num) && num >= 0) {
+    return Math.floor(num);
+  }
+  return null;
 };
 
 const sanitizeDate = (dateString) => {
@@ -44,11 +59,19 @@ const sanitizeDate = (dateString) => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
+const validateField = (field, expectedType) => {
+  return FIELD_TYPES[field] === expectedType;
+};
+
 const buildFilterConditions = (filters) => {
   const conditions = [];
   const params = [];
+  
+  const getParamIndex = () => params.length + 2;
 
   for (const field of ALLOWED_BOOLEAN_FIELDS) {
+    if (!validateField(field, "boolean")) continue;
+    
     if (filters[field]) {
       const filter = filters[field];
       if (
@@ -66,17 +89,19 @@ const buildFilterConditions = (filters) => {
   }
 
   for (const field of ALLOWED_NUMERIC_FIELDS) {
+    if (!validateField(field, "integer")) continue;
+    
     if (filters[field]) {
       const filter = filters[field];
       const minVal = sanitizeNumeric(filter.min);
       const maxVal = sanitizeNumeric(filter.max);
 
       if (minVal !== null) {
-        conditions.push(`${field} >= $${params.length + 1}`);
+        conditions.push(`${field} >= $${getParamIndex()}::INTEGER`);
         params.push(minVal);
       }
       if (maxVal !== null) {
-        conditions.push(`${field} <= $${params.length + 1}`);
+        conditions.push(`${field} <= $${getParamIndex()}::INTEGER`);
         params.push(maxVal);
       }
     }
@@ -85,19 +110,21 @@ const buildFilterConditions = (filters) => {
   if (filters.created_after) {
     const date = sanitizeDate(filters.created_after);
     if (date) {
-      conditions.push(`created_at >= $${params.length + 1}`);
+      conditions.push(`created_at >= $${getParamIndex()}`);
       params.push(date);
     }
   }
   if (filters.created_before) {
     const date = sanitizeDate(filters.created_before);
     if (date) {
-      conditions.push(`created_at <= $${params.length + 1}`);
+      conditions.push(`created_at <= $${getParamIndex()}`);
       params.push(date);
     }
   }
 
   for (const field of ALLOWED_TEXT_FIELDS) {
+    if (!validateField(field, "text")) continue;
+    
     if (filters[field]?.value?.trim?.()) {
       const value = filters[field].value.trim();
       const mode = filters[field].mode || "contains";
@@ -105,17 +132,17 @@ const buildFilterConditions = (filters) => {
       if (!ALLOWED_TEXT_MODES.has(mode)) continue;
 
       if (mode === "contains") {
-        conditions.push(`${field} ILIKE $${params.length + 1}`);
+        conditions.push(`${field} ILIKE $${getParamIndex()}`);
         params.push(`%${value}%`);
       } else if (mode === "exact") {
-        conditions.push(`${field} ILIKE $${params.length + 1}`);
+        conditions.push(`${field} ILIKE $${getParamIndex()}`);
         params.push(value);
       } else if (mode === "starts_with") {
-        conditions.push(`${field} ILIKE $${params.length + 1}`);
+        conditions.push(`${field} ILIKE $${getParamIndex()}`);
         params.push(`${value}%`);
       } else if (mode === "exclude") {
         conditions.push(
-          `(${field} IS NULL OR ${field} NOT ILIKE $${params.length + 1})`
+          `(${field} IS NULL OR ${field} NOT ILIKE $${getParamIndex()})`
         );
         params.push(`%${value}%`);
       }
@@ -124,7 +151,7 @@ const buildFilterConditions = (filters) => {
 
   if (filters.avatar_url?.trim?.()) {
     const avatarUrl = filters.avatar_url.trim();
-    conditions.push(`avatar ILIKE $${params.length + 1}`);
+    conditions.push(`avatar ILIKE $${getParamIndex()}`);
     params.push(`%${avatarUrl}%`);
   }
 
@@ -160,6 +187,8 @@ const buildPriorityOrder = (filters) => {
   const priorityDown = [];
 
   for (const field of ALLOWED_BOOLEAN_FIELDS) {
+    if (!validateField(field, "boolean")) continue;
+    
     if (filters[field]?.priority === "up") {
       priorityUp.push(`${field} DESC`);
     } else if (filters[field]?.priority === "down") {
@@ -168,6 +197,8 @@ const buildPriorityOrder = (filters) => {
   }
 
   for (const field of ALLOWED_NUMERIC_FIELDS) {
+    if (!validateField(field, "integer")) continue;
+    
     if (filters[field]?.priority === "up") {
       priorityUp.push(`${field} DESC`);
     } else if (filters[field]?.priority === "down") {
