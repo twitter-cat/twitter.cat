@@ -17,6 +17,9 @@
 .results .result.account .info {
   display: flex;
   flex-direction: column;
+
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .results .result.account .name {
@@ -139,6 +142,7 @@
   }
 }
 
-.loading-indicator, .load-more {
+.loading-indicator,
+.load-more {
   margin: 20px 0;
 }
