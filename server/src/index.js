@@ -8,7 +8,7 @@ import { compression } from "./compress";
 new Elysia()
   .use(
     cors({
-      origin: ["localhost:3000", "twitter.cat"],
+      origin: ["localhost:3000", "localhost:3002", "twitter.cat"],
       maxAge: 86400,
     }),
   )
