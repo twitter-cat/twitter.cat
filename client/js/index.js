@@ -308,7 +308,12 @@ const query = async (text, loadMore = false) => {
     if (_results.error) throw new Error(_results.error);
 
     const results = _results.rows.map((row) =>
-      Object.fromEntries(row.map((val, i) => [(_results.map || KNOWN_MAPPINGS).split(",")[i], val]))
+      Object.fromEntries(
+        row.map((val, i) => [
+          (_results.map || KNOWN_MAPPINGS).split(",")[i],
+          val,
+        ])
+      )
     );
 
     loadingEl.remove();
@@ -329,7 +334,7 @@ const query = async (text, loadMore = false) => {
       if (result.username) {
         const el = document.createElement("a");
         el.className = "result account";
-        el.href = `https://twitter.com/${result.username}`;
+        el.href = result.id ? `https://x.com/i/user/${result.id}` : `https://x.com/${result.username}`;
         el.target = "_blank";
         el.rel = "noopener";
 
@@ -552,9 +557,8 @@ const query = async (text, loadMore = false) => {
       resultsEl.innerHTML = `<div class="error-zone">
     <img src="assets/svgs/woozy.svg">
     <p>${
-      e.message ===
-      `Unexpected token 'r', "rate-limit reached" is not valid JSON`
-        ? "rate limit reached!"
+      e.message.includes("rate-limit reached")
+        ? "rate limit reached. please wait a few seconds and try again"
         : e.message
     }</p>
     <small>an error occurred. please try again later</small></div>`;
