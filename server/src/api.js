@@ -161,7 +161,7 @@ const formatRows = (rows) => {
 export default new Elysia()
   .post("/query", async ({ body }) => {
     try {
-      const { type, q, cursor, filters = {} } = body;
+      const { type, q, cursor, filters = {}, m: mappingsHash } = body;
 
       if (type === "dummy") {
         return "OK";
@@ -205,7 +205,11 @@ export default new Elysia()
 
       return {
         rows: formattedRows,
-        map,
+        map:
+          [...map].reduce((a, c) => (a << 5) - a + c.charCodeAt(), 0) ===
+          mappingsHash
+            ? undefined
+            : map,
         cursor: hasMore ? nextCursor : null,
       };
     } catch (err) {

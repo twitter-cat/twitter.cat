@@ -1,4 +1,4 @@
-import { API_URL } from "./config.js";
+import { API_URL, KNOWN_MAPPINGS, KNOWN_MAPPINGS_HASH } from "./config.js";
 
 const defaultColor = "#71767b";
 const buttons = {
@@ -300,6 +300,7 @@ const query = async (text, loadMore = false) => {
             "accounts",
           cursor: currentCursor,
           filters: currentFilters || {},
+          m: KNOWN_MAPPINGS_HASH,
         }),
       })
     ).json();
@@ -307,7 +308,7 @@ const query = async (text, loadMore = false) => {
     if (_results.error) throw new Error(_results.error);
 
     const results = _results.rows.map((row) =>
-      Object.fromEntries(row.map((val, i) => [_results.map.split(",")[i], val]))
+      Object.fromEntries(row.map((val, i) => [(_results.map || KNOWN_MAPPINGS).split(",")[i], val]))
     );
 
     loadingEl.remove();
