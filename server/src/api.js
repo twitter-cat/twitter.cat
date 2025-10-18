@@ -298,7 +298,7 @@ export default new Elysia()
       );
     }
 
-    postgresReadWrite`
+    await postgresReadWrite`
       UPDATE profiles SET
         bio = ${bio},
         avatar = ${pfp},
