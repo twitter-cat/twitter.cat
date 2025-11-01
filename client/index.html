@@ -21,13 +21,17 @@
       content="https://twitter.cat/assets/images/bouncing.gif"
     />
 
-    <link rel="stylesheet" href="/css/index.css" />
-    <link rel="stylesheet" href="/css/search.css" />
-    <link rel="stylesheet" href="/css/filters.css" />
     <link rel="preload" as="font" href="/assets/fonts/chirp.woff2" />
     <link rel="preload" as="font" href="/assets/fonts/chirpmedium.woff2" />
     <link rel="preload" as="font" href="/assets/fonts/chirpbold.woff2" />
     <link rel="preload" as="font" href="/assets/fonts/chirpheavy.woff2" />
+    <link rel="preload" as="script" href="/js/index.js" />
+    <link rel="preload" as="script" href="/js/config.js" />
+    <link rel="preload" as="script" href="/js/stats.js" />
+
+    <link rel="stylesheet" href="/css/index.css" />
+    <link rel="stylesheet" href="/css/search.css" />
+    <link rel="stylesheet" href="/css/filters.css" />
 
     <!-- <link rel="stylesheet" href="/css/youretooearly.css" /> -->
   </head>
@@ -432,6 +436,17 @@
             </div>
           </div>
         </div>
+
+        <div class="counter">
+          <div class="count accounts">
+            <span>Accounts</span>
+            <p></p>
+          </div>
+          <div class="count tweets" style="display: none">
+            <span>Tweets</span>
+            <p></p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -446,7 +461,8 @@
     </div>
   </body>
 
-  <script src="/js/index.js" type="module"></script>
+  <script src="/js/index.js" type="module" defer></script>
+  <script src="/js/stats.js" defer></script>
   <script
     defer
     data-domain="twitter.cat"

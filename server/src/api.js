@@ -271,26 +271,29 @@ export default new Elysia()
     const arr = html.split('<meta content="').slice(4, -6);
 
     const bioMatch = arr.find((a) =>
-      a.trim().endsWith(`" property="og:description" />`)
+      a?.trim()?.endsWith(`" property="og:description" />`)
     );
     const bio =
-      bioMatch?.replace(`" property="og:description" />`, "").trim() || "";
+      bioMatch?.replace(`" property="og:description" />`, "")?.trim() || "";
 
     const pfpMatch = arr.find((a) =>
-      a.trim().endsWith(`" property="og:image" />`)
+      a?.trim()?.endsWith(`" property="og:image" />`)
     );
     const pfp =
-      pfpMatch?.replace(`" property="og:image" />`, "").trim() ||
+      pfpMatch
+        ?.replace(`" property="og:image" />`, "")
+        ?.trim()
+        ?.replaceAll(":large", "") ||
       `https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png`;
 
     const nameMatch = arr.find((a) =>
-      a.trim().endsWith(`" property="og:title" />`)
+      a?.trim()?.endsWith(`" property="og:title" />`)
     );
     const name =
       nameMatch
         ?.replace(`" property="og:title" />`, "")
-        .trim()
-        .replace(` (@${username}) on X`, "") || "";
+        ?.trim()
+        ?.replace(` (@${username}) on X`, "") || "";
 
     if (!name && !bio && !pfp) {
       return Response.redirect(

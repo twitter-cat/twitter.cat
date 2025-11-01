@@ -381,6 +381,38 @@ sub {
   opacity: 0.3;
 }
 
+.counter {
+  display: flex;
+  gap: 1em;
+  position: absolute;
+  bottom: 40px;
+  transition: opacity 0.5s ease-in-out;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+}
+.center:has(.results) .counter {
+  display: none;
+}
+.counter .count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.counter .count span {
+  font-size: 12px;
+  line-height: 1rem;
+  color: #858585;
+}
+.counter .count p {
+  margin: 0px;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: "IBM Plex Mono", monospace;
+  line-height: 1.5rem;
+}
+
 br,
 svg,
 img[draggable="false"],
@@ -413,6 +445,10 @@ img[draggable="false"],
   src: url("../assets/fonts/chirpheavy.woff2") format("woff2");
   font-weight: 900;
   font-style: normal;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("../assets/fonts/ibm-plex-mono.woff2") format("woff2");
 }
 
 @keyframes jump {
