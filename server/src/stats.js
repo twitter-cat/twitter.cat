@@ -1,5 +1,5 @@
-import { Elysia } from "elysia";
 import { SQL } from "bun";
+import { Elysia } from "elysia";
 
 const postgresReadOnly = new SQL(
   `postgres://${process.env.POSTGRES_USER_READONLY}:${process.env.POSTGRES_PASSWORD_READONLY}@${process.env.POSTGRES_HOST}:5432/twitter`
