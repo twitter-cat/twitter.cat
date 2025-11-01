@@ -10,3 +10,5 @@ export const KNOWN_MAPPINGS_HASH = [...KNOWN_MAPPINGS].reduce(
   (a, c) => (a << 5) - a + c.charCodeAt(),
   0
 );
+
+window.API_URL = API_URL;

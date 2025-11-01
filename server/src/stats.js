@@ -1,0 +1,33 @@
+import { Elysia } from "elysia";
+import { SQL } from "bun";
+
+const postgresReadOnly = new SQL(
+  `postgres://${process.env.POSTGRES_USER_READONLY}:${process.env.POSTGRES_PASSWORD_READONLY}@${process.env.POSTGRES_HOST}:5432/twitter`
+);
+
+let statsCache = null;
+let statsCacheTime = 0;
+const STATS_CACHE_TTL = 60000;
+
+export default new Elysia().get("/stats", async () => {
+  const now = Date.now();
+
+  if (statsCache && now - statsCacheTime < STATS_CACHE_TTL) {
+    return statsCache;
+  }
+
+  statsCache = (
+    await Promise.all([
+      postgresReadOnly`
+    SELECT COUNT(*) FROM profiles;
+  `,
+      postgresReadOnly`
+    SELECT COUNT(*) FROM tweets;
+  `,
+    ])
+  ).map((res) => Number(res?.[0]?.count || 0));
+
+  statsCacheTime = now;
+
+  return statsCache;
+});

@@ -3,6 +3,7 @@ import { Elysia } from "elysia";
 import { rateLimit } from "elysia-rate-limit";
 
 import api from "./api.js";
+import stats from "./stats.js";
 import { compression } from "./compress";
 
 new Elysia()
@@ -22,6 +23,7 @@ new Elysia()
   )
   .get("/", () => "meow :3")
   .use(api)
+  .use(stats)
   .listen(process.env.PORT || 3001, () => {
     console.log(
       `              \x1b[38;2;29;161;242m+++++
