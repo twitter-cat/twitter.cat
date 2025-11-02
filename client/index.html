@@ -9,6 +9,7 @@
     <link rel="icon" type="image/x-icon" href="/assets/svgs/face.svg" />
 
     <meta itemprop="name" content="twitter (dot) cat" />
+    <meta name="description" content="small tools for twitter" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
@@ -38,8 +39,8 @@
   <body>
     <div class="center-wrapper">
       <div class="center">
-        <div class="logo">
-          <img src="assets/svgs/kitty.svg" draggable="false" />
+        <div class="logo" role="banner">
+          <img src="assets/svgs/kitty.svg" draggable="false" alt="kitty !!" />
 
           <!-- prettier-ignore -->
           <div>
@@ -47,11 +48,12 @@
         </div>
         </div>
 
-        <div class="search">
+        <div class="search" role="main">
           <img
             src="assets/svgs/search.svg"
             class="searchicon"
             draggable="false"
+            alt="search icon"
           />
           <input
             class="searchbar"
@@ -450,7 +452,7 @@
       </div>
     </div>
 
-    <div class="bottom dark">
+    <div class="bottom dark" role="navigation">
       <a href="https://x.twitter.cat">fxembed</a>
       <a href="/legal">legal</a>
       <a
