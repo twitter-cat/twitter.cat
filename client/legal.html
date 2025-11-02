@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>legal / twitter.cat</title>
+
+    <meta property="og:type" content="image" />
+    <link rel="icon" type="image/x-icon" href="/assets/svgs/face.svg" />
+
+    <meta itemprop="name" content="twitter (dot) cat" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="twitter (dot) cat" />
+    <meta name="twitter:site" content="@cvsilly_" />
+    <meta name="twitter:description" content="small tools for twitter" />
+    <meta
+      name="twitter:image"
+      content="https://twitter.cat/assets/images/bouncing.gif"
+    />
+    <style>
+      @font-face {
+        font-family: "chirp";
+        src: url("./assets/fonts/chirp.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "chirp";
+        src: url("./assets/fonts/chirpmedium.woff2") format("woff2");
+        font-weight: 500;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "chirp";
+        src: url("./assets/fonts/chirpbold.woff2") format("woff2");
+        font-weight: 700;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "chirp";
+        src: url("./assets/fonts/chirpheavy.woff2") format("woff2");
+        font-weight: 900;
+        font-style: normal;
+      }
+
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      html {
+        scrollbar-width: thin;
+        scrollbar-color: hsla(255 0 255 / 15%) #14171a;
+        scrollbar-gutter: stable;
+      }
+
+      body {
+        background-color: #14171a;
+        color: white;
+        margin: 0;
+        font-size: 20px;
+        font-family: "chirp", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
+          "Helvetica Neue", sans-serif;
+      }
+
+      .decor {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0px;
+        width: 100%;
+        z-index: -1;
+      }
+
+      main {
+        line-height: 1.75;
+        color: #ffffffd9;
+        max-width: 720px;
+        margin: 40px auto;
+        padding: 0 20px;
+        font-size: 16px;
+      }
+
+      .logo {
+        margin-bottom: 2em;
+        display: block;
+        width: fit-content;
+        text-decoration: none;
+        transition: opacity 0.2s, transform 0.1s;
+      }
+
+      .logo:hover {
+        opacity: 0.8;
+      }
+
+      .logo:active {
+        transform: scale(0.95);
+      }
+
+      .logo img {
+        width: 50px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 0px;
+        margin-bottom: 1em;
+        background-color: #13171a;
+        position: sticky;
+        top: 0;
+      }
+
+      .tabs button {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2em;
+        padding: 0;
+        cursor: pointer;
+        width: 100%;
+        font-family: inherit;
+        font-size: 16px;
+        padding-bottom: 12px;
+        padding-top: 20px;
+        position: relative;
+      }
+
+      .tabs button.active {
+        font-weight: 500;
+      }
+
+      .tabs button::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: white;
+        transform: scaleX(0);
+        border-radius: 8px;
+      }
+
+      .tabs button.active::after {
+        transform: scaleX(1);
+      }
+
+      .tabs::after {
+        content: "";
+        z-index: 5;
+        --background: 20, 23, 26;
+        background: linear-gradient(
+          to bottom,
+          transparent,
+          rgb(var(--background), 0.7)
+        );
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+        pointer-events: none;
+        width: 100%;
+        height: 56px;
+        mask-image: linear-gradient(
+          to top,
+          rgb(var(--background), 0.7) 25%,
+          transparent
+        );
+        -webkit-mask-image: linear-gradient(
+          to top,
+          rgb(var(--background)) 25%,
+          transparent
+        );
+        position: absolute;
+        bottom: -56px;
+        left: 0;
+        transform: rotate(180deg);
+      }
+
+      h1,
+      h2 {
+        color: #fff;
+        text-transform: lowercase;
+        margin-top: 2em;
+      }
+      h2 {
+        font-size: 1.3em;
+        margin-top: 3rem;
+        font-weight: 600;
+        margin-bottom: 1em;
+        line-height: 1.3333333;
+      }
+      h1 {
+        font-size: 1.8em;
+        margin-top: 0;
+      }
+      a {
+        color: #9cf;
+        text-underline-offset: 2px;
+      }
+      b {
+        color: white;
+        font-weight: 600;
+      }
+
+      ::marker {
+        color: #4b5563;
+      }
+      li {
+        padding-inline-start: 0.375em;
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+      }
+      ul {
+        list-style-type: disc;
+        margin-top: 1.25em;
+        margin-bottom: 1.25em;
+        padding-inline-start: 1.625em;
+      }
+      p {
+        margin-top: 0px;
+        margin-bottom: 1.25em;
+      }
+      .tab:not(.active) {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <svg
+      class="decor"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 1519 200"
+    >
+      <defs></defs>
+      <path
+        d="M708 103l9-5 13 1 2-2 5 1h8l1-1 42-5h7l7 3v1l12-2a9368 9368 0 0129-6l2-5 12 1 6-2 3 1 2 1v-2l13-2v1l4 2 7-1h1l17-3 1 2 4-1 18-7 3-1 4-1h9l13-1 1-4 3-2 13 1v2l22-2 10-3h6l10 5 16-5 15-3 2-1 8-4 6-2 12-1 7-2 8 5 7 1 22-9h7l5-1v-1l25-3 1 2 5 2v1h11l2 1 8-4h3l-1 1h11l10-6 6 3 9-1 4-1 1 1 1-2 6-1 1-1 10-2h2l7-5v1h4l3-1c11 0 23 2 34-3 2-2 7 0 10 0l12 1 4 1 9 2 12-1 11-3 11 1h4l10-6 17 1 2 1c9 2 19-3 22-11l1-1 9 1 15-5c3-1 9 4 9-5 5 0 5 3 5 7l2 3 4-1 4-2 9-4 3-3h3l8-4 6-3 26 2 7-4h18l7 1c10 3 13-6 17-12l8 4 3-1 14-3 15-2a38 38 0 01-5-1l-8-4 7-8 8-4-10-136-922 71 16 205z"
+      ></path>
+      <path
+        d="M-36 193l9-5 13 1 2-2 5 1h8l1-1 42-5h7l7 3v1l12-2a9328 9328 0 0129-6l2-5 12 1 6-2 3 1 2 1v-2l13-2v1l4 2 7-1h1l17-3 1 2 4-1 18-7 3-1 4-1h9l13-1 1-4 3-2 13 1v2l22-2 10-3h6l10 5 16-5 15-3 2-1 8-4 6-2 12-1 7-2 8 5 7 1 22-9h7l5-1v-1l25-3 1 2 5 2v1h11l2 1 8-4h3l-1 1h9a6 6 0 002 0l10-6 6 3 9-1 4-1a6 6 0 001 1l1-2 6-1 1-1 10-2h2l7-5v1h4l3-1c11 0 23 2 34-3 2-2 7 0 10 0l12 1 4 1 9 2 12-1 11-3 11 1h4l10-6 17 1 2 1c9 2 19-3 22-11l1-1 9 1 15-5c3-1 9 4 9-5 5 0 5 3 5 7l2 3 4-1 4-2 9-4 3-3h3l8-4 6-3 26 2 7-4h18l7 1c10 3 13-6 17-12l8 4 3-1 14-3 15-2a37 37 0 01-5-1l-8-4 7-8 8-4-10-136-922 71 16 205z"
+      ></path>
+    </svg>
+    <main>
+      <a href="/" class="logo" draggable="false">
+        <img src="assets/svgs/kitty.svg" draggable="false" />
+      </a>
+      <div class="tabs">
+        <button class="active" data-tab="pp">Privacy Policy</button>
+        <button data-tab="tos">Terms of Service</button>
+        <script>
+          const tabs = document.querySelectorAll(".tabs button");
+          tabs.forEach((tab) => {
+            tab.addEventListener("click", () => {
+              tabs.forEach((t) => t.classList.remove("active"));
+              tab.classList.add("active");
+
+              document
+                .querySelector(`.content .tab.active`)
+                .classList.remove("active");
+              document
+                .querySelector(`.content .tab#${tab.dataset.tab}`)
+                .classList.add("active");
+              window.scrollTo(0, 0);
+            });
+          });
+
+          window.switchTab = (tab) => {
+            document.querySelector(`.tabs button[data-tab="${tab}"]`).click();
+          };
+        </script>
+      </div>
+      <div class="content">
+        <div class="tab active" id="pp">
+          <h2>
+            tl;dr: we don't use cookies or collect any personal data, but we do
+            use plausible analytics.
+          </h2>
+          <!-- prettier-ignore -->
+          <p>
+            at twitter.cat (“<b>twitter.cat</b>,” “<b>we</b>,” “<b>our</b>,” or “<b>us</b>”),
+            we value your privacy and
+            are committed to being fair, accountable, and transparent in how we
+            handle your personal information. our Privacy Policy outlines how we
+            collect, use, and disclose your personal information when you use
+            our websites and applications, and other twitter.cat services (our "<b>Service</b>").
+            it also describes your privacy rights.
+          </p>
+          <p>
+            we collect only what we need to run and protect the service,
+            including limited telemetry, public data we index, including custom
+            private datasets, and any other data collected when interacting with
+            other websites and services ran by twitter.cat according to their
+            respective privacy policy. we use a self-hosted plausible instance
+            for analytics.
+          </p>
+
+          <h2>what we cover</h2>
+          <p>
+            this policy covers twitter.cat website, search, public datasets,
+            tools, and any api or developer endpoints we operate now or add
+            later. it does not apply to any other websites ran by twitter.cat
+            other than the main search engine located at
+            <a href="javascript:">https://twitter.cat</a>
+          </p>
+
+          <h2>data we collect</h2>
+          <ul>
+            <li>
+              <b>public data we index.</b>
+              tweets, public profiles and other public web content we crawl or
+              obtain from providers.
+            </li>
+            <li>
+              <b>technical telemetry.</b>
+              ip addresses, user agent, request timestamps, basic browser
+              fingerprinting and rate or/and abuse signals may be collected to
+              help keep the Service safe and protect against abuse.
+            </li>
+            <li>
+              <b>analytics.</b>
+              event pings, including pageviews and referrers. we do not use
+              third-party targeted advertising trackers.
+            </li>
+            <li>
+              <b>support & contact info.</b>
+              if you email us or file a report, we keep the info you provide to
+              respond.
+            </li>
+          </ul>
+
+          <h2>cookies & tracking</h2>
+          <p>
+            we do not use cookies for marketing. the site may set minimal
+            technical cookies when strictly necessary. analytics may send ping
+            or event calls to our self-hosted plausible instance that does not
+            build cross-site profiles.
+          </p>
+
+          <h2>how we use data</h2>
+          <ul>
+            <li>
+              provide, maintain, and improve the service (search, indexing,
+              api).
+            </li>
+            <li>
+              protect the service from abuse and fraud (rate limits, blocking,
+              investigation).
+            </li>
+            <li>
+              aggregate and analyze usage trends (via plausible) to improve
+              performance and features.
+            </li>
+            <li>
+              respond to support requests, legal requests, or safety incidents.
+            </li>
+          </ul>
+
+          <h2>data sharing & processors</h2>
+          <p>we do not sell personal information. we may disclose data to:</p>
+          <ul>
+            <li>
+              contracted service providers who help operate the service
+              (hosting, email, analytics) — we choose providers carefully and
+              require them to protect data.
+            </li>
+            <li>
+              third parties when required by law, to respond to legal process,
+              or to protect safety and rights.
+            </li>
+            <li>other parties you choose to share data with</li>
+          </ul>
+
+          <h2>international transfers</h2>
+          <p>
+            data may be stored and processed in portugal or other countries we
+            operate in. when transfers outside the EEA occur we use appropriate
+            safeguards required by law.
+          </p>
+
+          <h2>retention</h2>
+          <p>
+            we retain data only as long as necessary for the purposes above, or
+            as required by law. public data we index is kept to provide the
+            service; telemetry/logs and support records are kept for limited
+            operational, security, and legal reasons.
+          </p>
+
+          <h2>security</h2>
+          <p>
+            we implement reasonable technical and organizational measures to
+            protect data (encryption in transit, access controls, regular
+            updates). no online system is perfect, and if we learn of a security
+            incident affecting your personal data we will follow applicable laws
+            about notification.
+          </p>
+
+          <h2>children</h2>
+          <p>
+            our service is not directed to children under 13. we do not
+            knowingly collect personal data from children under 13. if you
+            believe we have such data, contact us and we will promptly delete it
+            where required by law.
+          </p>
+
+          <h2>your rights</h2>
+          <p>
+            for individuals in the European Economic Area, United Kingdom, and
+            Switzerland (collectively, “Europe”), you may have the right to:
+          </p>
+          <ul>
+            <li>request access to the personal data we hold about you;</li>
+            <li>
+              request correction or deletion (subject to legal exceptions);
+            </li>
+            <li>object to or restrict certain processing;</li>
+            <li>request a copy of your data in a machine-readable format;</li>
+            <li>withdraw consent where processing is based on consent.</li>
+          </ul>
+          <p>
+            we will verify requests to protect privacy. some requests may be
+            limited by legal obligations (e.g., logs needed for abuse
+            investigations).
+          </p>
+
+          <h2>changes to this policy</h2>
+          <p>
+            this policy may be updated from time to time without any prior
+            warning. your continued use of the Service after any change to this
+            policy constitutes your acceptance of the new Privacy Policy. if you
+            do not agree to any part of this Policy or to any future Privacy
+            Policies, do not access or use (or continue to access or use) the
+            Service.
+          </p>
+
+          <h2>contact</h2>
+          <p>
+            for questions, requests, or data-subject requests, please email us
+            using the email in our
+            <a href="#" onclick="switchTab('tos')">Terms of Service</a>
+          </p>
+        </div>
+
+        <div class="tab" id="tos">
+          <h2>welcome to twitter.cat!</h2>
+
+          <!--prettier-ignore-->
+          <p>
+            these terms of service (”<b>Terms</b>”)
+            apply to your use of twitter.cat and twitter.cat’s other services
+            for individuals, including associated applications and websites
+            (collectively, the “<b>Service</b>”). these terms form an agreement between you and twitter.cat (“<b>twitter.cat</b>,” “<b>we</b>,” “<b>our</b>,” or “<b>us</b>”). by using our Services, you acknowledge and agree to these Terms.
+          </p>
+
+          <!--prettier-ignore-->
+          <p>
+            please note that we reserve the right to modify these Terms at any
+            time. additionally, please read our
+            <a href="#" onclick="window.switchTab('pp')">Privacy Policy</a>, which describes how we
+            collect, use and disclose personal
+            information. although it does not form part of these Terms, it is an
+            important document you should read.
+          </p>
+
+          <h2>who we are</h2>
+          <p>
+            twitter.cat is a search engine and set of tools built around a
+            real-time scrape of public twitter data and other custom datasets.
+            additionally, we host a public fxtwitter instance. twitter.cat is
+            not meant for spam, doxxing, impersonation, or abuse.
+          </p>
+
+          <h2>access and usage</h2>
+          <p>
+            anyone may use twitter.cat and our services as long as they follow
+            these terms and local laws.
+          </p>
+          <p>
+            by choosing to login, where available, to any of our Services by
+            using a third-party service, such as Google, Apple, or X, you give
+            us permission to access, use, and store your information from that
+            service, as permitted by that service, which may include log-in
+            credentials and/or access tokens for that service.
+          </p>
+
+          <h2>acceptable use</h2>
+          <p>
+            we reserve the right to block or limit access for misuse or anyone
+            who has been previously removed from the Service. you agree not to:
+          </p>
+          <ul>
+            <li>
+              interfere with, overload, or scrape the site or live databases in
+              a harmful way. this includes:
+              <ul>
+                <li>
+                  modifying, copying, leasing, selling, reselling, distributing,
+                  distilling, using bots to access, reverse engineering, or
+                  decompiling our Service
+                </li>
+                <li>
+                  using the Service or any data or results returned by the
+                  Service to develop services that compete with twitter.cat, or
+                  scraping or reselling any data submitted and returned by the
+                  Service
+                </li>
+                <li>
+                  disrupting, interfering with, or unauthorized access to the
+                  Service or its safety systems
+                </li>
+              </ul>
+            </li>
+
+            <li>
+              causing harm or engaging in abusive activity, including by:
+
+              <ul>
+                <li>
+                  critically harming or promoting critically harming human life
+                  (yours or anyone else’s), including pro-terrorist activities
+                </li>
+                <li>
+                  violating copyright, trademark, or other intellectual property
+                  law
+                </li>
+                <li>
+                  violating a person’s privacy or their right to publicity
+                </li>
+                <li>the sexualization or exploitation of children</li>
+                <li>
+                  espionage, hacking, defrauding, defamation, scamming,
+                  spamming, or phishing
+                </li>
+              </ul>
+            </li>
+            <li>impersonate twitter.cat or claim affiliation</li>
+            <li>not complying with local or governing laws or regulations</li>
+          </ul>
+
+          <p>
+            our Service may include or be integrated with third-party software,
+            products, or services that are subject to their own terms. our
+            software may include open source software that is governed by its
+            own licenses.
+          </p>
+
+          <h2>content</h2>
+          <p>
+            all tweet, user, list, ad and any other data may come from X,
+            formerly known as twitter, and remains owned by Twitter Inc., X
+            Corp. and its users. twitter.cat does not host or control any
+            original content. if you would like to submit a DMCA or copyright
+            law violation report, please first send it to X Corp. and then
+            contact us to update the content.
+          </p>
+          <p>
+            by submitting or providing any content to the Service, you grant, an
+            irrevocable, perpetual, transferable, sublicensable, royalty-free,
+            and worldwide right to twitter.cat to use, copy, store, modify,
+            distribute, reproduce, publish, display in public forums, list
+            information regarding, make derivative works of, and aggregate your
+            User Content and derivative works thereof for any purpose, including
+            but not limited: (i) to maintain and provide the Service; (ii) to
+            improve our products and the Service and for our other business
+            purposes; and (iii) to perform such other actions to enforce these
+            Terms, comply with our Privacy Policy, comply with applicable law,
+            or keep our Service safe.
+          </p>
+          <p>
+            at our sole discretion, we may implement rate limitations or any
+            other blocks to accommodate system resources or usage needs, see
+            "disclaimer of warranties".
+          </p>
+
+          <h2>data &amp; privacy</h2>
+          <p>
+            we care about your privacy. by using the Service, you acknowledge
+            that we may collect, use, and disclose your personal information and
+            aggregated, pseudonymized, and/or de-identified data as set forth in
+            our Privacy Policy, and that your personal information will be
+            transferred to, and/or processed in, Portugal and/or any other
+            country part of the European Economic Area.
+          </p>
+
+          <p>
+            we may log limited telemetry and abuse-prevention data, such as ip
+            addresses or browser fingerprints, to keep the service stable and
+            secure. for more information, please read our
+            <a href="#" onclick="window.switchTab('pp')">privacy policy</a>
+          </p>
+
+          <h2>disclaimer of warranties</h2>
+          <p>
+            TO THE FULLEST EXTENT PERMITTED BY LAW, THE SERVICE IS PROVIDED ON
+            AN “AS IS” AND “AS AVAILABLE” BASIS. YOUR USE OF THE SERVICE IS AT
+            YOUR OWN RISK. TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW,
+            THE SERVICE, THE INTELLECTUAL PROPERTY, AND ANY OTHER INFORMATION
+            AVAILABLE ON OR THROUGH THE SERVICE ARE PROVIDED WITHOUT WARRANTIES
+            OF ANY KIND, WHETHER EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED
+            TO, IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+            PURPOSE, AND/OR NON-INFRINGEMENT. TWITTER.CAT DOES NOT GUARANTEE
+            THAT THE FUNCTIONS OR FEATURES OF THE SERVICE WILL BE UNINTERRUPTED
+            OR ERROR-FREE OR THAT DEFECTS WILL BE CORRECTED. YOU ACCEPT AND
+            AGREE THAT ANY USE OF OUTPUTS FROM OUR SERVICE IS AT YOUR SOLE RISK
+            AND YOU WILL NOT RELY ON OUTPUT AS THE SOLE SOURCE OF TRUTH OR
+            FACTUAL INFORMATION, OR AS PROFESSIONAL ADVICE.
+          </p>
+
+          <p>
+            to the fullest extent permitted by law, you will defend, indemnify,
+            and hold twitter.cat harmless from and against any and all claims,
+            damages (whether direct, indirect, incidental, consequential, or
+            otherwise), obligations, losses, liabilities, costs, debts, and
+            expenses (including, but not limited to, legal fees) arising from or
+            related to your use of the Service or any violation of these Terms.
+          </p>
+
+          <h2>general provisions</h2>
+          <p>
+            <b>assignment.</b>
+            these Terms, and any rights and licenses granted hereunder, may not
+            be transferred or assigned by you, but may be assigned by us without
+            restriction. any attempted transfer or assignment by you in
+            violation hereof will be null and void.
+          </p>
+
+          <p>
+            <b>changes to terms.</b>
+            these terms may be updated from time to time without any prior
+            warning. your continued use of the Service after any change to these
+            Terms constitutes your acceptance of the new Terms of Service. if
+            you do not agree to any part of these Terms or to any future Terms
+            of Service, do not access or use (or continue to access or use) the
+            Service.
+          </p>
+
+          <p>
+            <b>entire agreement; severability.</b>
+            these Terms, together with any amendments and any additional written
+            agreements you may enter into with us in connection with the
+            Service, will constitute the entire agreement between you and us
+            concerning the Service. any statements or comments made between you
+            and any of us or our representatives are expressly excluded from
+            these Terms and will not apply to you or us, or to your access to or
+            use of the Service. if any provision of these Terms is deemed
+            invalid by a court of competent jurisdiction, the invalidity of such
+            provision will not affect the validity of the remaining provisions
+            of these Terms, which will remain in full force and effect.
+          </p>
+
+          <p>
+            <b>no waiver.</b>
+            no waiver of any term of these Terms will be deemed a further or
+            continuing waiver of such term or of any other term, and our failure
+            to assert any right or provision under these will not constitute a
+            waiver of such right or provision.
+          </p>
+          <p>
+            <b>governing law.</b>
+            these terms are governed by Portuguese law. disputes will be handled
+            exclusively in the courts of Portugal.
+          </p>
+          <p>
+            <b>how to contact us.</b>
+            if you have any questions about the Service or these Terms, please
+            contact us at awry-march-tarot@duck.com.
+          </p>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
