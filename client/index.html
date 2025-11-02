@@ -436,6 +436,315 @@
                 </div>
               </div>
             </div>
+
+            <div class="filter-section tweet-filters" style="display: none">
+              <h4>Tweet Content</h4>
+              <div class="filter-grid">
+                <div class="filter-item text">
+                  <label>Tweet Text</label>
+                  <input
+                    type="text"
+                    class="text-input"
+                    placeholder="Search in tweet body"
+                    data-field="body"
+                  />
+                  <select class="text-mode-select" data-field="body">
+                    <option value="contains">Contains</option>
+                    <option value="exact">Exact Match</option>
+                    <option value="starts_with">Starts With</option>
+                    <option value="exclude">Exclude</option>
+                  </select>
+                </div>
+
+                <div class="filter-item text">
+                  <label>From User (username)</label>
+                  <input
+                    type="text"
+                    class="text-input"
+                    placeholder="e.g., username"
+                    data-field="author_username"
+                  />
+                  <select class="text-mode-select" data-field="author_username">
+                    <option value="exact">Exact Match</option>
+                    <option value="contains">Contains</option>
+                  </select>
+                </div>
+
+                <div class="filter-item">
+                  <label>Language</label>
+                  <input
+                    type="text"
+                    class="text-input"
+                    placeholder="e.g., en, es, ja"
+                    data-field="lang"
+                  />
+                </div>
+
+                <div class="filter-item text">
+                  <label>Source</label>
+                  <input
+                    type="text"
+                    class="text-input"
+                    placeholder="e.g., iPhone, Android"
+                    data-field="source"
+                  />
+                  <select class="text-mode-select" data-field="source">
+                    <option value="contains">Contains</option>
+                    <option value="exact">Exact Match</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="filter-section tweet-filters" style="display: none">
+              <h4>Tweet Date Range</h4>
+              <div class="filter-grid">
+                <div class="filter-item">
+                  <label>Posted After</label>
+                  <input
+                    type="date"
+                    class="date-input"
+                    data-field="tweet_created_after"
+                  />
+                </div>
+                <div class="filter-item">
+                  <label>Posted Before</label>
+                  <input
+                    type="date"
+                    class="date-input"
+                    data-field="tweet_created_before"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="filter-section tweet-filters" style="display: none">
+              <h4>Tweet Engagement</h4>
+              <div class="filter-grid">
+                <div class="filter-item numeric">
+                  <label>Likes</label>
+                  <div class="numeric-inputs">
+                    <input
+                      type="number"
+                      class="min-input"
+                      placeholder="Min"
+                      data-field="like_count"
+                      data-type="min"
+                    />
+                    <input
+                      type="number"
+                      class="max-input"
+                      placeholder="Max"
+                      data-field="like_count"
+                      data-type="max"
+                    />
+                  </div>
+                  <select class="priority-select" data-field="like_count">
+                    <option value="">No Priority</option>
+                    <option value="up">More First ↑</option>
+                    <option value="down">Less First ↓</option>
+                  </select>
+                </div>
+
+                <div class="filter-item numeric">
+                  <label>Retweets</label>
+                  <div class="numeric-inputs">
+                    <input
+                      type="number"
+                      class="min-input"
+                      placeholder="Min"
+                      data-field="retweet_count"
+                      data-type="min"
+                    />
+                    <input
+                      type="number"
+                      class="max-input"
+                      placeholder="Max"
+                      data-field="retweet_count"
+                      data-type="max"
+                    />
+                  </div>
+                  <select class="priority-select" data-field="retweet_count">
+                    <option value="">No Priority</option>
+                    <option value="up">More First ↑</option>
+                    <option value="down">Less First ↓</option>
+                  </select>
+                </div>
+
+                <div class="filter-item numeric">
+                  <label>Replies</label>
+                  <div class="numeric-inputs">
+                    <input
+                      type="number"
+                      class="min-input"
+                      placeholder="Min"
+                      data-field="reply_count"
+                      data-type="min"
+                    />
+                    <input
+                      type="number"
+                      class="max-input"
+                      placeholder="Max"
+                      data-field="reply_count"
+                      data-type="max"
+                    />
+                  </div>
+                  <select class="priority-select" data-field="reply_count">
+                    <option value="">No Priority</option>
+                    <option value="up">More First ↑</option>
+                    <option value="down">Less First ↓</option>
+                  </select>
+                </div>
+
+                <div class="filter-item numeric">
+                  <label>Quotes</label>
+                  <div class="numeric-inputs">
+                    <input
+                      type="number"
+                      class="min-input"
+                      placeholder="Min"
+                      data-field="quote_count"
+                      data-type="min"
+                    />
+                    <input
+                      type="number"
+                      class="max-input"
+                      placeholder="Max"
+                      data-field="quote_count"
+                      data-type="max"
+                    />
+                  </div>
+                  <select class="priority-select" data-field="quote_count">
+                    <option value="">No Priority</option>
+                    <option value="up">More First ↑</option>
+                    <option value="down">Less First ↓</option>
+                  </select>
+                </div>
+
+                <div class="filter-item numeric">
+                  <label>Views</label>
+                  <div class="numeric-inputs">
+                    <input
+                      type="number"
+                      class="min-input"
+                      placeholder="Min"
+                      data-field="views_count"
+                      data-type="min"
+                    />
+                    <input
+                      type="number"
+                      class="max-input"
+                      placeholder="Max"
+                      data-field="views_count"
+                      data-type="max"
+                    />
+                  </div>
+                  <select class="priority-select" data-field="views_count">
+                    <option value="">No Priority</option>
+                    <option value="up">More First ↑</option>
+                    <option value="down">Less First ↓</option>
+                  </select>
+                </div>
+
+                <div class="filter-item numeric">
+                  <label>Bookmarks</label>
+                  <div class="numeric-inputs">
+                    <input
+                      type="number"
+                      class="min-input"
+                      placeholder="Min"
+                      data-field="bookmarks_count"
+                      data-type="min"
+                    />
+                    <input
+                      type="number"
+                      class="max-input"
+                      placeholder="Max"
+                      data-field="bookmarks_count"
+                      data-type="max"
+                    />
+                  </div>
+                  <select class="priority-select" data-field="bookmarks_count">
+                    <option value="">No Priority</option>
+                    <option value="up">More First ↑</option>
+                    <option value="down">Less First ↓</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="filter-section tweet-filters" style="display: none">
+              <h4>Tweet Type</h4>
+              <div class="filter-grid">
+                <div class="filter-item">
+                  <label>Is Reply</label>
+                  <select class="special-select" data-field="is_reply">
+                    <option value="">Any</option>
+                    <option value="true">Replies Only</option>
+                    <option value="false">Not Replies</option>
+                  </select>
+                </div>
+
+                <div class="filter-item">
+                  <label>Is Quote</label>
+                  <select class="special-select" data-field="is_quote">
+                    <option value="">Any</option>
+                    <option value="true">Quotes Only</option>
+                    <option value="false">Not Quotes</option>
+                  </select>
+                </div>
+
+                <div class="filter-item">
+                  <label>Original Tweets</label>
+                  <select class="special-select" data-field="is_original">
+                    <option value="">Any</option>
+                    <option value="true">Original Only</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="filter-section tweet-filters" style="display: none">
+              <h4>Media & Content</h4>
+              <div class="filter-grid">
+                <div class="filter-item">
+                  <label>Has Media</label>
+                  <select class="special-select" data-field="has_media">
+                    <option value="">Any</option>
+                    <option value="true">Has Media</option>
+                    <option value="false">No Media</option>
+                  </select>
+                </div>
+
+                <div class="filter-item">
+                  <label>Media Type</label>
+                  <select class="special-select" data-field="media_type">
+                    <option value="">Any</option>
+                    <option value="photo">Photo</option>
+                    <option value="video">Video</option>
+                    <option value="gif">GIF</option>
+                  </select>
+                </div>
+
+                <div class="filter-item">
+                  <label>Has Poll</label>
+                  <select class="special-select" data-field="has_poll">
+                    <option value="">Any</option>
+                    <option value="true">Has Poll</option>
+                    <option value="false">No Poll</option>
+                  </select>
+                </div>
+
+                <div class="filter-item">
+                  <label>Has Embed</label>
+                  <select class="special-select" data-field="has_embed">
+                    <option value="">Any</option>
+                    <option value="true">Has Embed</option>
+                    <option value="false">No Embed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -1,0 +1,7 @@
+- test suite
+- ad search
+- list search
+- more and better filters
+- export results
+- more scrapers
+- visualize results in graphs
