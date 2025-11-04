@@ -74,9 +74,7 @@ const decodeCursor = (cursor) => {
     Buffer.from(base64urlDecodeToBuffer(payloadB64url), "latin1").toString()
   );
 
-  // Support both account cursors [rank, username] and tweet cursors [rank, tweetId]
   if (decoded.length === 2) {
-    // Could be either account or tweet cursor
     if (typeof decoded[1] === "string" && !decoded[1].match(/^\d+$/)) {
       return {
         lastRank: decoded[0],
@@ -112,9 +110,6 @@ const executeSearchQuery = async (
 ) => {
   const { conditions, params } = filterData;
 
-  // Improved ranking formula with better weighting
-  // Uses ts_rank_cd for better phrase matching and considers account quality signals
-  // All field names are static - no user input in SQL structure
   const rankFormula = `(
     ts_rank_cd(
       search_tsv, 
@@ -131,8 +126,6 @@ const executeSearchQuery = async (
 
   const baseParams = [q, ...params];
 
-  // Use websearch_to_tsquery for better phrase and operator support
-  // Falls back to plainto_tsquery for backwards compatibility
   const whereConditions = [`search_tsv @@ plainto_tsquery('simple', $1)`];
   whereConditions.push(...conditions);
 
@@ -154,7 +147,6 @@ const executeSearchQuery = async (
 
   const whereClause = whereConditions.join(" AND ");
 
-  // Optimized query structure - calculate rank once in subquery
   const query = `
     SELECT 
       id, username, name, bio, location, url, avatar, banner,
@@ -188,9 +180,12 @@ const executeTweetSearchQuery = async (
 ) => {
   const { conditions, params } = filterData;
 
-  // Optimized ranking formula with better engagement weighting and recency boost
-  // Uses logarithmic scaling to prevent outliers from dominating
   const rankFormula = `(
+    ts_rank_cd(
+      tweets.search_tsv,
+      plainto_tsquery('simple', $1),
+      32
+    ) * 10.0 +
     log(greatest(tweets.like_count, 1)) * 1.5 +
     log(greatest(tweets.retweet_count, 1)) * 1.8 +
     log(greatest(tweets.reply_count, 1)) * 0.8 +
@@ -212,37 +207,11 @@ const executeTweetSearchQuery = async (
   const baseParams = [];
   const whereConditions = [];
 
-  // Optimized full-text search - use ILIKE with indexes or trigram similarity
-  // Better handling of multi-word queries
   if (q?.trim()) {
-    const searchTerm = q.trim();
-
-    // Handle exact phrase search (quoted)
-    if (searchTerm.startsWith('"') && searchTerm.endsWith('"')) {
-      const exactTerm = searchTerm.slice(1, -1);
-      whereConditions.push(`tweets.body ILIKE $${baseParams.length + 1}`);
-      baseParams.push(`%${exactTerm}%`);
-    } else {
-      // Multi-word search: split and search efficiently
-      const words = searchTerm.split(/\s+/).filter((w) => w.length > 1);
-
-      if (words.length === 1) {
-        // Single word - simple ILIKE
-        whereConditions.push(`tweets.body ILIKE $${baseParams.length + 1}`);
-        baseParams.push(`%${words[0]}%`);
-      } else if (words.length > 1) {
-        // Multiple words - search for all terms (AND logic)
-        // This is faster than individual ILIKEs when properly indexed
-        const wordConditions = words.map((word) => {
-          baseParams.push(`%${word}%`);
-          return `tweets.body ILIKE $${baseParams.length}`;
-        });
-        whereConditions.push(`(${wordConditions.join(" AND ")})`);
-      }
-    }
+    whereConditions.push(`tweets.search_tsv @@ plainto_tsquery('simple', $1)`);
+    baseParams.push(q.trim());
   }
 
-  // Add filter conditions (already parameterized)
   whereConditions.push(...conditions);
   baseParams.push(...params);
 
@@ -314,27 +283,19 @@ const formatTweetRows = (rows) => {
     if (row.media && typeof row.media === "string") {
       try {
         row.media = JSON.parse(row.media);
-      } catch {
-        // Already parsed or invalid
-      }
+      } catch {}
     }
 
-    // Format poll if present
     if (row.poll && typeof row.poll === "string") {
       try {
         row.poll = JSON.parse(row.poll);
-      } catch {
-        // Already parsed or invalid
-      }
+      } catch {}
     }
 
-    // Format embed if present
     if (row.embed && typeof row.embed === "string") {
       try {
         row.embed = JSON.parse(row.embed);
-      } catch {
-        // Already parsed or invalid
-      }
+      } catch {}
     }
 
     return Object.values(row);
@@ -347,7 +308,6 @@ const formatRows = (rows) => {
     delete row.rank;
     delete row.last_roi_discovery;
 
-    // Safely process avatar URL - validate it's from trusted domain
     if (
       row.avatar &&
       typeof row.avatar === "string" &&
@@ -357,11 +317,9 @@ const formatRows = (rows) => {
         .replace("_normal.", ";")
         .replace("https://pbs.twimg.com/profile_images/", "");
     } else if (row.avatar) {
-      // If avatar URL is not from trusted domain, clear it
       row.avatar = null;
     }
 
-    // Safely process banner URL - validate it's from trusted domain
     if (
       row.banner &&
       typeof row.banner === "string" &&
@@ -372,7 +330,6 @@ const formatRows = (rows) => {
         ""
       );
     } else if (row.banner) {
-      // If banner URL is not from trusted domain, clear it
       row.banner = null;
     }
 
@@ -397,7 +354,6 @@ export default new Elysia()
         return { error: "missing or invalid query" };
       }
 
-      // Validate cursor format if provided
       if (cursor && (typeof cursor !== "string" || cursor.length > 1000)) {
         return { error: "invalid cursor" };
       }
@@ -405,7 +361,6 @@ export default new Elysia()
       const { lastRank, lastUsername, lastTweetId } = decodeCursor(cursor);
 
       if (type === "tweets") {
-        // Separate author filters from tweet filters
         const authorFilterKeys = [
           "verified",
           "protected",
@@ -486,7 +441,6 @@ export default new Elysia()
         return result;
       }
 
-      // Original accounts search logic
       const filterData = buildFilterConditions(filters);
       const priorityOrder = buildPriorityOrder(filters);
 
@@ -537,7 +491,6 @@ export default new Elysia()
       return "NOT_FOUND";
     }
 
-    // Strict username validation - only alphanumeric and underscore, max 15 chars
     if (!/^[a-zA-Z0-9_]{1,15}$/.test(u)) {
       return Response.redirect(
         `https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png`
