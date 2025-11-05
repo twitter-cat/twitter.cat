@@ -19,13 +19,13 @@ export default new Elysia().get("/stats", async () => {
   statsCache = (
     await Promise.all([
       postgresReadOnly`
-    SELECT COUNT(*) FROM profiles;
+    SELECT reltuples::bigint AS estimate FROM pg_class WHERE relname = 'profiles';
   `,
       postgresReadOnly`
-    SELECT COUNT(*) FROM tweets;
+   SELECT reltuples::bigint AS estimate FROM pg_class WHERE relname = 'tweets';
   `,
     ])
-  ).map((res) => Number(res?.[0]?.count || 0));
+  ).map((res) => Number(res?.[0]?.estimate || 0));
 
   statsCacheTime = now;
 
