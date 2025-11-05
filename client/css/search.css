@@ -24,7 +24,7 @@
 
 .results .result.account .name {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 3px;
@@ -32,7 +32,7 @@
 }
 
 .results .result.account .username {
-  font-size: 15px;
+  font-size: 14px;
   margin-top: 0px;
   color: #71767a;
 }
