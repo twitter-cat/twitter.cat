@@ -836,7 +836,7 @@ const query = async (text, loadMore = false) => {
         if (result.reply_to_status_id) {
           const replyToDiv = document.createElement("div");
           replyToDiv.className = "reply-to";
-          replyToDiv.innerHTML = `<a href="https://x.com/i/status/${result.reply_to_status_id}">Replying to ${result.reply_to_status_id}</a>`;
+          replyToDiv.innerHTML = `<a href="https://x.com/i/status/${result.reply_to_status_id}" target="_blank">Replying to ${result.reply_to_status_id}</a>`;
           bodyDiv.prepend(replyToDiv);
         }
 
