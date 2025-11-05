@@ -734,7 +734,7 @@ const query = async (text, loadMore = false) => {
     hasMore = !!_results.cursor || false;
     currentCursor = _results.cursor || null;
 
-    results.forEach((result, i) => {
+    results.forEach((result) => {
       if (currentSearchType === "tweets") {
         const el = document.createElement("a");
         el.className = "result tweet";
@@ -829,92 +829,17 @@ const query = async (text, loadMore = false) => {
         authorSection.appendChild(avatar);
         authorSection.appendChild(authorInfo);
 
-        // Add hover card for author
-        let hoverTimeout;
-        let hoverCard = null;
-
-        authorSection.addEventListener("mouseenter", () => {
-          hoverTimeout = setTimeout(async () => {
-            try {
-              const response = await fetch(
-                `${API_URL}/profile/${result.author_username}`
-              );
-              const data = await response.json();
-
-              if (data.error) return;
-
-              hoverCard = document.createElement("div");
-              hoverCard.className = "profile-hover-card";
-              hoverCard.style.position = "absolute";
-              hoverCard.style.zIndex = "1000";
-
-              const rect = authorSection.getBoundingClientRect();
-              hoverCard.style.top = `${rect.bottom + window.scrollY + 8}px`;
-              hoverCard.style.left = `${rect.left + window.scrollX}px`;
-
-              hoverCard.innerHTML = `
-                <div class="hover-card-content">
-                  <div class="hover-card-header">
-                    <strong>${data.name || data.username}</strong>
-                    ${
-                      data.verified
-                        ? '<svg viewBox="0 0 22 22" width="16px"><path d="M16.5 3H2v18h15c3.038 0 5.5-2.46 5.5-5.5 0-1.4-.524-2.68-1.385-3.65-.08-.09-.089-.22-.023-.32.574-.87.908-1.91.908-3.03C22 5.46 19.538 3 16.5 3zm-.796 5.99c.457-.05.892-.17 1.296-.35-.302.45-.684.84-1.125 1.15.004.1.006.19.006.29 0 2.94-2.269 6.32-6.421 6.32-1.274 0-2.46-.37-3.459-1 .177.02.357.03.539.03 1.057 0 2.03-.35 2.803-.95-.988-.02-1.821-.66-2.109-1.54.138.03.28.04.425.04.206 0 .405-.03.595-.08-1.033-.2-1.811-1.1-1.811-2.18v-.03c.305.17.652.27 1.023.28-.606-.4-1.004-1.08-1.004-1.85 0-.4.111-.78.305-1.11 1.113 1.34 2.775 2.22 4.652 2.32-.038-.17-.058-.33-.058-.51 0-1.23 1.01-2.22 2.256-2.22.649 0 1.235.27 1.647.7.514-.1.997-.28 1.433-.54-.168.52-.526.96-.992 1.23z" fill="#1da1f2"></path></svg>'
-                        : ""
-                    }
-                  </div>
-                  <div class="hover-card-username">@${data.username}</div>
-                  ${
-                    data.bio
-                      ? `<div class="hover-card-bio">${data.bio}</div>`
-                      : ""
-                  }
-                  ${
-                    data.location
-                      ? `<div class="hover-card-location"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M12 7c-1.93 0-3.5 1.57-3.5 3.5S10.07 14 12 14s3.5-1.57 3.5-3.5S13.93 7 12 7zm0 5c-.827 0-1.5-.673-1.5-1.5S11.173 9 12 9s1.5.673 1.5 1.5S12.827 12 12 12zm0-10c-4.687 0-8.5 3.813-8.5 8.5 0 5.967 7.621 11.116 7.945 11.332l.555.37.555-.37c.324-.216 7.945-5.365 7.945-11.332C20.5 5.813 16.687 2 12 2zm0 17.77c-1.665-1.241-6.5-5.196-6.5-9.27C5.5 6.916 8.416 4 12 4s6.5 2.916 6.5 6.5c0 4.073-4.835 8.028-6.5 9.27z" fill="currentColor"></path></svg> ${data.location}</div>`
-                      : ""
-                  }
-                  <div class="hover-card-stats">
-                    <div><strong>${formatNumber(
-                      data.followers
-                    )}</strong> followers</div>
-                    <div><strong>${formatNumber(
-                      data.following
-                    )}</strong> following</div>
-                    <div><strong>${formatNumber(
-                      data.tweets
-                    )}</strong> tweets</div>
-                  </div>
-                  <div class="hover-card-dates">
-                    <div>Joined: ${new Date(
-                      data.created_at
-                    ).toLocaleDateString()}</div>
-                    <div>Indexed: ${new Date(
-                      data.added_at
-                    ).toLocaleDateString()}</div>
-                  </div>
-                </div>
-              `;
-
-              document.body.appendChild(hoverCard);
-            } catch (error) {
-              console.error("Failed to load profile hover card:", error);
-            }
-          }, 500);
-        });
-
-        authorSection.addEventListener("mouseleave", () => {
-          clearTimeout(hoverTimeout);
-          if (hoverCard) {
-            hoverCard.remove();
-            hoverCard = null;
-          }
-        });
-
         const bodyDiv = document.createElement("div");
         bodyDiv.className = "tweet-body";
         bodyDiv.innerHTML = linkifyTweetBody(result.body);
 
-        // Expand t.co links asynchronously without blocking - removed staggered delays
+        if (result.reply_to_status_id) {
+          const replyToDiv = document.createElement("div");
+          replyToDiv.className = "reply-to";
+          replyToDiv.innerHTML = `<a href="https://x.com/i/status/${result.reply_to_status_id}">Replying to ${result.reply_to_status_id}</a>`;
+          bodyDiv.prepend(replyToDiv);
+        }
+
         bodyDiv.querySelectorAll("a.tweet-link").forEach(async (el) => {
           const url = el.getAttribute("href");
 
@@ -932,7 +857,6 @@ const query = async (text, loadMore = false) => {
                 el.textContent = finalUrl;
               }
             } catch {
-              // Silently fail
             } finally {
               el.style.opacity = "1";
             }
@@ -958,7 +882,6 @@ const query = async (text, loadMore = false) => {
           mediaSection = document.createElement("div");
           mediaSection.className = "tweet-media";
 
-          // Display up to 2 images
           const mediaToDisplay = result.media.slice(0, 2);
           const isMultiple = mediaToDisplay.length > 1;
 
