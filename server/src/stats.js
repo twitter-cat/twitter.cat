@@ -7,7 +7,7 @@ const postgresReadOnly = new SQL(
 
 let statsCache = null;
 let statsCacheTime = 0;
-const STATS_CACHE_TTL = 60000;
+const STATS_CACHE_TTL = 30000;
 
 export default new Elysia().get("/stats", async () => {
   const now = Date.now();
