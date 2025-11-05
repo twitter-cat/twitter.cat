@@ -111,10 +111,9 @@ const executeSearchQuery = async (
   const { conditions, params } = filterData;
 
   const rankFormula = `(
-    ts_rank_cd(
-      search_tsv, 
-      plainto_tsquery('simple', $1),
-      32  -- Cover density ranking
+    GREATEST(
+      similarity(username, $1),
+      similarity(name, $1)
     ) * 10.0 +
     log(greatest(followers, 1)) * 0.8 +
     log(greatest(following, 1)) * 0.1 +
@@ -126,7 +125,7 @@ const executeSearchQuery = async (
 
   const baseParams = [q, ...params];
 
-  const whereConditions = [`search_tsv @@ plainto_tsquery('simple', $1)`];
+  const whereConditions = [`(username % $1 OR name % $1)`];
   whereConditions.push(...conditions);
 
   const orderParts =
@@ -181,11 +180,7 @@ const executeTweetSearchQuery = async (
   const { conditions, params } = filterData;
 
   const rankFormula = `(
-    ts_rank_cd(
-      tweets.search_tsv,
-      plainto_tsquery('simple', $1),
-      32
-    ) * 10.0 +
+    similarity(tweets.body, $1) * 10.0 +
     log(greatest(tweets.like_count, 1)) * 1.5 +
     log(greatest(tweets.retweet_count, 1)) * 1.8 +
     log(greatest(tweets.reply_count, 1)) * 0.8 +
@@ -208,7 +203,7 @@ const executeTweetSearchQuery = async (
   const whereConditions = [];
 
   if (q?.trim()) {
-    whereConditions.push(`tweets.search_tsv @@ plainto_tsquery('simple', $1)`);
+    whereConditions.push(`tweets.body % $1`);
     baseParams.push(q.trim());
   }
 
