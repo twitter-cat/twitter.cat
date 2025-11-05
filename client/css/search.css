@@ -180,7 +180,7 @@
 
 .author-info .name {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -207,6 +207,15 @@
   word-break: break-word;
   overflow-wrap: anywhere;
   margin-bottom: 12px;
+}
+
+.reply-to a {
+  font-size: 13px;
+  color: #71767a;
+  margin-top: -8px;
+  display: block;
+  width: fit-content;
+  margin-bottom: 2px;
 }
 
 .tweet-body .tweet-link {
