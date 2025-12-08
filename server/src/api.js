@@ -9,11 +9,11 @@ import {
 } from "./filters.js";
 
 const postgresReadOnly = new SQL(
-  `postgres://${process.env.POSTGRES_USER_READONLY}:${process.env.POSTGRES_PASSWORD_READONLY}@${process.env.POSTGRES_HOST}:5432/twitter`
+  `postgres://${process.env.POSTGRES_USER_READONLY}:${process.env.POSTGRES_PASSWORD_READONLY}@${process.env.POSTGRES_HOST}:5432/twitter`,
 );
 
 const postgresReadWrite = new SQL(
-  `postgres://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:5432/twitter`
+  `postgres://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:5432/twitter`,
 );
 
 const DEFAULT_LIMIT = 20;
@@ -71,7 +71,7 @@ const decodeCursor = (cursor) => {
   }
 
   const decoded = JSON.parse(
-    Buffer.from(base64urlDecodeToBuffer(payloadB64url), "latin1").toString()
+    Buffer.from(base64urlDecodeToBuffer(payloadB64url), "latin1").toString(),
   );
 
   if (decoded.length === 2) {
@@ -106,7 +106,7 @@ const executeSearchQuery = async (
   filterData,
   priorityOrder,
   lastRank,
-  lastUsername
+  lastUsername,
 ) => {
   const { conditions, params } = filterData;
 
@@ -175,7 +175,7 @@ const executeTweetSearchQuery = async (
   filterData,
   priorityOrder,
   lastRank,
-  lastTweetId
+  lastTweetId,
 ) => {
   const { conditions, params } = filterData;
 
@@ -264,7 +264,7 @@ const executeTweetSearchQuery = async (
     row.media = JSON.stringify(
       JSON.parse(row.media || "[]")?.filter((media) => {
         return media.url && media.url !== "null";
-      })
+      }),
     );
 
     return row;
@@ -322,7 +322,7 @@ const formatRows = (rows) => {
     ) {
       row.banner = row.banner.replace(
         "https://pbs.twimg.com/profile_banners/",
-        ""
+        "",
       );
     } else if (row.banner) {
       row.banner = null;
@@ -339,6 +339,12 @@ export default new Elysia()
 
       if (type === "dummy") {
         return "OK";
+      }
+
+      if (process.env.SEARCH_DISABLED === "true") {
+        return {
+          error: `search has been temporarily disabled so we can focus on scraping without having to deal with api abuse and db load. sorry for the inconvenience!\n\nfor more updates, follow <a target="_blank" href="https://x.com/twittdotcat">@twittdotcat</a> on x.`,
+        };
       }
 
       if (!["accounts", "tweets"].includes(type)) {
@@ -396,7 +402,7 @@ export default new Elysia()
 
         const filterData = buildTweetFilterConditions(
           tweetFilters,
-          authorFilters
+          authorFilters,
         );
         const priorityOrder = buildTweetPriorityOrder(tweetFilters);
 
@@ -405,7 +411,7 @@ export default new Elysia()
           filterData,
           priorityOrder,
           lastRank,
-          lastTweetId
+          lastTweetId,
         );
 
         let hasMore = false;
@@ -444,7 +450,7 @@ export default new Elysia()
         filterData,
         priorityOrder,
         lastRank,
-        lastUsername
+        lastUsername,
       );
 
       let hasMore = false;
@@ -488,7 +494,7 @@ export default new Elysia()
 
     if (!/^[a-zA-Z0-9_]{1,15}$/.test(u)) {
       return Response.redirect(
-        `https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png`
+        `https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png`,
       );
     }
 
@@ -500,7 +506,7 @@ export default new Elysia()
 
     if (!userExists[0]?.exists) {
       return Response.redirect(
-        `https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png`
+        `https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png`,
       );
     }
 
@@ -525,20 +531,20 @@ export default new Elysia()
       ).text();
     } catch {
       return Response.redirect(
-        `https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png`
+        `https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png`,
       );
     }
 
     const arr = html.split('<meta content="').slice(4, -6);
 
     const bioMatch = arr.find((a) =>
-      a?.trim()?.endsWith(`" property="og:description" />`)
+      a?.trim()?.endsWith(`" property="og:description" />`),
     );
     const bio =
       bioMatch?.replace(`" property="og:description" />`, "")?.trim() || "";
 
     const pfpMatch = arr.find((a) =>
-      a?.trim()?.endsWith(`" property="og:image" />`)
+      a?.trim()?.endsWith(`" property="og:image" />`),
     );
     const pfp =
       pfpMatch
@@ -548,7 +554,7 @@ export default new Elysia()
       `https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png`;
 
     const nameMatch = arr.find((a) =>
-      a?.trim()?.endsWith(`" property="og:title" />`)
+      a?.trim()?.endsWith(`" property="og:title" />`),
     );
     const name =
       nameMatch
@@ -558,7 +564,7 @@ export default new Elysia()
 
     if (!name && !bio && !pfp) {
       return Response.redirect(
-        `https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png`
+        `https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png`,
       );
     }
 
