@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>live / twitter.cat</title>
+
+    <meta charset="UTF-8" />
+
+    <meta property="og:type" content="image" />
+    <link rel="icon" type="image/x-icon" href="/assets/svgs/face.svg" />
+
+    <meta itemprop="name" content="twitter (dot) cat" />
+    <meta name="description" content="small tools for twitter" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="twitter (dot) cat" />
+    <meta name="twitter:site" content="@cvsilly_" />
+    <meta name="twitter:description" content="small tools for twitter" />
+    <meta
+      name="twitter:image"
+      content="https://twitter.cat/assets/images/bouncing.gif"
+    />
+
+    <style>
+      html {
+        scrollbar-width: thin;
+        scrollbar-color: hsla(255 0 255 / 15%) #14171a;
+      }
+
+      body {
+        padding-top: 64px;
+        margin: 0;
+        background-color: #14171a;
+        color: white;
+
+        font-family: "chirp", sans-serif;
+        font-size: 16px;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        display: flex;
+        flex-direction: column;
+        color-scheme: dark;
+        max-width: 100vw;
+      }
+      header {
+        height: 64px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background-color: #14171a;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        display: flex;
+        align-items: center;
+
+        .logo {
+          display: block;
+          width: fit-content;
+          text-decoration: none;
+          transition: opacity 0.2s, transform 0.1s;
+        }
+
+        .logo:hover {
+          opacity: 0.8;
+        }
+
+        .logo:active {
+          transform: scale(0.95);
+        }
+
+        .logo img {
+          width: 34px;
+        }
+      }
+      main {
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        max-width: 928px;
+        width: 100%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .stats {
+        display: flex;
+        gap: 4rem;
+        margin-bottom: 3rem;
+
+        div {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+
+          span {
+            color: #9c9da0;
+            letter-spacing: 0.025em;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            line-height: 1rem;
+          }
+
+          p {
+            font-size: 2.25rem;
+            line-height: 2.5rem;
+            margin: 0px;
+            font-weight: 700;
+            font-family: "IBM Plex Mono", monospace;
+          }
+        }
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        line-height: 2rem;
+        color: #9e9e9e;
+        font-weight: 400;
+        margin-bottom: 1.5rem;
+
+        b {
+          color: white;
+          font-weight: 500;
+        }
+      }
+
+      .skeleton {
+        display: inline-block;
+
+        background: linear-gradient(
+          90deg,
+          rgba(158, 158, 158, 0.08) 0%,
+          rgba(158, 158, 158, 0.14) 20%,
+          rgba(158, 158, 158, 0.08) 40%
+        );
+        background-size: 200% 100%;
+        border-radius: 4px;
+        pointer-events: none;
+        margin-bottom: -7px;
+        animation: skeleton-shimmer 1.4s infinite linear;
+      }
+
+      @keyframes skeleton-shimmer {
+        0% {
+          background-position: -200% 0;
+        }
+
+        100% {
+          background-position: 200% 0;
+        }
+      }
+
+      .tweets-table {
+        border: 1px solid #2f3336;
+        border-radius: 8px;
+        overflow: hidden;
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1em;
+      }
+
+      .tweets-table th {
+        text-align: left;
+        font-weight: 700;
+        font-size: 13px;
+        color: #9c9da0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding-bottom: 7px;
+      }
+
+      .tweets-table th.stat-col {
+        text-align: center;
+        width: 80px;
+      }
+
+      .tweets-table td {
+        padding: 12px;
+        vertical-align: top;
+        padding-left: 0px;
+        padding-right: 0px;
+      }
+
+      .author-cell {
+        width: 185px;
+        min-width: 185px;
+      }
+
+      .author-cell a {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+      }
+
+      .tweet-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+      }
+
+      .tweet-name {
+        color: white;
+        font-weight: 500;
+        font-size: 15px;
+        display: block;
+      }
+
+      .content-cell {
+        color: #e7e9ea;
+        font-size: 15px;
+        line-height: 20px;
+        word-wrap: break-word;
+        max-width: 500px;
+      }
+
+      .content-cell .media-preview {
+        margin-top: 8px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #2f3336;
+      }
+
+      .content-cell .media-preview img {
+        width: 100%;
+        max-width: 300px;
+        height: auto;
+        display: block;
+      }
+
+      .time-cell {
+        color: #9e9e9e;
+        font-size: 15px;
+        white-space: nowrap;
+        text-align: right;
+        font-weight: 500;
+      }
+
+      .time-cell a {
+        color: #9e9e9e;
+        text-decoration: none;
+      }
+
+      .time-cell a:hover {
+        color: white;
+      }
+
+      br,
+      svg,
+      img[draggable="false"],
+      .white,
+      .word {
+        user-select: none;
+        pointer-events: none;
+      }
+
+      @font-face {
+        font-family: "chirp";
+        src: url("../assets/fonts/chirp.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "chirp";
+        src: url("../assets/fonts/chirpmedium.woff2") format("woff2");
+        font-weight: 500;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "chirp";
+        src: url("../assets/fonts/chirpbold.woff2") format("woff2");
+        font-weight: 700;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "chirp";
+        src: url("../assets/fonts/chirpheavy.woff2") format("woff2");
+        font-weight: 900;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "IBM Plex Mono";
+        src: url("../assets/fonts/ibm-plex-mono.woff2") format("woff2");
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="/" class="logo" draggable="false">
+        <img src="assets/svgs/kitty.svg" draggable="false" />
+      </a>
+    </header>
+    <main>
+      <div class="stats">
+        <div class="count tweets">
+          <span>Total Tweets</span>
+          <p>
+            <span class="skeleton" style="width: 194px; height: 40px"></span>
+          </p>
+        </div>
+
+        <div class="count accounts">
+          <span>Total Accounts</span>
+          <p>
+            <span class="skeleton" style="width: 194px; height: 40px"></span>
+          </p>
+        </div>
+      </div>
+
+      <h1>
+        <b><span class="skeleton" style="width: 80px; height: 29px"></span></b>
+        tweets crawled in the last hour
+      </h1>
+
+      <table class="tweets-table">
+        <thead>
+          <tr>
+            <th>Author</th>
+            <th>Content</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </main>
+  </body>
+  <script>
+    let currentPage = 0;
+    const MAX_PAGES = 20;
+    let isLoading = false;
+    let oldestTimestamp = null;
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatNumber(num) {
+      if (!num) return "";
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + "M";
+      } else if (num >= 1000) {
+        return (num / 1000).toFixed(1) + "K";
+      }
+      return num.toString();
+    }
+
+    function getTimeAgo(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+
+      const seconds = Math.floor((now - date) / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+
+      if (seconds < 60) {
+        return `${seconds}s ago`;
+      } else if (minutes < 60) {
+        return `${minutes}m ago`;
+      } else if (hours < 24) {
+        return `${hours}h ago`;
+      }
+
+      return `${days}d ago`;
+    }
+
+    const getTweetsHTML = (tweets) => {
+      return tweets
+        .map((tweet) => {
+          const safeName = escapeHtml(tweet.name);
+          const safeUsername = escapeHtml(tweet.username);
+          const safeBody = escapeHtml(tweet.body);
+          const safeAvatar = escapeHtml(tweet.avatar);
+
+          let mediaHtml = "";
+          if (tweet.media && tweet.media !== "[]") {
+            try {
+              const mediaArray = JSON.parse(tweet.media);
+              if (mediaArray && mediaArray.length > 0 && mediaArray[0].url) {
+                const mediaUrl = escapeHtml(mediaArray[0].url);
+                mediaHtml = `<div class="media-preview"><img src="${mediaUrl}" alt="Media" /></div>`;
+              }
+            } catch (e) {
+              console.log("Error parsing media:", e);
+            }
+          }
+
+          const indexedAgo = getTimeAgo(tweet.added_at);
+
+          return `
+              <tr>
+                <td>
+                  <div class="author-cell">
+                  <a href="https://x.com/i/user/${
+                    tweet.author_id
+                  }" target="_blank" rel="noopener noreferrer">
+                    <img src="${safeAvatar}" class="tweet-avatar" alt="Avatar" onerror="this.src = 'https://upload.wikimedia.org/wikipedia/commons/0/03/Twitter_default_profile_400x400.png'" />
+                    <span class="tweet-name">${
+                      safeName || `@${safeUsername}`
+                    }</span>
+                  </a>
+                  </div>
+                </td>
+                <td class="content-cell">${safeBody}${mediaHtml}</td>
+                <td class="time-cell"><a href="https://x.com/i/status/${
+                  tweet.id
+                }" target="_blank" rel="noopener noreferrer" data-time="${
+            tweet.added_at
+          }">${indexedAgo}</a></td>
+              </tr>
+            `;
+        })
+        .join("");
+    };
+
+    (async () => {
+      const API_URL =
+        window.API_URL ||
+        (await import("./js/config.js").then(({ API_URL }) => API_URL));
+
+      fetch(`${API_URL}/stats`)
+        .then((res) => res.json())
+        .then(([accounts, tweets]) => {
+          document.querySelector(".count.tweets p").innerText =
+            Number(tweets).toLocaleString();
+          document.querySelector(".count.accounts p").innerText =
+            Number(accounts).toLocaleString();
+        });
+
+      fetch(`${API_URL}/live/lh`)
+        .then((res) => res.json())
+        .then((data) => {
+          document.querySelector("h1").innerHTML = `<b>${Number(
+            data.lastHour
+          ).toLocaleString()}</b> tweets crawled in the last hour`;
+        });
+
+      fetch(`${API_URL}/live/tweets`)
+        .then((res) => res.json())
+        .then(({ tweets, hash }) => {
+          document.querySelector(".tweets-table tbody").innerHTML =
+            getTweetsHTML(tweets);
+
+          let lastHash = hash;
+
+          setInterval(() => {
+            document.querySelectorAll("[data-time]").forEach((cell) => {
+              const time = cell.getAttribute("data-time");
+              cell.innerHTML = getTimeAgo(time);
+            });
+          }, 4000);
+
+          setInterval(() => {
+            fetch(`${API_URL}/live/tweets?hash=${lastHash}`)
+              .then((res) => res.json())
+              .then(({ hash, tweets }) => {
+                if (tweets.length > 0) {
+                  document.querySelector(".tweets-table tbody").innerHTML =
+                    getTweetsHTML(tweets);
+                }
+                lastHash = hash;
+              });
+          }, 2000);
+        });
+
+      // Infinite scroll functionality
+      async function loadMoreTweets() {
+        if (isLoading || currentPage >= MAX_PAGES) {
+          return;
+        }
+
+        isLoading = true;
+        currentPage++;
+
+        try {
+          const url = oldestTimestamp
+            ? `${API_URL}/live/tweets?cursor=${oldestTimestamp}`
+            : `${API_URL}/live/tweets`;
+
+          const response = await fetch(url);
+          const { tweets } = await response.json();
+
+          if (!tweets || tweets.length === 0) {
+            const sentinelEl = document.querySelector(".load-sentinel");
+            if (sentinelEl) {
+              sentinelEl.remove();
+            }
+            return;
+          }
+
+          const lastTweet = tweets[tweets.length - 1];
+          oldestTimestamp = lastTweet.added_at;
+
+          const tbody = document.querySelector(".tweets-table tbody");
+          tbody.innerHTML += getTweetsHTML(tweets);
+
+          document.querySelectorAll("[data-time]").forEach((cell) => {
+            const time = cell.getAttribute("data-time");
+            cell.innerHTML = getTimeAgo(time);
+          });
+
+          if (currentPage >= MAX_PAGES) {
+            const sentinelEl = document.querySelector(".load-sentinel");
+            if (sentinelEl) {
+              sentinelEl.remove();
+            }
+
+            const maxPagesMsg = document.createElement("div");
+            maxPagesMsg.style.cssText = `
+              text-align: center;
+              padding: 2rem;
+              color: #9e9e9e;
+              font-size: 14px;
+            `;
+            maxPagesMsg.textContent =
+              "Sorry, we can't show more pages right now.";
+            document.querySelector("main").appendChild(maxPagesMsg);
+          }
+        } catch (error) {
+          console.error("Error loading more tweets:", error);
+        } finally {
+          isLoading = false;
+        }
+      }
+
+      const sentinel = document.createElement("div");
+      sentinel.className = "load-sentinel";
+      sentinel.style.cssText = "height: 1px; margin: 20px 0;";
+      document.querySelector("main").appendChild(sentinel);
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !isLoading && currentPage < MAX_PAGES) {
+              loadMoreTweets();
+            }
+          });
+        },
+        { rootMargin: "100px" }
+      );
+
+      observer.observe(sentinel);
+    })();
+  </script>
+</html>
