@@ -43,6 +43,10 @@ WHERE added_at > NOW() - INTERVAL '1 hour';`;
 }).get("/live/tweets", async ({ query }) => {
   const { hash, cursor } = query;
 
+  if (cursor && Date.now() - new Date(cursor).getTime() > 172800000) {
+    return { tweets: [], hash: 0 };
+  }
+
   let tweets;
 
   if (cursor) {
