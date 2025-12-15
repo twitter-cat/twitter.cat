@@ -28,6 +28,7 @@
       html {
         scrollbar-width: thin;
         scrollbar-color: hsla(255 0 255 / 15%) #14171a;
+        overflow-x: hidden;
       }
 
       body {
@@ -44,6 +45,7 @@
         flex-direction: column;
         color-scheme: dark;
         max-width: 100vw;
+        overflow-x: hidden;
       }
       header {
         height: 64px;
@@ -51,7 +53,13 @@
         top: 0;
         left: 0;
         right: 0;
-        background-color: #14171a;
+        /* background-color: #14171a; */
+        background: linear-gradient(
+          180deg,
+          rgba(20, 23, 26, 1) 0%,
+          rgba(20, 23, 26, 0) 100%
+        );
+
         padding-left: 1rem;
         padding-right: 1rem;
         display: flex;
@@ -156,9 +164,9 @@
       }
 
       .tweets-table {
-        border: 1px solid #2f3336;
-        border-radius: 8px;
-        overflow: hidden;
+        max-width: calc(100vw - 2rem);
+        overflow-x: auto;
+        display: block;
         width: 100%;
         border-collapse: collapse;
         margin-top: 1em;
@@ -184,6 +192,7 @@
         vertical-align: top;
         padding-left: 0px;
         padding-right: 0px;
+        cursor: pointer;
       }
 
       .author-cell {
@@ -293,6 +302,18 @@
         font-family: "IBM Plex Mono";
         src: url("../assets/fonts/ibm-plex-mono.woff2") format("woff2");
       }
+
+      @media (max-width: 600px) {
+        .stats {
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+
+        .author-cell {
+          width: 140px;
+          min-width: 140px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -346,16 +367,6 @@
       return div.innerHTML;
     }
 
-    function formatNumber(num) {
-      if (!num) return "";
-      if (num >= 1000000) {
-        return (num / 1000000).toFixed(1) + "M";
-      } else if (num >= 1000) {
-        return (num / 1000).toFixed(1) + "K";
-      }
-      return num.toString();
-    }
-
     function getTimeAgo(dateString) {
       const date = new Date(dateString);
       const now = new Date();
@@ -366,17 +377,73 @@
       const days = Math.floor(hours / 24);
 
       if (seconds < 60) {
-        return `${seconds}s ago`;
+        return `${seconds}s`;
       } else if (minutes < 60) {
-        return `${minutes}m ago`;
+        return `${minutes}m`;
       } else if (hours < 24) {
-        return `${hours}h ago`;
+        return `${hours}h`;
       }
 
-      return `${days}d ago`;
+      return `${days}d`;
     }
 
     const getTweetsHTML = (tweets) => {
+      setTimeout(() => {
+        document.querySelectorAll("[data-tweet-id]").forEach((cell) => {
+          cell.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = cell.getAttribute("data-tweet-id");
+
+            window.open(`https://x.com/i/status/${id}`, "_blank");
+
+            /*
+            const modal = document.createElement("div");
+
+            window.onmessage = (e) => {
+              const data = e.data["twttr.embed"]?.params?.[0];
+
+              if (data?.data?.tweet_id === id) {
+                modal.querySelector("iframe").style.height = `${data.height}px`;
+                modal.querySelector("iframe").style.width = `${data.width}px`;
+
+                const screenHeight = window.innerHeight;
+
+                if (data.height > screenHeight) {
+                  modal.querySelector("iframe").style.height = `${screenHeight - 80}px`;
+                  modal.querySelector("iframe").setAttribute("scrolling", "yes");
+
+                  window.onmessage = () => {}
+                }
+              }
+            };
+
+            modal.className = "modal";
+            modal.innerHTML = `
+            <iframe src="https://platform.twitter.com/embed/Tweet.html?dnt=false&embedId=twitter-widget-1&features=eyJ0ZndfdGltZWxpbmVfbGlzdCI6eyJidWNrZXQiOltdLCJ2ZXJzaW9uIjpudWxsfSwidGZ3X2ZvbGxvd2VyX2NvdW50X3N1bnNldCI6eyJidWNrZXQiOnRydWUsInZlcnNpb24iOm51bGx9LCJ0ZndfdHdlZXRfZWRpdF9iYWNrZW5kIjp7ImJ1Y2tldCI6Im9uIiwidmVyc2lvbiI6bnVsbH0sInRmd19yZWZzcmNfc2Vzc2lvbiI6eyJidWNrZXQiOiJvbiIsInZlcnNpb24iOm51bGx9LCJ0ZndfZm9zbnJfc29mdF9pbnRlcnZlbnRpb25zX2VuYWJsZWQiOnsiYnVja2V0Ijoib24iLCJ2ZXJzaW9uIjpudWxsfSwidGZ3X21peGVkX21lZGlhXzE1ODk3Ijp7ImJ1Y2tldCI6InRyZWF0bWVudCIsInZlcnNpb24iOm51bGx9LCJ0ZndfZXhwZXJpbWVudHNfY29va2llX2V4cGlyYXRpb24iOnsiYnVja2V0IjoxMjA5NjAwLCJ2ZXJzaW9uIjpudWxsfSwidGZ3X3Nob3dfYmlyZHdhdGNoX3Bpdm90c19lbmFibGVkIjp7ImJ1Y2tldCI6Im9uIiwidmVyc2lvbiI6bnVsbH0sInRmd19kdXBsaWNhdGVfc2NyaWJlc190b19zZXR0aW5ncyI6eyJidWNrZXQiOiJvbiIsInZlcnNpb24iOm51bGx9LCJ0ZndfdXNlX3Byb2ZpbGVfaW1hZ2Vfc2hhcGVfZW5hYmxlZCI6eyJidWNrZXQiOiJvbiIsInZlcnNpb24iOm51bGx9LCJ0ZndfdmlkZW9faGxzX2R5bmFtaWNfbWFuaWZlc3RzXzE1MDgyIjp7ImJ1Y2tldCI6InRydWVfYml0cmF0ZSIsInZlcnNpb24iOm51bGx9LCJ0ZndfbGVnYWN5X3RpbWVsaW5lX3N1bnNldCI6eyJidWNrZXQiOnRydWUsInZlcnNpb24iOm51bGx9LCJ0ZndfdHdlZXRfZWRpdF9mcm9udGVuZCI6eyJidWNrZXQiOiJvbiIsInZlcnNpb24iOm51bGx9fQ%3D%3D&frame=false&hideCard=false&hideThread=false&id=${id}&lang=en&origin=https%3A%2F%2Fpublish.twitter.com%2F%23&sessionId=1&theme=dark&widgetsVersion=2615f7e52b7e0%3A1702314776716&width=550px" style="border: none; width: 550px; height: 321px;border-radius: 12px; max-height: 100vh;" scrolling="no" frameborder="0" allowtransparency="true" allowfullscreen="true" title="X Post"></iframe>`;
+            document.body.appendChild(modal);
+
+            modal.addEventListener("click", () => {
+              modal.remove();
+            });
+
+            modal.style.cssText = `
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: rgba(0, 0, 0, 0.5);
+              z-index: 1000;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+            `;*/
+          });
+        });
+      }, 10);
+      
       return tweets
         .map((tweet) => {
           const safeName = escapeHtml(tweet.name);
@@ -400,7 +467,7 @@
           const indexedAgo = getTimeAgo(tweet.added_at);
 
           return `
-              <tr>
+              <tr data-tweet-id="${tweet.id}">
                 <td>
                   <div class="author-cell">
                   <a href="https://x.com/i/user/${
@@ -466,7 +533,7 @@
             fetch(`${API_URL}/live/tweets?hash=${lastHash}`)
               .then((res) => res.json())
               .then(({ hash, tweets }) => {
-                if (tweets.length > 0) {
+                if (tweets?.length > 0) {
                   document.querySelector(".tweets-table tbody").innerHTML =
                     getTweetsHTML(tweets);
                 }
@@ -475,7 +542,6 @@
           }, 2000);
         });
 
-      // Infinite scroll functionality
       async function loadMoreTweets() {
         if (isLoading || currentPage >= MAX_PAGES) {
           return;
@@ -537,7 +603,37 @@
 
       const sentinel = document.createElement("div");
       sentinel.className = "load-sentinel";
-      sentinel.style.cssText = "height: 1px; margin: 20px 0;";
+      sentinel.innerHTML = `
+      <div style="text-align: center; margin-top: 2em">
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <style>
+            .spinner_ajPY {
+              transform-origin: center;
+              animation: spinner_AtaB 0.5s infinite linear;
+            }
+            @keyframes spinner_AtaB {
+              100% {
+                transform: rotate(360deg);
+              }
+            }
+          </style>
+          <path
+            d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z"
+            opacity=".25"
+            fill="#1EA1F1"
+          />
+          <path
+            d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z"
+            fill="#1EA1F1"
+            class="spinner_ajPY"
+          />
+        </svg>
+      </div>`;
       document.querySelector("main").appendChild(sentinel);
 
       const observer = new IntersectionObserver(
@@ -548,7 +644,7 @@
             }
           });
         },
-        { rootMargin: "100px" }
+        { rootMargin: "300px" }
       );
 
       observer.observe(sentinel);

@@ -116,7 +116,6 @@
         background: none;
         border: none;
         color: white;
-        font-size: 1.2em;
         padding: 0;
         cursor: pointer;
         width: 100%;
@@ -252,7 +251,7 @@
           const tabs = document.querySelectorAll(".tabs button");
           tabs.forEach((tab) => {
             tab.addEventListener("click", () => {
-              tabs.forEach((t) => t.classList.remove("active"));
+              tabs.forEach((t) => { t.classList.remove("active") });
               tab.classList.add("active");
 
               document

@@ -602,7 +602,7 @@ export default new Elysia()
       }
 
       return profile[0];
-    } catch (error) {
+    } catch {
       return { error: "failed to fetch profile" };
     }
   });
