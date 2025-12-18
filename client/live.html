@@ -358,8 +358,8 @@
   <script>
     let isLoadingMore = false;
     let oldestTimestamp = null;
-    let loadedTweetIds = new Set();
-    let isAutoRefreshing = true;
+    const loadedTweetIds = new Set();
+    const isAutoRefreshing = true;
 
     function escapeHtml(text) {
       const div = document.createElement("div");
@@ -388,21 +388,23 @@
     }
 
     function attachTweetClickHandlers() {
-      document.querySelectorAll("[data-tweet-id]:not([data-click-attached])").forEach((cell) => {
-        cell.setAttribute("data-click-attached", "true");
-        cell.addEventListener("click", (e) => {
-          if (e.target.tagName === 'A') return;
-          e.preventDefault();
-          e.stopPropagation();
-          const id = cell.getAttribute("data-tweet-id");
-          window.open(`https://x.com/i/status/${id}`, "_blank");
+      document
+        .querySelectorAll("[data-tweet-id]:not([data-click-attached])")
+        .forEach((cell) => {
+          cell.setAttribute("data-click-attached", "true");
+          cell.addEventListener("click", (e) => {
+            if (e.target.tagName === "A") return;
+            e.preventDefault();
+            e.stopPropagation();
+            const id = cell.getAttribute("data-tweet-id");
+            window.open(`https://x.com/i/status/${id}`, "_blank");
+          });
         });
-      });
     }
 
     const getTweetsHTML = (tweets) => {
       setTimeout(attachTweetClickHandlers, 10);
-      
+
       return tweets
         .map((tweet) => {
           const safeName = escapeHtml(tweet.name);
@@ -477,16 +479,17 @@
 
       // Load initial tweets
       const initialResponse = await fetch(`${API_URL}/live/tweets`);
-      const { tweets: initialTweets, hash: lastHash } = await initialResponse.json();
-      
+      const { tweets: initialTweets, hash: lastHash } =
+        await initialResponse.json();
+
       // Track loaded tweets
-      initialTweets.forEach(tweet => loadedTweetIds.add(tweet.id));
-      
+      initialTweets.forEach((tweet) => loadedTweetIds.add(tweet.id));
+
       // Set oldest timestamp for pagination
       if (initialTweets.length > 0) {
         oldestTimestamp = initialTweets[initialTweets.length - 1].added_at;
       }
-      
+
       const tbody = document.querySelector(".tweets-table tbody");
       tbody.innerHTML = getTweetsHTML(initialTweets);
 
@@ -502,33 +505,37 @@
       let currentHash = lastHash;
       setInterval(async () => {
         if (!isAutoRefreshing) return;
-        
+
         try {
-          const response = await fetch(`${API_URL}/live/tweets?hash=${currentHash}`);
+          const response = await fetch(
+            `${API_URL}/live/tweets?hash=${currentHash}`
+          );
           const data = await response.json();
-          
+
           // Update hash
           if (data.hash) {
             currentHash = data.hash;
           }
-          
+
           // If there are new tweets, replace the top portion
           if (data.tweets && data.tweets.length > 0) {
-            const newTweets = data.tweets.filter(tweet => !loadedTweetIds.has(tweet.id));
-            
+            const newTweets = data.tweets.filter(
+              (tweet) => !loadedTweetIds.has(tweet.id)
+            );
+
             if (newTweets.length > 0) {
               // Add new tweet IDs to tracking
-              newTweets.forEach(tweet => loadedTweetIds.add(tweet.id));
-              
+              newTweets.forEach((tweet) => loadedTweetIds.add(tweet.id));
+
               // Prepend new tweets to the table
               const tbody = document.querySelector(".tweets-table tbody");
-              tbody.insertAdjacentHTML('afterbegin', getTweetsHTML(newTweets));
-              
+              tbody.insertAdjacentHTML("afterbegin", getTweetsHTML(newTweets));
+
               // Keep only the most recent 200 tweets in view
-              const allRows = tbody.querySelectorAll('tr');
+              const allRows = tbody.querySelectorAll("tr");
               if (allRows.length > 200) {
                 for (let i = 200; i < allRows.length; i++) {
-                  const removedId = allRows[i].getAttribute('data-tweet-id');
+                  const removedId = allRows[i].getAttribute("data-tweet-id");
                   if (removedId) loadedTweetIds.delete(removedId);
                   allRows[i].remove();
                 }
@@ -549,7 +556,9 @@
         isLoadingMore = true;
 
         try {
-          const response = await fetch(`${API_URL}/live/tweets?cursor=${oldestTimestamp}`);
+          const response = await fetch(
+            `${API_URL}/live/tweets?cursor=${oldestTimestamp}`
+          );
           const { tweets } = await response.json();
 
           if (!tweets || tweets.length === 0) {
@@ -561,18 +570,20 @@
           }
 
           // Filter out duplicates
-          const newTweets = tweets.filter(tweet => !loadedTweetIds.has(tweet.id));
-          
+          const newTweets = tweets.filter(
+            (tweet) => !loadedTweetIds.has(tweet.id)
+          );
+
           if (newTweets.length > 0) {
             // Track new tweets
-            newTweets.forEach(tweet => loadedTweetIds.add(tweet.id));
-            
+            newTweets.forEach((tweet) => loadedTweetIds.add(tweet.id));
+
             // Update oldest timestamp
             oldestTimestamp = newTweets[newTweets.length - 1].added_at;
 
             // Append to table
             const tbody = document.querySelector(".tweets-table tbody");
-            tbody.insertAdjacentHTML('beforeend', getTweetsHTML(newTweets));
+            tbody.insertAdjacentHTML("beforeend", getTweetsHTML(newTweets));
           } else if (tweets.length > 0) {
             // All tweets were duplicates, update cursor and try again
             oldestTimestamp = tweets[tweets.length - 1].added_at;
