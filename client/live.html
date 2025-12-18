@@ -356,10 +356,10 @@
     </main>
   </body>
   <script>
-    let currentPage = 0;
-    const MAX_PAGES = 20;
-    let isLoading = false;
+    let isLoadingMore = false;
     let oldestTimestamp = null;
+    let loadedTweetIds = new Set();
+    let isAutoRefreshing = true;
 
     function escapeHtml(text) {
       const div = document.createElement("div");
@@ -387,62 +387,21 @@
       return `${days}d`;
     }
 
-    const getTweetsHTML = (tweets) => {
-      setTimeout(() => {
-        document.querySelectorAll("[data-tweet-id]").forEach((cell) => {
-          cell.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const id = cell.getAttribute("data-tweet-id");
-
-            window.open(`https://x.com/i/status/${id}`, "_blank");
-
-            /*
-            const modal = document.createElement("div");
-
-            window.onmessage = (e) => {
-              const data = e.data["twttr.embed"]?.params?.[0];
-
-              if (data?.data?.tweet_id === id) {
-                modal.querySelector("iframe").style.height = `${data.height}px`;
-                modal.querySelector("iframe").style.width = `${data.width}px`;
-
-                const screenHeight = window.innerHeight;
-
-                if (data.height > screenHeight) {
-                  modal.querySelector("iframe").style.height = `${screenHeight - 80}px`;
-                  modal.querySelector("iframe").setAttribute("scrolling", "yes");
-
-                  window.onmessage = () => {}
-                }
-              }
-            };
-
-            modal.className = "modal";
-            modal.innerHTML = `
-            <iframe src="https://platform.twitter.com/embed/Tweet.html?dnt=false&embedId=twitter-widget-1&features=eyJ0ZndfdGltZWxpbmVfbGlzdCI6eyJidWNrZXQiOltdLCJ2ZXJzaW9uIjpudWxsfSwidGZ3X2ZvbGxvd2VyX2NvdW50X3N1bnNldCI6eyJidWNrZXQiOnRydWUsInZlcnNpb24iOm51bGx9LCJ0ZndfdHdlZXRfZWRpdF9iYWNrZW5kIjp7ImJ1Y2tldCI6Im9uIiwidmVyc2lvbiI6bnVsbH0sInRmd19yZWZzcmNfc2Vzc2lvbiI6eyJidWNrZXQiOiJvbiIsInZlcnNpb24iOm51bGx9LCJ0ZndfZm9zbnJfc29mdF9pbnRlcnZlbnRpb25zX2VuYWJsZWQiOnsiYnVja2V0Ijoib24iLCJ2ZXJzaW9uIjpudWxsfSwidGZ3X21peGVkX21lZGlhXzE1ODk3Ijp7ImJ1Y2tldCI6InRyZWF0bWVudCIsInZlcnNpb24iOm51bGx9LCJ0ZndfZXhwZXJpbWVudHNfY29va2llX2V4cGlyYXRpb24iOnsiYnVja2V0IjoxMjA5NjAwLCJ2ZXJzaW9uIjpudWxsfSwidGZ3X3Nob3dfYmlyZHdhdGNoX3Bpdm90c19lbmFibGVkIjp7ImJ1Y2tldCI6Im9uIiwidmVyc2lvbiI6bnVsbH0sInRmd19kdXBsaWNhdGVfc2NyaWJlc190b19zZXR0aW5ncyI6eyJidWNrZXQiOiJvbiIsInZlcnNpb24iOm51bGx9LCJ0ZndfdXNlX3Byb2ZpbGVfaW1hZ2Vfc2hhcGVfZW5hYmxlZCI6eyJidWNrZXQiOiJvbiIsInZlcnNpb24iOm51bGx9LCJ0ZndfdmlkZW9faGxzX2R5bmFtaWNfbWFuaWZlc3RzXzE1MDgyIjp7ImJ1Y2tldCI6InRydWVfYml0cmF0ZSIsInZlcnNpb24iOm51bGx9LCJ0ZndfbGVnYWN5X3RpbWVsaW5lX3N1bnNldCI6eyJidWNrZXQiOnRydWUsInZlcnNpb24iOm51bGx9LCJ0ZndfdHdlZXRfZWRpdF9mcm9udGVuZCI6eyJidWNrZXQiOiJvbiIsInZlcnNpb24iOm51bGx9fQ%3D%3D&frame=false&hideCard=false&hideThread=false&id=${id}&lang=en&origin=https%3A%2F%2Fpublish.twitter.com%2F%23&sessionId=1&theme=dark&widgetsVersion=2615f7e52b7e0%3A1702314776716&width=550px" style="border: none; width: 550px; height: 321px;border-radius: 12px; max-height: 100vh;" scrolling="no" frameborder="0" allowtransparency="true" allowfullscreen="true" title="X Post"></iframe>`;
-            document.body.appendChild(modal);
-
-            modal.addEventListener("click", () => {
-              modal.remove();
-            });
-
-            modal.style.cssText = `
-              position: fixed;
-              top: 0;
-              left: 0;
-              right: 0;
-              bottom: 0;
-              background: rgba(0, 0, 0, 0.5);
-              z-index: 1000;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              cursor: pointer;
-            `;*/
-          });
+    function attachTweetClickHandlers() {
+      document.querySelectorAll("[data-tweet-id]:not([data-click-attached])").forEach((cell) => {
+        cell.setAttribute("data-click-attached", "true");
+        cell.addEventListener("click", (e) => {
+          if (e.target.tagName === 'A') return;
+          e.preventDefault();
+          e.stopPropagation();
+          const id = cell.getAttribute("data-tweet-id");
+          window.open(`https://x.com/i/status/${id}`, "_blank");
         });
-      }, 10);
+      });
+    }
+
+    const getTweetsHTML = (tweets) => {
+      setTimeout(attachTweetClickHandlers, 10);
       
       return tweets
         .map((tweet) => {
@@ -467,7 +426,7 @@
           const indexedAgo = getTimeAgo(tweet.added_at);
 
           return `
-              <tr data-tweet-id="${tweet.id}">
+              <tr data-tweet-id="${tweet.id}" data-added-at="${tweet.added_at}">
                 <td>
                   <div class="author-cell">
                   <a href="https://x.com/i/user/${
@@ -497,6 +456,7 @@
         window.API_URL ||
         (await import("./js/config.js").then(({ API_URL }) => API_URL));
 
+      // Load stats
       fetch(`${API_URL}/stats`)
         .then((res) => res.json())
         .then(([accounts, tweets]) => {
@@ -506,6 +466,7 @@
             Number(accounts).toLocaleString();
         });
 
+      // Load last hour stats
       fetch(`${API_URL}/live/lh`)
         .then((res) => res.json())
         .then((data) => {
@@ -514,48 +475,81 @@
           ).toLocaleString()}</b> tweets crawled in the last hour`;
         });
 
-      fetch(`${API_URL}/live/tweets`)
-        .then((res) => res.json())
-        .then(({ tweets, hash }) => {
-          document.querySelector(".tweets-table tbody").innerHTML =
-            getTweetsHTML(tweets);
+      // Load initial tweets
+      const initialResponse = await fetch(`${API_URL}/live/tweets`);
+      const { tweets: initialTweets, hash: lastHash } = await initialResponse.json();
+      
+      // Track loaded tweets
+      initialTweets.forEach(tweet => loadedTweetIds.add(tweet.id));
+      
+      // Set oldest timestamp for pagination
+      if (initialTweets.length > 0) {
+        oldestTimestamp = initialTweets[initialTweets.length - 1].added_at;
+      }
+      
+      const tbody = document.querySelector(".tweets-table tbody");
+      tbody.innerHTML = getTweetsHTML(initialTweets);
 
-          let lastHash = hash;
-
-          setInterval(() => {
-            document.querySelectorAll("[data-time]").forEach((cell) => {
-              const time = cell.getAttribute("data-time");
-              cell.innerHTML = getTimeAgo(time);
-            });
-          }, 4000);
-
-          setInterval(() => {
-            fetch(`${API_URL}/live/tweets?hash=${lastHash}`)
-              .then((res) => res.json())
-              .then(({ hash, tweets }) => {
-                if (tweets?.length > 0) {
-                  document.querySelector(".tweets-table tbody").innerHTML =
-                    getTweetsHTML(tweets);
-                }
-                lastHash = hash;
-              });
-          }, 2000);
+      // Update time ago every 5 seconds
+      setInterval(() => {
+        document.querySelectorAll("[data-time]").forEach((cell) => {
+          const time = cell.getAttribute("data-time");
+          cell.textContent = getTimeAgo(time);
         });
+      }, 5000);
 
+      // Auto-refresh for new tweets every 3 seconds
+      let currentHash = lastHash;
+      setInterval(async () => {
+        if (!isAutoRefreshing) return;
+        
+        try {
+          const response = await fetch(`${API_URL}/live/tweets?hash=${currentHash}`);
+          const data = await response.json();
+          
+          // Update hash
+          if (data.hash) {
+            currentHash = data.hash;
+          }
+          
+          // If there are new tweets, replace the top portion
+          if (data.tweets && data.tweets.length > 0) {
+            const newTweets = data.tweets.filter(tweet => !loadedTweetIds.has(tweet.id));
+            
+            if (newTweets.length > 0) {
+              // Add new tweet IDs to tracking
+              newTweets.forEach(tweet => loadedTweetIds.add(tweet.id));
+              
+              // Prepend new tweets to the table
+              const tbody = document.querySelector(".tweets-table tbody");
+              tbody.insertAdjacentHTML('afterbegin', getTweetsHTML(newTweets));
+              
+              // Keep only the most recent 200 tweets in view
+              const allRows = tbody.querySelectorAll('tr');
+              if (allRows.length > 200) {
+                for (let i = 200; i < allRows.length; i++) {
+                  const removedId = allRows[i].getAttribute('data-tweet-id');
+                  if (removedId) loadedTweetIds.delete(removedId);
+                  allRows[i].remove();
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching new tweets:", error);
+        }
+      }, 3000);
+
+      // Infinite scroll function
       async function loadMoreTweets() {
-        if (isLoading || currentPage >= MAX_PAGES) {
+        if (isLoadingMore || !oldestTimestamp) {
           return;
         }
 
-        isLoading = true;
-        currentPage++;
+        isLoadingMore = true;
 
         try {
-          const url = oldestTimestamp
-            ? `${API_URL}/live/tweets?cursor=${oldestTimestamp}`
-            : `${API_URL}/live/tweets`;
-
-          const response = await fetch(url);
+          const response = await fetch(`${API_URL}/live/tweets?cursor=${oldestTimestamp}`);
           const { tweets } = await response.json();
 
           if (!tweets || tweets.length === 0) {
@@ -566,41 +560,31 @@
             return;
           }
 
-          const lastTweet = tweets[tweets.length - 1];
-          oldestTimestamp = lastTweet.added_at;
+          // Filter out duplicates
+          const newTweets = tweets.filter(tweet => !loadedTweetIds.has(tweet.id));
+          
+          if (newTweets.length > 0) {
+            // Track new tweets
+            newTweets.forEach(tweet => loadedTweetIds.add(tweet.id));
+            
+            // Update oldest timestamp
+            oldestTimestamp = newTweets[newTweets.length - 1].added_at;
 
-          const tbody = document.querySelector(".tweets-table tbody");
-          tbody.innerHTML += getTweetsHTML(tweets);
-
-          document.querySelectorAll("[data-time]").forEach((cell) => {
-            const time = cell.getAttribute("data-time");
-            cell.innerHTML = getTimeAgo(time);
-          });
-
-          if (currentPage >= MAX_PAGES) {
-            const sentinelEl = document.querySelector(".load-sentinel");
-            if (sentinelEl) {
-              sentinelEl.remove();
-            }
-
-            const maxPagesMsg = document.createElement("div");
-            maxPagesMsg.style.cssText = `
-              text-align: center;
-              padding: 2rem;
-              color: #9e9e9e;
-              font-size: 14px;
-            `;
-            maxPagesMsg.textContent =
-              "Sorry, we can't show more pages right now.";
-            document.querySelector("main").appendChild(maxPagesMsg);
+            // Append to table
+            const tbody = document.querySelector(".tweets-table tbody");
+            tbody.insertAdjacentHTML('beforeend', getTweetsHTML(newTweets));
+          } else if (tweets.length > 0) {
+            // All tweets were duplicates, update cursor and try again
+            oldestTimestamp = tweets[tweets.length - 1].added_at;
           }
         } catch (error) {
           console.error("Error loading more tweets:", error);
         } finally {
-          isLoading = false;
+          isLoadingMore = false;
         }
       }
 
+      // Create loading sentinel for infinite scroll
       const sentinel = document.createElement("div");
       sentinel.className = "load-sentinel";
       sentinel.innerHTML = `
@@ -636,15 +620,16 @@
       </div>`;
       document.querySelector("main").appendChild(sentinel);
 
+      // Set up intersection observer for infinite scroll
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            if (entry.isIntersecting && !isLoading && currentPage < MAX_PAGES) {
+            if (entry.isIntersecting && !isLoadingMore) {
               loadMoreTweets();
             }
           });
         },
-        { rootMargin: "300px" }
+        { rootMargin: "500px" }
       );
 
       observer.observe(sentinel);
