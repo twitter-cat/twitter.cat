@@ -53,7 +53,6 @@
         top: 0;
         left: 0;
         right: 0;
-        /* background-color: #14171a; */
         background: linear-gradient(
           180deg,
           rgba(20, 23, 26, 1) 0%,
@@ -458,7 +457,6 @@
         window.API_URL ||
         (await import("./js/config.js").then(({ API_URL }) => API_URL));
 
-      // Load stats
       fetch(`${API_URL}/stats`)
         .then((res) => res.json())
         .then(([accounts, tweets]) => {
@@ -468,7 +466,6 @@
             Number(accounts).toLocaleString();
         });
 
-      // Load last hour stats
       fetch(`${API_URL}/live/lh`)
         .then((res) => res.json())
         .then((data) => {
@@ -477,15 +474,12 @@
           ).toLocaleString()}</b> tweets crawled in the last hour`;
         });
 
-      // Load initial tweets
       const initialResponse = await fetch(`${API_URL}/live/tweets`);
       const { tweets: initialTweets, hash: lastHash } =
         await initialResponse.json();
 
-      // Track loaded tweets
       initialTweets.forEach((tweet) => loadedTweetIds.add(tweet.id));
 
-      // Set oldest timestamp for pagination
       if (initialTweets.length > 0) {
         oldestTimestamp = initialTweets[initialTweets.length - 1].added_at;
       }
@@ -493,15 +487,13 @@
       const tbody = document.querySelector(".tweets-table tbody");
       tbody.innerHTML = getTweetsHTML(initialTweets);
 
-      // Update time ago every 5 seconds
       setInterval(() => {
         document.querySelectorAll("[data-time]").forEach((cell) => {
           const time = cell.getAttribute("data-time");
           cell.textContent = getTimeAgo(time);
         });
-      }, 5000);
+      }, 3000);
 
-      // Auto-refresh for new tweets every 3 seconds
       let currentHash = lastHash;
       setInterval(async () => {
         if (!isAutoRefreshing) return;
@@ -512,26 +504,21 @@
           );
           const data = await response.json();
 
-          // Update hash
           if (data.hash) {
             currentHash = data.hash;
           }
 
-          // If there are new tweets, replace the top portion
           if (data.tweets && data.tweets.length > 0) {
             const newTweets = data.tweets.filter(
               (tweet) => !loadedTweetIds.has(tweet.id)
             );
 
             if (newTweets.length > 0) {
-              // Add new tweet IDs to tracking
               newTweets.forEach((tweet) => loadedTweetIds.add(tweet.id));
 
-              // Prepend new tweets to the table
               const tbody = document.querySelector(".tweets-table tbody");
               tbody.insertAdjacentHTML("afterbegin", getTweetsHTML(newTweets));
 
-              // Keep only the most recent 200 tweets in view
               const allRows = tbody.querySelectorAll("tr");
               if (allRows.length > 200) {
                 for (let i = 200; i < allRows.length; i++) {
@@ -547,7 +534,6 @@
         }
       }, 3000);
 
-      // Infinite scroll function
       async function loadMoreTweets() {
         if (isLoadingMore || !oldestTimestamp) {
           return;
@@ -569,23 +555,18 @@
             return;
           }
 
-          // Filter out duplicates
           const newTweets = tweets.filter(
             (tweet) => !loadedTweetIds.has(tweet.id)
           );
 
           if (newTweets.length > 0) {
-            // Track new tweets
             newTweets.forEach((tweet) => loadedTweetIds.add(tweet.id));
 
-            // Update oldest timestamp
             oldestTimestamp = newTweets[newTweets.length - 1].added_at;
 
-            // Append to table
             const tbody = document.querySelector(".tweets-table tbody");
             tbody.insertAdjacentHTML("beforeend", getTweetsHTML(newTweets));
           } else if (tweets.length > 0) {
-            // All tweets were duplicates, update cursor and try again
             oldestTimestamp = tweets[tweets.length - 1].added_at;
           }
         } catch (error) {
@@ -595,7 +576,6 @@
         }
       }
 
-      // Create loading sentinel for infinite scroll
       const sentinel = document.createElement("div");
       sentinel.className = "load-sentinel";
       sentinel.innerHTML = `
@@ -631,7 +611,6 @@
       </div>`;
       document.querySelector("main").appendChild(sentinel);
 
-      // Set up intersection observer for infinite scroll
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
