@@ -411,19 +411,6 @@
           const safeBody = escapeHtml(tweet.body);
           const safeAvatar = escapeHtml(tweet.avatar);
 
-          let mediaHtml = "";
-          if (tweet.media && tweet.media !== "[]") {
-            try {
-              const mediaArray = JSON.parse(tweet.media);
-              if (mediaArray && mediaArray.length > 0 && mediaArray[0].url) {
-                const mediaUrl = escapeHtml(mediaArray[0].url);
-                mediaHtml = `<div class="media-preview"><img src="${mediaUrl}" alt="Media" /></div>`;
-              }
-            } catch (e) {
-              console.log("Error parsing media:", e);
-            }
-          }
-
           const indexedAgo = getTimeAgo(tweet.added_at);
 
           return `
@@ -440,7 +427,7 @@
                   </a>
                   </div>
                 </td>
-                <td class="content-cell">${safeBody}${mediaHtml}</td>
+                <td class="content-cell">${safeBody}</td>
                 <td class="time-cell"><a href="https://x.com/i/status/${
                   tweet.id
                 }" target="_blank" rel="noopener noreferrer" data-time="${
@@ -478,7 +465,7 @@
       const { tweets: initialTweets, hash: lastHash } =
         await initialResponse.json();
 
-      initialTweets.forEach((tweet) => loadedTweetIds.add(tweet.id));
+      initialTweets.forEach((tweet) => { loadedTweetIds.add(tweet.id) });
 
       if (initialTweets.length > 0) {
         oldestTimestamp = initialTweets[initialTweets.length - 1].added_at;
@@ -514,7 +501,7 @@
             );
 
             if (newTweets.length > 0) {
-              newTweets.forEach((tweet) => loadedTweetIds.add(tweet.id));
+              newTweets.forEach((tweet) => { loadedTweetIds.add(tweet.id) });
 
               const tbody = document.querySelector(".tweets-table tbody");
               tbody.insertAdjacentHTML("afterbegin", getTweetsHTML(newTweets));
