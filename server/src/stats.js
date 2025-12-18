@@ -43,14 +43,14 @@ WHERE added_at > NOW() - INTERVAL '1 hour';`;
 }).get("/live/tweets", async ({ query }) => {
   const { hash, cursor } = query;
 
-  if (cursor && Date.now() - new Date(cursor).getTime() > 172800000) {
-    return { tweets: [], hash: 0 };
-  }
-
-  let tweets;
-
+  // If cursor is provided, return older tweets (pagination)
   if (cursor) {
-    tweets = await postgresReadOnly`SELECT
+    // Check if cursor is too old (>48 hours)
+    if (Date.now() - new Date(cursor).getTime() > 172800000) {
+      return { tweets: [] };
+    }
+
+    const tweets = await postgresReadOnly`SELECT
       t.author_id, t.body, t.id, t.added_at, t.media,
       p.name, p.username, p.avatar
     FROM tweets t
@@ -59,18 +59,22 @@ WHERE added_at > NOW() - INTERVAL '1 hour';`;
     WHERE t.added_at < ${cursor}
     ORDER BY t.added_at DESC
     LIMIT 60`;
-  } else {
-    tweets = await postgresReadOnly`SELECT
-      t.author_id, t.body, t.id, t.added_at, t.media,
-      p.name, p.username, p.avatar
-    FROM tweets t
-    LEFT JOIN profiles p
-    ON p.id = t.author_id
-    ORDER BY t.added_at DESC
-    LIMIT 60`;
+
+    return { tweets };
   }
 
-  const str = JSON.stringify(tweets, Object.keys(tweets).sort());
+  // No cursor - return latest tweets
+  const tweets = await postgresReadOnly`SELECT
+    t.author_id, t.body, t.id, t.added_at, t.media,
+    p.name, p.username, p.avatar
+  FROM tweets t
+  LEFT JOIN profiles p
+  ON p.id = t.author_id
+  ORDER BY t.added_at DESC
+  LIMIT 60`;
+
+  // Calculate hash for change detection
+  const str = JSON.stringify(tweets);
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) {
     h ^= str.charCodeAt(i);
@@ -79,7 +83,8 @@ WHERE added_at > NOW() - INTERVAL '1 hour';`;
 
   const hhash = h >>> 0;
 
-  if (hash && (hash === hhash.toString())) {
+  // If client's hash matches, no new tweets
+  if (hash && parseInt(hash) === hhash) {
     return { hash: hhash };
   }
 
