@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <title>legal / twitter.cat</title>
@@ -19,31 +19,6 @@
       content="https://twitter.cat/assets/images/bouncing.gif"
     />
     <style>
-      @font-face {
-        font-family: "chirp";
-        src: url("./assets/fonts/chirp.woff2") format("woff2");
-        font-weight: 400;
-        font-style: normal;
-      }
-      @font-face {
-        font-family: "chirp";
-        src: url("./assets/fonts/chirpmedium.woff2") format("woff2");
-        font-weight: 500;
-        font-style: normal;
-      }
-      @font-face {
-        font-family: "chirp";
-        src: url("./assets/fonts/chirpbold.woff2") format("woff2");
-        font-weight: 700;
-        font-style: normal;
-      }
-      @font-face {
-        font-family: "chirp";
-        src: url("./assets/fonts/chirpheavy.woff2") format("woff2");
-        font-weight: 900;
-        font-style: normal;
-      }
-
       * {
         box-sizing: border-box;
         -webkit-tap-highlight-color: transparent;
@@ -53,6 +28,7 @@
         scrollbar-width: thin;
         scrollbar-color: hsla(255 0 255 / 15%) #14171a;
         scrollbar-gutter: stable;
+        color-scheme: dark;
       }
 
       body {
@@ -60,9 +36,19 @@
         color: white;
         margin: 0;
         font-size: 20px;
-        font-family: "chirp", system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
-          "Helvetica Neue", sans-serif;
+        font-family:
+          "chirp",
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Oxygen,
+          Ubuntu,
+          Cantarell,
+          "Open Sans",
+          "Helvetica Neue",
+          sans-serif;
       }
 
       .decor {
@@ -88,7 +74,9 @@
         display: block;
         width: fit-content;
         text-decoration: none;
-        transition: opacity 0.2s, transform 0.1s;
+        transition:
+          opacity 0.2s,
+          transform 0.1s;
       }
 
       .logo:hover {
@@ -115,7 +103,7 @@
       .tabs button {
         background: none;
         border: none;
-        color: white;
+        color: rgba(255, 255, 255, 0.8);
         padding: 0;
         cursor: pointer;
         width: 100%;
@@ -126,8 +114,13 @@
         position: relative;
       }
 
+      .tabs button:hover {
+        color: white;
+      }
+
       .tabs button.active {
         font-weight: 500;
+        color: white;
       }
 
       .tabs button::after {
@@ -224,6 +217,30 @@
       .tab:not(.active) {
         display: none;
       }
+      @font-face {
+        font-family: "chirp";
+        src: url("./assets/fonts/chirp.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "chirp";
+        src: url("./assets/fonts/chirpmedium.woff2") format("woff2");
+        font-weight: 500;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "chirp";
+        src: url("./assets/fonts/chirpbold.woff2") format("woff2");
+        font-weight: 700;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "chirp";
+        src: url("./assets/fonts/chirpheavy.woff2") format("woff2");
+        font-weight: 900;
+        font-style: normal;
+      }
     </style>
   </head>
   <body>
@@ -251,7 +268,9 @@
           const tabs = document.querySelectorAll(".tabs button");
           tabs.forEach((tab) => {
             tab.addEventListener("click", () => {
-              tabs.forEach((t) => { t.classList.remove("active") });
+              tabs.forEach((t) => {
+                t.classList.remove("active");
+              });
               tab.classList.add("active");
 
               document
@@ -457,10 +476,10 @@
 
           <h2>who we are</h2>
           <p>
-            twitter.cat is a search engine and set of tools built around a
-            real-time scrape of public twitter data and other custom datasets.
-            additionally, we host a public fxtwitter instance. twitter.cat is
-            not meant for spam, doxxing, impersonation, or abuse.
+            twitter.cat is a search engine, archive and set of tools built
+            around a real-time index of public twitter data and other custom
+            datasets. twitter.cat is not meant for spam, impersonation, abuse or
+            any other illegal activities.
           </p>
 
           <h2>access and usage</h2>
@@ -470,7 +489,7 @@
           </p>
           <p>
             by choosing to login, where available, to any of our Services by
-            using a third-party service, such as Google, Apple, or X, you give
+            using a third-party service, such as Google, Bluesky, or X, you give
             us permission to access, use, and store your information from that
             service, as permitted by that service, which may include log-in
             credentials and/or access tokens for that service.
@@ -527,7 +546,7 @@
               </ul>
             </li>
             <li>impersonate twitter.cat or claim affiliation</li>
-            <li>not complying with local or governing laws or regulations</li>
+            <li>not comply with local or governing laws or regulations</li>
           </ul>
 
           <p>
@@ -539,12 +558,11 @@
 
           <h2>content</h2>
           <p>
-            all tweet, user, list, ad and any other data may come from X,
-            formerly known as twitter, and remains owned by Twitter Inc., X
-            Corp. and its users. twitter.cat does not host or control any
-            original content. if you would like to submit a DMCA or copyright
-            law violation report, please first send it to X Corp. and then
-            contact us to update the content.
+            all tweet, user, list, ad and any other data are sourced from X,
+            formerly known as twitter, and remains owned by X Corp. and its
+            users. twitter.cat does not host or control any original content. if
+            you would like to submit a DMCA or copyright law violation report,
+            please report it as detailed in "reporting illegal content"
           </p>
           <p>
             by submitting or providing any content to the Service, you grant, an
@@ -657,6 +675,17 @@
             <b>how to contact us.</b>
             if you have any questions about the Service or these Terms, please
             contact us at awry-march-tarot@duck.com.
+          </p>
+          <p>
+            <b>reporting illegal content.</b>
+
+            if you believe any content available on or through the service
+            infringes copyright, violates portuguese or eu law, or violates your
+            rights of publicity or privacy: notify X corp. and confirm that it
+            has been removed from their services; you can then
+            <a href="/pages/de-index">request it to be de-indexed</a>. content
+            such as csam should also be reported directly to law enforcement or
+            the relevant national reporting body.
           </p>
         </div>
       </div>
