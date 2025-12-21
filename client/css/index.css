@@ -360,6 +360,7 @@ body {
   font-size: 0.6em;
   background-color: inherit;
   z-index: 999;
+  user-select: none;
 }
 
 body:has(.results) .bottom {
