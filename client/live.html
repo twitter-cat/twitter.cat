@@ -466,10 +466,15 @@
         });
 
       const initialResponse = await fetch(`${API_URL}/live/tweets`);
-      const { tweets: initialTweets, hash: lastHash, cursor } =
-        await initialResponse.json();
+      const {
+        tweets: initialTweets,
+        hash: lastHash,
+        cursor,
+      } = await initialResponse.json();
 
-      initialTweets.forEach((tweet) => { loadedTweetIds.add(tweet.id) });
+      initialTweets.forEach((tweet) => {
+        loadedTweetIds.add(tweet.id);
+      });
 
       nextCursor = cursor;
 
@@ -503,7 +508,9 @@
             );
 
             if (newTweets.length > 0) {
-              newTweets.forEach((tweet) => { loadedTweetIds.add(tweet.id) });
+              newTweets.forEach((tweet) => {
+                loadedTweetIds.add(tweet.id);
+              });
 
               const tbody = document.querySelector(".tweets-table tbody");
               tbody.insertAdjacentHTML("afterbegin", getTweetsHTML(newTweets));
@@ -558,7 +565,9 @@
           );
 
           if (newTweets.length > 0) {
-            newTweets.forEach((tweet) => { loadedTweetIds.add(tweet.id) });
+            newTweets.forEach((tweet) => {
+              loadedTweetIds.add(tweet.id);
+            });
 
             const tbody = document.querySelector(".tweets-table tbody");
             tbody.insertAdjacentHTML("beforeend", getTweetsHTML(newTweets));
