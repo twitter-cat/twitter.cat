@@ -97,18 +97,19 @@ body {
 @media (max-width: 410px) {
   .logo {
     flex-direction: column;
+    font-size: 2em;
   }
 }
 
 @media (max-width: 340px) {
   .logo {
-    font-size: 2em;
+    font-size: 1.8em;
   }
 }
 
 @media (max-width: 240px) {
   .logo {
-    font-size: 1.5em;
+    font-size: 1.3em;
   }
 }
 
