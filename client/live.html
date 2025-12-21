@@ -360,7 +360,7 @@
   </body>
   <script>
     let isLoadingMore = false;
-    let oldestTimestamp = null;
+    let nextCursor = null;
     const loadedTweetIds = new Set();
     const isAutoRefreshing = true;
 
@@ -466,14 +466,12 @@
         });
 
       const initialResponse = await fetch(`${API_URL}/live/tweets`);
-      const { tweets: initialTweets, hash: lastHash } =
+      const { tweets: initialTweets, hash: lastHash, cursor } =
         await initialResponse.json();
 
       initialTweets.forEach((tweet) => { loadedTweetIds.add(tweet.id) });
 
-      if (initialTweets.length > 0) {
-        oldestTimestamp = initialTweets[initialTweets.length - 1].added_at;
-      }
+      nextCursor = cursor;
 
       const tbody = document.querySelector(".tweets-table tbody");
       tbody.innerHTML = getTweetsHTML(initialTweets);
@@ -526,7 +524,7 @@
       }, 3000);
 
       async function loadMoreTweets() {
-        if (isLoadingMore || !oldestTimestamp) {
+        if (isLoadingMore || !nextCursor) {
           return;
         }
 
@@ -534,9 +532,18 @@
 
         try {
           const response = await fetch(
-            `${API_URL}/live/tweets?cursor=${oldestTimestamp}`
+            `${API_URL}/live/tweets?cursor=${encodeURIComponent(nextCursor)}`
           );
-          const { tweets } = await response.json();
+          const { tweets, cursor: newCursor, error } = await response.json();
+
+          if (error) {
+            console.error("failed to request more tweets", error);
+            const sentinelEl = document.querySelector(".load-sentinel");
+            if (sentinelEl) {
+              sentinelEl.remove();
+            }
+            return;
+          }
 
           if (!tweets || tweets.length === 0) {
             const sentinelEl = document.querySelector(".load-sentinel");
@@ -553,13 +560,11 @@
           if (newTweets.length > 0) {
             newTweets.forEach((tweet) => { loadedTweetIds.add(tweet.id) });
 
-            oldestTimestamp = newTweets[newTweets.length - 1].added_at;
-
             const tbody = document.querySelector(".tweets-table tbody");
             tbody.insertAdjacentHTML("beforeend", getTweetsHTML(newTweets));
-          } else if (tweets.length > 0) {
-            oldestTimestamp = tweets[tweets.length - 1].added_at;
           }
+
+          nextCursor = newCursor;
         } catch (error) {
           console.error("Error loading more tweets:", error);
         } finally {

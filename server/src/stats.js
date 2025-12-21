@@ -1,9 +1,31 @@
 import { SQL } from "bun";
 import { Elysia } from "elysia";
+import * as jose from "jose";
 
 const postgresReadOnly = new SQL(
   `postgres://${process.env.POSTGRES_USER_READONLY}:${process.env.POSTGRES_PASSWORD_READONLY}@${process.env.POSTGRES_HOST}:5432/twitter`
 );
+
+const CURSOR_SECRET = new TextEncoder().encode(process.env.CURSOR_SIGNING_KEY);
+
+async function signCursor(timestamp, depth = 0) {
+  return await new jose.SignJWT({ ts: timestamp, depth })
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("2d")
+    .sign(CURSOR_SECRET);
+}
+
+async function verifyCursor(token) {
+  try {
+    const { payload } = await jose.jwtVerify(token, CURSOR_SECRET);
+    if (payload.depth >= 20) {
+      return null;
+    }
+    return { timestamp: payload.ts, depth: payload.depth };
+  } catch {
+    return null;
+  }
+}
 
 let statsCache = null;
 let statsCacheTime = 0;
@@ -43,11 +65,10 @@ WHERE added_at > NOW() - INTERVAL '1 hour';`;
 }).get("/live/tweets", async ({ query }) => {
   const { hash, cursor } = query;
 
-  // If cursor is provided, return older tweets (pagination)
   if (cursor) {
-    // Check if cursor is too old (>48 hours)
-    if (Date.now() - new Date(cursor).getTime() > 172800000) {
-      return { tweets: [] };
+    const verified = await verifyCursor(cursor);
+    if (!verified) {
+      return { tweets: [], error: "g" };
     }
 
     const tweets = await postgresReadOnly`SELECT
@@ -56,14 +77,19 @@ WHERE added_at > NOW() - INTERVAL '1 hour';`;
     FROM tweets t
     LEFT JOIN profiles p
     ON p.id = t.author_id
-    WHERE t.added_at < ${cursor}
+    WHERE t.added_at < ${verified.timestamp}
     ORDER BY t.added_at DESC
     LIMIT 60`;
 
-    return { tweets };
+    let nextCursor = null;
+    if (tweets.length > 0) {
+      const oldestTimestamp = tweets[tweets.length - 1].added_at;
+      nextCursor = await signCursor(oldestTimestamp, verified.depth + 1);
+    }
+
+    return { tweets, cursor: nextCursor };
   }
 
-  // No cursor - return latest tweets
   const tweets = await postgresReadOnly`SELECT
     t.author_id, t.body, t.id, t.added_at, t.media,
     p.name, p.username, p.avatar
@@ -73,7 +99,6 @@ WHERE added_at > NOW() - INTERVAL '1 hour';`;
   ORDER BY t.added_at DESC
   LIMIT 60`;
 
-  // Calculate hash for change detection
   const str = JSON.stringify(tweets);
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) {
@@ -83,13 +108,19 @@ WHERE added_at > NOW() - INTERVAL '1 hour';`;
 
   const hhash = h >>> 0;
 
-  // If client's hash matches, no new tweets
-  if (hash && parseInt(hash) === hhash) {
+  if (hash && parseInt(hash, 10) === hhash) {
     return { hash: hhash };
+  }
+
+  let initialCursor = null;
+  if (tweets.length > 0) {
+    const oldestTimestamp = tweets[tweets.length - 1].added_at;
+    initialCursor = await signCursor(oldestTimestamp, 0);
   }
 
   return {
     tweets,
-    hash: hhash
+    hash: hhash,
+    cursor: initialCursor
   };
 });
