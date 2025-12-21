@@ -551,7 +551,7 @@
           );
 
           if (newTweets.length > 0) {
-            newTweets.forEach((tweet) => loadedTweetIds.add(tweet.id));
+            newTweets.forEach((tweet) => { loadedTweetIds.add(tweet.id) });
 
             oldestTimestamp = newTweets[newTweets.length - 1].added_at;
 
