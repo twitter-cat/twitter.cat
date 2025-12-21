@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <title>request a post or profile to be de-indexed / twitter.cat</title>
@@ -36,19 +36,9 @@
         color: white;
         margin: 0;
         font-size: 20px;
-        font-family:
-          "chirp",
-          system-ui,
-          -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          Roboto,
-          Oxygen,
-          Ubuntu,
-          Cantarell,
-          "Open Sans",
-          "Helvetica Neue",
-          sans-serif;
+        font-family: "chirp", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
+          "Helvetica Neue", sans-serif;
       }
 
       .decor {
@@ -74,9 +64,7 @@
         display: block;
         width: fit-content;
         text-decoration: none;
-        transition:
-          opacity 0.2s,
-          transform 0.1s;
+        transition: opacity 0.2s, transform 0.1s;
       }
 
       .logo:hover {
@@ -175,7 +163,6 @@
         padding-top: 0.75rem;
         padding-left: 1rem;
         padding-right: 1rem;
-        border-radius: 0.25rem;
         background-color: transparent;
         font-size: 1rem;
 
@@ -349,20 +336,20 @@
 
           <fieldset>
             <legend>are you still able to access this content on X?</legend>
-            <label
-              ><input type="radio" name="stillVisible" value="yes" /> yes, the
-              content is still on X</label
-            >
-            <label
-              ><input type="radio" name="stillVisible" value="no" /> no, the
-              content has been removed from X</label
-            >
+            <label>
+              <input type="radio" name="stillVisible" value="yes" />
+              yes, the content is still on X
+            </label>
+            <label>
+              <input type="radio" name="stillVisible" value="no" />
+              no, the content has been removed from X
+            </label>
             <p id="stillVisibleNote" class="hidden">
               we are unable to remove this content if it's still present on X.
               please
-              <a href="https://help.x.com/en/forms" target="_blank"
-                >report it to X. Corp</a
-              >
+              <a href="https://help.x.com/en/forms" target="_blank">
+                report it to X. Corp
+              </a>
               and make sure the content has been removed for us to de-index it.
             </p>
           </fieldset>
@@ -372,49 +359,49 @@
               <legend>
                 are you de-indexing an image, video or other media?
               </legend>
-              <label
-                ><input type="radio" name="contentType" value="media" /> yes, i
-                am</label
-              >
-              <label
-                ><input type="radio" name="contentType" value="post" required />
-                no, i'm not</label
-              >
+              <label>
+                <input type="radio" name="contentType" value="media" />
+                yes, i am
+              </label>
+              <label>
+                <input type="radio" name="contentType" value="post" required />
+                no, i'm not
+              </label>
               <p id="mediaNote" class="hidden">
                 we don't host media ourselves. please
-                <a href="https://help.x.com/forms" target="_blank"
-                  >submit this report to X</a
-                >
+                <a href="https://help.x.com/forms" target="_blank">
+                  submit this report to X
+                </a>
                 instead.
               </p>
             </fieldset>
 
             <fieldset id="reasonFieldset">
               <legend>reason for de-indexing (select all that apply)</legend>
-              <label
-                ><input type="checkbox" name="reason" value="trademark" /> this
-                content is infringing on a trademark</label
-              >
-              <label
-                ><input type="checkbox" name="reason" value="copyright" /> this
-                content is infringing on a copyright</label
-              >
-              <label
-                ><input type="checkbox" name="reason" value="portugalLaw" />
-                this content is illegal under Portuguese law</label
-              >
-              <label
-                ><input type="checkbox" name="reason" value="euLaw" /> this
-                content is illegal under European Union law</label
-              >
-              <label
-                ><input type="checkbox" name="reason" value="dmca" /> i would
-                like to submit a DMCA request</label
-              >
-              <label
-                ><input type="checkbox" name="reason" value="selfdelete" /> i am the
-                author of this content and would not like it archived</label
-              >
+              <label>
+                <input type="checkbox" name="reason" value="trademark" />
+                this content is infringing on a trademark
+              </label>
+              <label>
+                <input type="checkbox" name="reason" value="copyright" />
+                this content is infringing on a copyright
+              </label>
+              <label>
+                <input type="checkbox" name="reason" value="portugalLaw" />
+                this content is illegal under Portuguese law
+              </label>
+              <label>
+                <input type="checkbox" name="reason" value="euLaw" />
+                this content is illegal under European Union law
+              </label>
+              <label>
+                <input type="checkbox" name="reason" value="dmca" />
+                i would like to submit a DMCA request
+              </label>
+              <label>
+                <input type="checkbox" name="reason" value="selfdelete" />
+                i am the author of this content and would not like it archived
+              </label>
             </fieldset>
 
             <fieldset>
@@ -425,39 +412,38 @@
 
             <fieldset>
               <legend>who are you?</legend>
-              <label
-                ><input type="radio" name="lawEnforcement" value="no" checked />
+              <label>
+                <input type="radio" name="lawEnforcement" value="no" checked />
                 <input type="hidden" name="reporter" value="individual" />
-                i'm an individual</label
-              >
-              <label
-                ><input type="radio" name="lawEnforcement" value="no" checked />
+                i'm an individual
+              </label>
+              <label>
+                <input type="radio" name="lawEnforcement" value="no" checked />
                 <input type="hidden" name="reporter" value="organization" />
-                i'm an organization</label
-              >
-              <label
-                ><input type="radio" name="lawEnforcement" value="yes" />
+                i'm an organization
+              </label>
+              <label>
+                <input type="radio" name="lawEnforcement" value="yes" />
                 <input type="hidden" name="reporter" value="lawEnforcement" />
-                in behalf of law enforcement</label
-              >
-              <label
-                ><input type="radio" name="lawEnforcement" value="yes" /><input
-                  type="hidden"
-                  name="reporter"
-                  value="govAgency"
-                />
-                in behalf of a government agency</label
-              >
+                in behalf of law enforcement
+              </label>
+              <label>
+                <input type="radio" name="lawEnforcement" value="yes" />
+                <input type="hidden" name="reporter" value="govAgency" />
+                in behalf of a government agency
+              </label>
             </fieldset>
 
             <fieldset id="agencyFields" class="hidden">
               <legend>please confirm the following information</legend>
-              <label
-                >agency name: <input type="text" name="agencyName" required
-              /></label>
-              <label
-                >country: <input type="text" name="agencyCountry" required
-              /></label>
+              <label>
+                agency name:
+                <input type="text" name="agencyName" required />
+              </label>
+              <label>
+                country:
+                <input type="text" name="agencyCountry" required />
+              </label>
             </fieldset>
 
             <fieldset>
@@ -473,11 +459,11 @@
             </fieldset>
 
             <fieldset>
-              <label
-                ><input type="checkbox" name="legalAffirmation" required /> i
-                have good faith belief that the information and allegations i
-                provided are accurate and complete.</label
-              >
+              <label>
+                <input type="checkbox" name="legalAffirmation" required />
+                i have good faith belief that the information and allegations i
+                provided are accurate and complete.
+              </label>
             </fieldset>
 
             <button type="submit" id="submitBtn">submit request</button>
@@ -512,7 +498,11 @@
             <span class="postOption">
               <label>post id: <input type="text" class="postId" required placeholder="e.g. 2002552975018086623"></label>
             </span>
-            ${Array.from(contentItemsDiv.querySelectorAll(".item")).length ? '<button type="button" class="removeItem">remove</button>' : ""}
+            ${
+              Array.from(contentItemsDiv.querySelectorAll(".item")).length
+                ? '<button type="button" class="removeItem">remove</button>'
+                : ""
+            }
           `;
             contentItemsDiv.appendChild(div);
 
@@ -527,7 +517,7 @@
             updateItemVisibility(typeSelect.value);
 
             typeSelect.addEventListener("change", () =>
-              updateItemVisibility(typeSelect.value),
+              updateItemVisibility(typeSelect.value)
             );
 
             function updateItemVisibility(val) {
@@ -566,17 +556,15 @@
 
             if (form.contentType.value === "media") {
               mediaNote.classList.remove("hidden");
-              mainForm
-                .querySelectorAll("fieldset")
-                .forEach((f) =>
-                  f !== mediaNote.parentNode ? f.classList.add("hidden") : null,
-                );
+              mainForm.querySelectorAll("fieldset").forEach((f) => {
+                f !== mediaNote.parentNode ? f.classList.add("hidden") : null;
+              });
               submitBtn.classList.add("hidden");
             } else {
               mediaNote.classList.add("hidden");
-              mainForm
-                .querySelectorAll("fieldset")
-                .forEach((f) => f.classList.remove("hidden"));
+              mainForm.querySelectorAll("fieldset").forEach((f) => {
+                f.classList.remove("hidden");
+              });
               submitBtn.classList.remove("hidden");
             }
 
@@ -584,12 +572,12 @@
               agencyFields.classList.remove("hidden");
               agencyFields
                 .querySelectorAll("input")
-                .forEach((inp) => (inp.required = true));
+                .forEach((inp) => {inp.required = true});
             } else {
               agencyFields.classList.add("hidden");
               agencyFields
                 .querySelectorAll("input")
-                .forEach((inp) => (inp.required = false));
+                .forEach((inp) => {inp.required = false});
             }
           }
 
@@ -617,7 +605,7 @@ ${Array.from(formData.entries())
   .join("\n")}`)}
 
 ${new Date().toLocaleString()}
-${document.querySelector("[name='fullName']").value}`,
+${document.querySelector("[name='fullName']").value}`
             );
           });
 
