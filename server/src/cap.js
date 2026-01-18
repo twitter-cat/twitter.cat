@@ -5,7 +5,7 @@ import * as jose from "jose";
 
 const db = new SQL("sqlite:../.cap.db");
 
-await db`
+db`
   CREATE TABLE IF NOT EXISTS challenges (
     token TEXT PRIMARY KEY,
     data TEXT NOT NULL,
@@ -13,24 +13,20 @@ await db`
   );
 `;
 
-await db`
+db`
   CREATE TABLE IF NOT EXISTS tokens (
     key TEXT PRIMARY KEY,
     expires INTEGER NOT NULL
   );
 `;
 
-await db`
+db`
   CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,
     expires INTEGER NOT NULL,
     search_count INTEGER NOT NULL DEFAULT 0
   );
 `;
-
-try {
-  await db`ALTER TABLE sessions ADD COLUMN search_count INTEGER NOT NULL DEFAULT 0`;
-} catch {}
 
 const SESSION_SECRET = new TextEncoder().encode(process.env.CURSOR_SIGNING_KEY);
 const SESSION_DURATION_MS = 60 * 60 * 1000;
