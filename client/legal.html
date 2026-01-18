@@ -61,16 +61,16 @@
       }
 
       main {
-        line-height: 1.75;
         color: #ffffffd9;
-        max-width: 720px;
+        max-width: 650px;
         margin: 40px auto;
         padding: 0 20px;
         font-size: 16px;
+        line-height: 1.8;
       }
 
       .logo {
-        margin-bottom: 2em;
+        margin-bottom: 1.5em;
         display: block;
         width: fit-content;
         text-decoration: none;
@@ -89,6 +89,7 @@
 
       .logo img {
         width: 50px;
+        height: 50px;
       }
 
       .tabs {
@@ -175,13 +176,17 @@
         color: #fff;
         text-transform: lowercase;
         margin-top: 2em;
+        user-select: none;
       }
       h2 {
-        font-size: 1.3em;
+        font-size: 17px;
         margin-top: 3rem;
-        font-weight: 600;
-        margin-bottom: 1em;
-        line-height: 1.3333333;
+        font-weight: 500;
+        margin-bottom: 10px;
+        line-height: 1;
+      }
+      h2:not(:first-child) {
+        margin-top: 1.8rem;
       }
       h1 {
         font-size: 1.8em;
@@ -189,11 +194,11 @@
       }
       a {
         color: #9cf;
-        text-underline-offset: 2px;
+        text-underline-offset: 3px;
       }
       b {
         color: white;
-        font-weight: 600;
+        font-weight: 500;
       }
 
       ::marker {
@@ -206,9 +211,10 @@
       }
       ul {
         list-style-type: disc;
-        margin-top: 1.25em;
-        margin-bottom: 1.25em;
+        margin-top: 12px;
+        margin-bottom: 0px;
         padding-inline-start: 1.625em;
+        padding-left: 14px;
       }
       p {
         margin-top: 0px;
@@ -222,24 +228,28 @@
         src: url("./assets/fonts/chirp.woff2") format("woff2");
         font-weight: 400;
         font-style: normal;
+        font-display: swap;
       }
       @font-face {
         font-family: "chirp";
         src: url("./assets/fonts/chirpmedium.woff2") format("woff2");
         font-weight: 500;
         font-style: normal;
+        font-display: swap;
       }
       @font-face {
         font-family: "chirp";
         src: url("./assets/fonts/chirpbold.woff2") format("woff2");
         font-weight: 700;
         font-style: normal;
+        font-display: swap;
       }
       @font-face {
         font-family: "chirp";
         src: url("./assets/fonts/chirpheavy.woff2") format("woff2");
         font-weight: 900;
         font-style: normal;
+        font-display: swap;
       }
     </style>
   </head>
@@ -262,8 +272,8 @@
         <img src="assets/svgs/kitty.svg" draggable="false" />
       </a>
       <div class="tabs">
-        <button class="active" data-tab="pp">Privacy Policy</button>
-        <button data-tab="tos">Terms of Service</button>
+        <button class="active" data-tab="pp">privacy</button>
+        <button data-tab="tos">terms and ethics</button>
         <script>
           const tabs = document.querySelectorAll(".tabs button");
           tabs.forEach((tab) => {
@@ -290,166 +300,35 @@
       </div>
       <div class="content">
         <div class="tab active" id="pp">
-          <h2>
-            tl;dr: we don't use cookies or collect any personal data, but we do
-            use plausible analytics.
-          </h2>
-          <!-- prettier-ignore -->
-          <p>
-            at twitter.cat (“<b>twitter.cat</b>,” “<b>we</b>,” “<b>our</b>,” or “<b>us</b>”),
-            we value your privacy and
-            are committed to being fair, accountable, and transparent in how we
-            handle your personal information. our Privacy Policy outlines how we
-            collect, use, and disclose your personal information when you use
-            our websites and applications, and other twitter.cat services (our "<b>Service</b>").
-            it also describes your privacy rights.
-          </p>
-          <p>
-            we collect only what we need to run and protect the service,
-            including limited telemetry, public data we index, including custom
-            private datasets, and any other data collected when interacting with
-            other websites and services ran by twitter.cat according to their
-            respective privacy policy. we use a self-hosted plausible instance
-            for analytics.
+          <p style="margin-top: 2em; position: relative; z-index: 10">
+            we don’t collect or store anything about you. what you do is solely
+            your business, not ours or anyone else’s.
           </p>
 
+          <h2>anonymous traffic analytics</h2>
           <p>
-            this policy covers twitter.cat website, search, public datasets,
-            tools, and any api or developer endpoints we operate now or add
-            later. it does not apply to any other websites ran by twitter.cat
-            other than the main search engine located at
-            <a href="javascript:">https://twitter.cat</a>
+            we use plausible to get an approximate number of active users, fully
+            anonymously. no identifiable information about you or your requests
+            is ever stored.
+            <a
+              href="https://plausible.io/privacy-focused-web-analytics"
+              target="_blank"
+              >learn more about plausible’s dedication to privacy</a
+            >
           </p>
 
-          <h2>data we collect</h2>
-          <ul>
-            <li>
-              <b>public data we index.</b>
-              tweets, public profiles and other public web content we crawl or
-              obtain from providers.
-            </li>
-            <li>
-              <b>technical telemetry.</b>
-              ip addresses, user agent, request timestamps, basic browser
-              fingerprinting and rate or/and abuse signals may be collected to
-              help keep the Service safe and protect against abuse.
-            </li>
-            <li>
-              <b>analytics.</b>
-              event pings, including pageviews and referrers. we do not use
-              third-party targeted advertising trackers.
-            </li>
-            <li>
-              <b>support & contact info.</b>
-              if you email us or file a report, we keep the info you provide to
-              respond.
-            </li>
-          </ul>
-
+          <h2>data sharing</h2>
           <p>
-            we do not use cookies for marketing. twitter.cat sets minimal
-            technical cookies when strictly necessary. analytics send ping and
-            event calls to our self-hosted plausible instance that does not
-            build cross-site profiles.
-          </p>
-
-          <h2>how we use data</h2>
-          <ul>
-            <li>
-              provide, maintain, and improve the service (search, indexing,
-              api).
-            </li>
-            <li>
-              protect the service from abuse and fraud (rate limits, blocking,
-              investigation).
-            </li>
-            <li>
-              aggregate and analyze usage trends (via plausible) to improve
-              performance and features.
-            </li>
-            <li>
-              respond to support requests, legal requests, or safety incidents.
-            </li>
-          </ul>
-
-          <h2>data sharing & processors</h2>
-          <p>we do not sell personal information. we may disclose data to:</p>
-          <ul>
-            <li>
-              contracted service providers who help operate the service
-              (hosting, email, analytics) — we choose providers carefully and
-              require them to protect data.
-            </li>
-            <li>
-              third parties when required by law, to respond to legal process,
-              or to protect safety and rights.
-            </li>
-            <li>other parties you choose to share data with</li>
-          </ul>
-
-          <p>
-            data may be stored and processed in portugal or other countries we
-            operate in. when transfers outside the EEA occur we use appropriate
-            safeguards required by law.
+            we do not sell personal information. we use GitHub to host the
+            website and Cloudflare to protect our api. data is stored and
+            processed exclusively in portugal.
           </p>
 
           <p>
-            we retain data only as long as necessary for the purposes above, or
-            as required by law. public data we index is kept to provide the
-            service; telemetry/logs and support records are kept for limited
-            operational, security, and legal reasons.
-          </p>
-
-          <h2>security</h2>
-          <p>
-            we implement reasonable technical and organizational measures to
-            protect data (encryption in transit, access controls, regular
-            updates). no online system is perfect, and if we learn of a security
-            incident affecting your personal data we will follow applicable laws
-            about notification.
-          </p>
-
-          <h2>children</h2>
-          <p>
-            our service is not directed to children under 13. we do not
-            knowingly collect personal data from children under 13. if you
-            believe we have such data, contact us and we will promptly delete it
-            where required by law.
-          </p>
-
-          <h2>your rights</h2>
-          <p>
-            for individuals in the European Economic Area, United Kingdom, and
-            Switzerland (collectively, “Europe”), you may have the right to:
-          </p>
-          <ul>
-            <li>request access to the personal data we hold about you;</li>
-            <li>
-              request correction or deletion (subject to legal exceptions);
-            </li>
-            <li>object to or restrict certain processing;</li>
-            <li>request a copy of your data in a machine-readable format;</li>
-            <li>withdraw consent where processing is based on consent.</li>
-          </ul>
-          <p>
-            we will verify requests to protect privacy. some requests may be
-            limited by legal obligations (e.g., logs needed for abuse
-            investigations).
-          </p>
-
-          <h2>changes to this policy</h2>
-          <p>
-            this policy may be updated from time to time without any prior
-            warning. your continued use of the Service after any change to this
-            policy constitutes your acceptance of the new Privacy Policy. if you
-            do not agree to any part of this Policy or to any future Privacy
-            Policies, do not access or use (or continue to access or use) the
-            Service.
-          </p>
-
-          <p>
-            for questions, requests, or data-subject requests, please email us
-            at awry-march-tarot@duck.com
+            for questions, requests, or data-subject requests, please
+            <a href="mailto:awry-march-tarot@duck.com" target="_blank"
+              >email us</a
+            >.
           </p>
         </div>
 
@@ -677,22 +556,17 @@
             contact us at awry-march-tarot@duck.com.
           </p>
           <p>
-            <b>reporting illegal content.</b>
+            <b>removing content and opting out.</b>
 
-            if you believe any content available on or through the service
-            infringes copyright, violates portuguese or eu law, or violates your
-            rights of publicity or privacy: notify X corp. and confirm that it
-            has been removed from their services; you can then
-            <a href="/pages/de-index">request it to be de-indexed</a>. content
-            such as csam should also be reported directly to law enforcement or
-            the relevant national reporting body.
+            if you would like to remove your content from twitter.cat or request
+            someone else's tweet to be deleted from our archive if it has
+            already been deleted by twitter please email us. we do not have a
+            proper self-serve opt-out system at the moment.
           </p>
         </div>
       </div>
-      
-      <div class="made-by">
-      
-      </div>
+
+      <div class="made-by"></div>
     </main>
   </body>
 </html>

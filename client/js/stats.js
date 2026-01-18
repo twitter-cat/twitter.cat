@@ -21,15 +21,17 @@ window.addEventListener("load", () => {
           parseInt(
             document
               .querySelector(".counter .count.accounts p")
-              .innerText.replaceAll(",", "")
-          ) + Math.floor(Math.random() * addAccountsMax)
+              .innerText.replaceAll(",", ""),
+            10,
+          ) + Math.floor(Math.random() * addAccountsMax),
         ).toLocaleString();
         document.querySelector(".counter .count.tweets p").innerText = Number(
           parseInt(
             document
               .querySelector(".counter .count.tweets p")
-              .innerText.replaceAll(",", "")
-          ) + Math.floor(Math.random() * addTweetsMax)
+              .innerText.replaceAll(",", ""),
+            10,
+          ) + Math.floor(Math.random() * addTweetsMax),
         ).toLocaleString();
       }, 3000);
     } catch (e) {

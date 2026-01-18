@@ -1,7 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
-    <title>twitter.cat — the open-source real-time twitter search engine & tools</title>
+    <title>
+      twitter.cat — the open-source real-time twitter search engine & tools
+    </title>
 
     <meta charset="UTF-8" />
 
@@ -9,14 +11,20 @@
     <link rel="icon" type="image/x-icon" href="/assets/svgs/face.svg" />
 
     <meta itemprop="name" content="twitter.cat" />
-    <meta name="description" content="search and analyze a real-time scrape of millions of tweets updated every second with twitter.cat" />
+    <meta
+      name="description"
+      content="search and analyze a real-time scrape of millions of tweets updated every second with twitter.cat"
+    />
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="twitter.cat" />
     <meta name="twitter:site" content="@cvsilly_" />
-    <meta name="twitter:description" content="search and analyze a real-time scrape of millions of tweets updated every second with twitter.cat" />
+    <meta
+      name="twitter:description"
+      content="search and analyze a real-time scrape of millions of tweets updated every second with twitter.cat"
+    />
     <meta
       name="twitter:image"
       content="https://twitter.cat/assets/images/bouncing.gif"
@@ -28,15 +36,99 @@
     <link rel="preload" as="font" href="/assets/fonts/chirpheavy.woff2" />
     <link rel="preload" as="script" href="/js/index.js" />
     <link rel="preload" as="script" href="/js/config.js" />
+    <link rel="preload" as="script" href="/js/session.js" />
     <link rel="preload" as="script" href="/js/stats.js" />
 
     <link rel="stylesheet" href="/css/index.css" />
     <link rel="stylesheet" href="/css/search.css" />
+    <link rel="stylesheet" href="/css/skeleton.css" />
     <link rel="stylesheet" href="/css/filters.css" />
+    <link rel="stylesheet" href="/css/typeahead.css" />
 
     <!-- <link rel="stylesheet" href="/css/youretooearly.css" /> -->
   </head>
   <body>
+    <style>
+      .notice {
+        position: absolute;
+        top: 15px;
+        left: 0px;
+        right: 0px;
+        font-size: 15px;
+        user-select: none;
+      }
+
+      .notice p {
+        max-width: 390px;
+        margin: 0px auto;
+        line-height: 1.4;
+        text-align: center;
+        color: #9fa5aa;
+        opacity: 0.9;
+
+        a {
+          color: #dadfe4;
+          text-decoration: underline;
+          text-underline-offset: 3px;
+        }
+      }
+
+      .notice button {
+        background: transparent;
+        border: none;
+        aspect-ratio: 1 / 1;
+        cursor: pointer;
+        right: 17px;
+        position: absolute;
+        top: 5px;
+        color: #c6ccd1;
+      }
+
+      .notice button:hover {
+        color: white;
+      }
+
+      html:has(.center .results) .notice {
+        display: none !important;
+      }
+    </style>
+    <div class="notice" style="display: none">
+      <p>
+        search is currently being synced, so results are temporarily using a
+        smaller dataset.
+        <a href="https://x.com/twittdotcat" target="_blank">more updates</a>
+      </p>
+
+      <button
+        title="close"
+        onclick="
+          this.parentElement.remove();
+          localStorage.setItem('syctwbanner', 'h');
+        "
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="icon icon-tabler icons-tabler-outline icon-tabler-x"
+        >
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <path d="M18 6l-12 12" />
+          <path d="M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <script>
+      if (localStorage.getItem("syctwbanner") !== "h") {
+        document.querySelector(".notice").style.display = "flex";
+      }
+    </script>
     <div class="center-wrapper">
       <div class="center">
         <div class="logo" role="banner">
@@ -65,6 +157,22 @@
 
         <!-- these aren't linked as normal files because i can't get them to recolor otherwise 😭 god dammit -->
         <div class="buttons">
+          <button class="toggle" data-toggle="tweets">
+            <span class="svgwrapper">
+              <span class="togglebg tweetsbg"></span>
+
+              <svg
+                class="buttonicon"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366a8.13 8.13 0 0 1 8.129 8.13c0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067A8.005 8.005 0 0 1 1.751 10m8.005-6a6.005 6.005 0 1 0 .133 12.01l.351-.01h1.761v2.3l5.087-2.81A6.127 6.127 0 0 0 14.122 4z"
+                />
+              </svg>
+            </span>
+            <span>tweets</span>
+          </button>
           <button class="toggle" data-toggle="accounts">
             <span class="svgwrapper">
               <span class="togglebg accountsbg"></span>
@@ -80,22 +188,23 @@
             </span>
             <span>accounts</span>
           </button>
-
-          <button class="toggle" data-toggle="tweets">
+          <button class="toggle" data-toggle="media">
             <span class="svgwrapper">
-              <span class="togglebg tweetsbg"></span>
+              <span class="togglebg mediabg"></span>
               <svg
                 class="buttonicon"
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
               >
                 <path
-                  d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366a8.13 8.13 0 0 1 8.129 8.13c0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067A8.005 8.005 0 0 1 1.751 10m8.005-6a6.005 6.005 0 1 0 .133 12.01l.351-.01h1.761v2.3l5.087-2.81A6.127 6.127 0 0 0 14.122 4z"
+                  d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13zM5.5 5c-.276 0-.5.224-.5.5v9.086l3-3 3 3 5-5 3 3V5.5c0-.276-.224-.5-.5-.5h-13zM19 15.414l-3-3-5 5-3-3-3 3V18.5c0 .276.224.5.5.5h13c.276 0 .5-.224.5-.5v-3.086zM9.75 7C8.784 7 8 7.784 8 8.75s.784 1.75 1.75 1.75 1.75-.784 1.75-1.75S10.716 7 9.75 7z"
                 />
               </svg>
             </span>
-            <span>tweets</span>
+            <span>media</span>
           </button>
+
+          <!--
           <button class="toggle" data-toggle="lists">
             <span class="svgwrapper">
               <span class="togglebg listsbg"></span>
@@ -127,7 +236,29 @@
               </svg>
             </span>
             <span>ads</span>
-          </button>
+          </button>-->
+
+          <div class="sort-dropdown" id="sort-dropdown">
+            <button class="sort-toggle" id="sort-toggle" title="Sort results">
+              <span class="sort-label">Relevance</span>
+              <svg
+                class="dropdown-arrow"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+              >
+                <path d="M7 10l5 5 5-5z" fill="currentColor" />
+              </svg>
+            </button>
+            <div class="sort-menu" id="sort-menu">
+              <button class="sort-option active" data-sort="relevance">
+                Relevance
+              </button>
+              <button class="sort-option" data-sort="likes">Likes</button>
+              <button class="sort-option" data-sort="newest">Newest</button>
+              <button class="sort-option" data-sort="oldest">Oldest</button>
+            </div>
+          </div>
 
           <button
             class="filter-toggle"
@@ -136,629 +267,78 @@
           >
             <span class="svgwrapper">
               <span class="togglebg filterbg"></span>
+
               <svg
-                class="buttonicon"
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="buttonicon"
+                aria-hidden="true"
+                style="width: 14px; height: 14px"
               >
                 <path
-                  d="M4.25 5.61C6.27 8.2 10 13 10 13v6c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-6s3.73-4.8 5.75-7.39c.51-.66.04-1.61-.79-1.61H5.04c-.83 0-1.3.95-.79 1.61z"
-                />
+                  d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"
+                ></path>
               </svg>
             </span>
           </button>
         </div>
 
         <div class="filters-panel" id="filters-panel">
-          <div class="filters-header">
-            <h3>Filters</h3>
-            <button class="clear-filters" id="clear-filters">Clear all</button>
-          </div>
-
           <div class="filters-content">
             <div class="filter-section">
-              <h4>Account Properties</h4>
-              <div class="filter-grid">
-                <div class="filter-item">
-                  <label>Verified</label>
-                  <select class="filter-select" data-field="verified">
-                    <option value="">Any</option>
-                    <option value="matches_only">Verified Only</option>
-                    <option value="exclude">Exclude Verified</option>
-                  </select>
-                  <select class="priority-select" data-field="verified">
-                    <option value="">No Priority</option>
-                    <option value="up">Prioritize ↑</option>
-                    <option value="down">Deprioritize ↓</option>
-                  </select>
-                </div>
-
-                <div class="filter-item">
-                  <label>Protected</label>
-                  <select class="filter-select" data-field="protected">
-                    <option value="">Any</option>
-                    <option value="matches_only">Protected Only</option>
-                    <option value="exclude">Exclude Protected</option>
-                  </select>
-                  <select class="priority-select" data-field="protected">
-                    <option value="">No Priority</option>
-                    <option value="up">Prioritize ↑</option>
-                    <option value="down">Deprioritize ↓</option>
-                  </select>
-                </div>
-
-                <div class="filter-item">
-                  <label>Square Profile Pic</label>
-                  <select class="filter-select" data-field="square_avatar">
-                    <option value="">Any</option>
-                    <option value="matches_only">Square Only</option>
-                    <option value="exclude">Exclude Square</option>
-                  </select>
-                  <select class="priority-select" data-field="square_avatar">
-                    <option value="">No Priority</option>
-                    <option value="up">Prioritize ↑</option>
-                    <option value="down">Deprioritize ↓</option>
-                  </select>
-                </div>
-
-                <div class="filter-item">
-                  <label>Fast Followers</label>
-                  <select class="filter-select" data-field="fast_followers">
-                    <option value="">Any</option>
-                    <option value="matches_only">Fast Followers Only</option>
-                    <option value="exclude">Exclude Fast Followers</option>
-                  </select>
-                  <select class="priority-select" data-field="fast_followers">
-                    <option value="">No Priority</option>
-                    <option value="up">Prioritize ↑</option>
-                    <option value="down">Deprioritize ↓</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div class="filter-section">
-              <h4>Numbers & stats</h4>
-              <div class="filter-grid">
-                <div class="filter-item numeric">
-                  <label>Followers</label>
-                  <div class="numeric-inputs">
-                    <input
-                      type="number"
-                      class="min-input"
-                      placeholder="Min"
-                      data-field="followers"
-                      data-type="min"
-                    />
-                    <input
-                      type="number"
-                      class="max-input"
-                      placeholder="Max"
-                      data-field="followers"
-                      data-type="max"
-                    />
-                  </div>
-                  <select class="priority-select" data-field="followers">
-                    <option value="">No Priority</option>
-                    <option value="up">More First ↑</option>
-                    <option value="down">Less First ↓</option>
-                  </select>
-                </div>
-
-                <div class="filter-item numeric">
-                  <label>Following</label>
-                  <div class="numeric-inputs">
-                    <input
-                      type="number"
-                      class="min-input"
-                      placeholder="Min"
-                      data-field="following"
-                      data-type="min"
-                    />
-                    <input
-                      type="number"
-                      class="max-input"
-                      placeholder="Max"
-                      data-field="following"
-                      data-type="max"
-                    />
-                  </div>
-                  <select class="priority-select" data-field="following">
-                    <option value="">No Priority</option>
-                    <option value="up">More First ↑</option>
-                    <option value="down">Less First ↓</option>
-                  </select>
-                </div>
-
-                <div class="filter-item numeric">
-                  <label>Tweets</label>
-                  <div class="numeric-inputs">
-                    <input
-                      type="number"
-                      class="min-input"
-                      placeholder="Min"
-                      data-field="tweets"
-                      data-type="min"
-                    />
-                    <input
-                      type="number"
-                      class="max-input"
-                      placeholder="Max"
-                      data-field="tweets"
-                      data-type="max"
-                    />
-                  </div>
-                  <select class="priority-select" data-field="tweets">
-                    <option value="">No Priority</option>
-                    <option value="up">More First ↑</option>
-                    <option value="down">Less First ↓</option>
-                  </select>
-                </div>
-
-                <div class="filter-item numeric">
-                  <label>Likes</label>
-                  <div class="numeric-inputs">
-                    <input
-                      type="number"
-                      class="min-input"
-                      placeholder="Min"
-                      data-field="likes"
-                      data-type="min"
-                    />
-                    <input
-                      type="number"
-                      class="max-input"
-                      placeholder="Max"
-                      data-field="likes"
-                      data-type="max"
-                    />
-                  </div>
-                  <select class="priority-select" data-field="likes">
-                    <option value="">No Priority</option>
-                    <option value="up">More First ↑</option>
-                    <option value="down">Less First ↓</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div class="filter-section">
-              <h4>Profile Content</h4>
-              <div class="filter-grid">
-                <div class="filter-item text">
-                  <label>Name</label>
-                  <input
-                    type="text"
-                    class="text-input"
-                    placeholder="Search names..."
-                    data-field="name"
-                  />
-                  <select class="text-mode-select" data-field="name">
-                    <option value="contains">Contains</option>
-                    <option value="exact">Exact</option>
-                    <option value="starts_with">Starts With</option>
-                    <option value="exclude">Exclude</option>
-                  </select>
-                </div>
-
-                <div class="filter-item text">
-                  <label>Bio</label>
-                  <input
-                    type="text"
-                    class="text-input"
-                    placeholder="Search bios..."
-                    data-field="bio"
-                  />
-                  <select class="text-mode-select" data-field="bio">
-                    <option value="contains">Contains</option>
-                    <option value="exact">Exact</option>
-                    <option value="starts_with">Starts With</option>
-                    <option value="exclude">Exclude</option>
-                  </select>
-                </div>
-
-                <div class="filter-item text">
-                  <label>Location</label>
-                  <input
-                    type="text"
-                    class="text-input"
-                    placeholder="Search locations..."
-                    data-field="location"
-                  />
-                  <select class="text-mode-select" data-field="location">
-                    <option value="contains">Contains</option>
-                    <option value="exact">Exact</option>
-                    <option value="starts_with">Starts With</option>
-                    <option value="exclude">Exclude</option>
-                  </select>
-                </div>
-
-                <div class="filter-item text">
-                  <label>Profile Picture URL</label>
-                  <input
-                    type="text"
-                    class="text-input"
-                    placeholder="Part of image URL..."
-                    data-field="avatar_url"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div class="filter-section">
-              <h4>Account Age</h4>
-              <div class="filter-grid">
-                <div class="filter-item">
-                  <label>Created After</label>
-                  <input
-                    type="date"
-                    class="date-input"
-                    data-field="created_after"
-                  />
-                </div>
-                <div class="filter-item">
-                  <label>Created Before</label>
-                  <input
-                    type="date"
-                    class="date-input"
-                    data-field="created_before"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div class="filter-section">
-              <h4>Profile Completeness</h4>
-              <div class="filter-grid">
-                <div class="filter-item">
-                  <label>Has Location</label>
-                  <select class="special-select" data-field="has_location">
-                    <option value="">Any</option>
-                    <option value="true">Has Location</option>
-                    <option value="false">No Location</option>
-                  </select>
-                </div>
-                <div class="filter-item">
-                  <label>Has Bio</label>
-                  <select class="special-select" data-field="has_bio">
-                    <option value="">Any</option>
-                    <option value="true">Has Bio</option>
-                    <option value="false">No Bio</option>
-                  </select>
-                </div>
-                <div class="filter-item">
-                  <label>Has Website</label>
-                  <select class="special-select" data-field="has_url">
-                    <option value="">Any</option>
-                    <option value="true">Has Website</option>
-                    <option value="false">No Website</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div class="filter-section tweet-filters" style="display: none">
-              <h4>Tweet Content</h4>
-              <div class="filter-grid">
-                <div class="filter-item text">
-                  <label>Tweet Text</label>
-                  <input
-                    type="text"
-                    class="text-input"
-                    placeholder="Search in tweet body"
-                    data-field="body"
-                  />
-                  <select class="text-mode-select" data-field="body">
-                    <option value="contains">Contains</option>
-                    <option value="exact">Exact Match</option>
-                    <option value="starts_with">Starts With</option>
-                    <option value="exclude">Exclude</option>
-                  </select>
-                </div>
-
-                <div class="filter-item text">
-                  <label>From User (username)</label>
-                  <input
-                    type="text"
-                    class="text-input"
-                    placeholder="e.g., username"
-                    data-field="author_username"
-                  />
-                  <select class="text-mode-select" data-field="author_username">
-                    <option value="exact">Exact Match</option>
-                    <option value="contains">Contains</option>
-                  </select>
-                </div>
-
-                <div class="filter-item">
-                  <label>Language</label>
-                  <input
-                    type="text"
-                    class="text-input"
-                    placeholder="e.g., en, es, ja"
-                    data-field="lang"
-                  />
-                </div>
-
-                <div class="filter-item text">
-                  <label>Source</label>
-                  <input
-                    type="text"
-                    class="text-input"
-                    placeholder="e.g., iPhone, Android"
-                    data-field="source"
-                  />
-                  <select class="text-mode-select" data-field="source">
-                    <option value="contains">Contains</option>
-                    <option value="exact">Exact Match</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div class="filter-section tweet-filters" style="display: none">
-              <h4>Tweet Date Range</h4>
-              <div class="filter-grid">
-                <div class="filter-item">
-                  <label>Posted After</label>
-                  <input
-                    type="date"
-                    class="date-input"
-                    data-field="tweet_created_after"
-                  />
-                </div>
-                <div class="filter-item">
-                  <label>Posted Before</label>
-                  <input
-                    type="date"
-                    class="date-input"
-                    data-field="tweet_created_before"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div class="filter-section tweet-filters" style="display: none">
-              <h4>Tweet Engagement</h4>
-              <div class="filter-grid">
-                <div class="filter-item numeric">
-                  <label>Likes</label>
-                  <div class="numeric-inputs">
-                    <input
-                      type="number"
-                      class="min-input"
-                      placeholder="Min"
-                      data-field="like_count"
-                      data-type="min"
-                    />
-                    <input
-                      type="number"
-                      class="max-input"
-                      placeholder="Max"
-                      data-field="like_count"
-                      data-type="max"
-                    />
-                  </div>
-                  <select class="priority-select" data-field="like_count">
-                    <option value="">No Priority</option>
-                    <option value="up">More First ↑</option>
-                    <option value="down">Less First ↓</option>
-                  </select>
-                </div>
-
-                <div class="filter-item numeric">
-                  <label>Retweets</label>
-                  <div class="numeric-inputs">
-                    <input
-                      type="number"
-                      class="min-input"
-                      placeholder="Min"
-                      data-field="retweet_count"
-                      data-type="min"
-                    />
-                    <input
-                      type="number"
-                      class="max-input"
-                      placeholder="Max"
-                      data-field="retweet_count"
-                      data-type="max"
-                    />
-                  </div>
-                  <select class="priority-select" data-field="retweet_count">
-                    <option value="">No Priority</option>
-                    <option value="up">More First ↑</option>
-                    <option value="down">Less First ↓</option>
-                  </select>
-                </div>
-
-                <div class="filter-item numeric">
-                  <label>Replies</label>
-                  <div class="numeric-inputs">
-                    <input
-                      type="number"
-                      class="min-input"
-                      placeholder="Min"
-                      data-field="reply_count"
-                      data-type="min"
-                    />
-                    <input
-                      type="number"
-                      class="max-input"
-                      placeholder="Max"
-                      data-field="reply_count"
-                      data-type="max"
-                    />
-                  </div>
-                  <select class="priority-select" data-field="reply_count">
-                    <option value="">No Priority</option>
-                    <option value="up">More First ↑</option>
-                    <option value="down">Less First ↓</option>
-                  </select>
-                </div>
-
-                <div class="filter-item numeric">
-                  <label>Quotes</label>
-                  <div class="numeric-inputs">
-                    <input
-                      type="number"
-                      class="min-input"
-                      placeholder="Min"
-                      data-field="quote_count"
-                      data-type="min"
-                    />
-                    <input
-                      type="number"
-                      class="max-input"
-                      placeholder="Max"
-                      data-field="quote_count"
-                      data-type="max"
-                    />
-                  </div>
-                  <select class="priority-select" data-field="quote_count">
-                    <option value="">No Priority</option>
-                    <option value="up">More First ↑</option>
-                    <option value="down">Less First ↓</option>
-                  </select>
-                </div>
-
-                <div class="filter-item numeric">
-                  <label>Views</label>
-                  <div class="numeric-inputs">
-                    <input
-                      type="number"
-                      class="min-input"
-                      placeholder="Min"
-                      data-field="views_count"
-                      data-type="min"
-                    />
-                    <input
-                      type="number"
-                      class="max-input"
-                      placeholder="Max"
-                      data-field="views_count"
-                      data-type="max"
-                    />
-                  </div>
-                  <select class="priority-select" data-field="views_count">
-                    <option value="">No Priority</option>
-                    <option value="up">More First ↑</option>
-                    <option value="down">Less First ↓</option>
-                  </select>
-                </div>
-
-                <div class="filter-item numeric">
-                  <label>Bookmarks</label>
-                  <div class="numeric-inputs">
-                    <input
-                      type="number"
-                      class="min-input"
-                      placeholder="Min"
-                      data-field="bookmarks_count"
-                      data-type="min"
-                    />
-                    <input
-                      type="number"
-                      class="max-input"
-                      placeholder="Max"
-                      data-field="bookmarks_count"
-                      data-type="max"
-                    />
-                  </div>
-                  <select class="priority-select" data-field="bookmarks_count">
-                    <option value="">No Priority</option>
-                    <option value="up">More First ↑</option>
-                    <option value="down">Less First ↓</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div class="filter-section tweet-filters" style="display: none">
-              <h4>Tweet Type</h4>
-              <div class="filter-grid">
-                <div class="filter-item">
-                  <label>Is Reply</label>
-                  <select class="special-select" data-field="is_reply">
-                    <option value="">Any</option>
-                    <option value="true">Replies Only</option>
-                    <option value="false">Not Replies</option>
-                  </select>
-                </div>
-
-                <div class="filter-item">
-                  <label>Is Quote</label>
-                  <select class="special-select" data-field="is_quote">
-                    <option value="">Any</option>
-                    <option value="true">Quotes Only</option>
-                    <option value="false">Not Quotes</option>
-                  </select>
-                </div>
-
-                <div class="filter-item">
-                  <label>Original Tweets</label>
-                  <select class="special-select" data-field="is_original">
-                    <option value="">Any</option>
-                    <option value="true">Original Only</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div class="filter-section tweet-filters" style="display: none">
-              <h4>Media & Content</h4>
-              <div class="filter-grid">
-                <div class="filter-item">
-                  <label>Has Media</label>
-                  <select class="special-select" data-field="has_media">
-                    <option value="">Any</option>
-                    <option value="true">Has Media</option>
-                    <option value="false">No Media</option>
-                  </select>
-                </div>
-
-                <div class="filter-item">
-                  <label>Media Type</label>
-                  <select class="special-select" data-field="media_type">
-                    <option value="">Any</option>
-                    <option value="photo">Photo</option>
-                    <option value="video">Video</option>
-                    <option value="gif">GIF</option>
-                  </select>
-                </div>
-
-                <div class="filter-item">
-                  <label>Has Poll</label>
-                  <select class="special-select" data-field="has_poll">
-                    <option value="">Any</option>
-                    <option value="true">Has Poll</option>
-                    <option value="false">No Poll</option>
-                  </select>
-                </div>
-
-                <div class="filter-item">
-                  <label>Has Embed</label>
-                  <select class="special-select" data-field="has_embed">
-                    <option value="">Any</option>
-                    <option value="true">Has Embed</option>
-                    <option value="false">No Embed</option>
-                  </select>
-                </div>
-              </div>
+              <textarea
+                id="filter-textarea"
+                class="filter-textarea"
+                placeholder="e.g., followers >= 1000 AND verified = true"
+                rows="8"
+                spellcheck="false"
+                maxlength="600"
+              ></textarea>
+              <p class="filter-help">
+                <a
+                  href="https://www.meilisearch.com/docs/reference/api/search#filter"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-circle-question-mark-icon lucide-circle-question-mark"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <path d="M12 17h.01" />
+                  </svg>
+                  learn filter syntax →
+                </a>
+              </p>
             </div>
           </div>
         </div>
 
         <div class="counter">
           <a href="/live">
-            <div class="count accounts">
-              <span>Accounts</span>
+            <div class="count tweets">
+              <span>tweets</span>
               <p></p>
             </div>
           </a>
 
           <a href="/live">
-            <div class="count tweets">
-              <span>Tweets</span>
+            <div class="count accounts">
+              <span>accounts</span>
               <p></p>
             </div>
           </a>
@@ -772,17 +352,22 @@
       <a
         title="This service is independently operated and is not affiliated with, endorsed by, or sponsored by any company formerly or currently known as Twitter, X, X Corp, or any related entity. Use at your own risk."
       >
-        not affiliated with X Corp.
+        not affiliated with 𝕏
       </a>
     </div>
   </body>
 
   <script src="/js/index.js" type="module" defer></script>
+  <script src="/js/typeahead.js" type="module" defer></script>
   <script src="/js/stats.js" defer></script>
   <script
     defer
     data-domain="twitter.cat"
     src="https://a.tiago.zip/js/script.js"
+  ></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.32"
+    async
   ></script>
   <!-- <script src="/js/youretooearly.js"></script> -->
 </html>

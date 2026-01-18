@@ -1,0 +1,119 @@
+.skeleton-box,
+.skeleton-text {
+  display: inline-block;
+
+  background: linear-gradient(
+    90deg,
+    rgba(158, 158, 158, 0.08) 0%,
+    rgba(158, 158, 158, 0.14) 20%,
+    rgba(158, 158, 158, 0.08) 40%
+  );
+  background-size: 200% 100%;
+  border-radius: 4px;
+  pointer-events: none;
+  margin-bottom: -7px;
+  animation: skeleton-loading 1.4s infinite linear;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.result.account.skeleton {
+  pointer-events: none;
+  cursor: default;
+}
+
+.result.account.skeleton .avatar.skeleton-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 120px;
+  flex-shrink: 0;
+}
+
+.result.account.skeleton .skeleton-name {
+  height: 16px;
+  width: 120px;
+  margin-bottom: 4px;
+}
+
+.result.account.skeleton .skeleton-username {
+  height: 16px;
+  width: 150px;
+  margin-bottom: 4px;
+}
+
+.result.account.skeleton .skeleton-bio-line {
+  height: 14px;
+  width: 100%;
+  margin-bottom: 5px;
+}
+
+.result.account.skeleton .skeleton-bio-line-short {
+  height: 14px;
+  width: 70%;
+  margin-bottom: 5px;
+}
+
+.result.account.skeleton .stats {
+  height: 19px;
+}
+
+.result.account.skeleton .skeleton-stat {
+  height: 19px;
+  width: 60px;
+  margin: 0px;
+}
+
+.result.tweet.skeleton {
+  pointer-events: none;
+  cursor: default;
+}
+
+.result.tweet.skeleton .tweet-stats {
+  height: 19px;
+}
+
+.result.tweet.skeleton .tweet-author .avatar.skeleton-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: transparent;
+  flex-shrink: 0;
+}
+
+.result.tweet.skeleton .skeleton-name {
+  height: 18px;
+  width: 120px;
+  margin-bottom: 4px;
+}
+
+.result.tweet.skeleton .skeleton-username {
+  height: 18px;
+  width: 150px;
+  margin-bottom: 4px;
+}
+
+.result.tweet.skeleton .skeleton-line {
+  height: 15px;
+  width: 100%;
+  margin-bottom: 2px;
+}
+
+.result.tweet.skeleton .skeleton-line-short {
+  height: 15px;
+  width: 75%;
+  margin-bottom: 2px;
+}
+
+.result.tweet.skeleton .skeleton-stat {
+  height: 19px;
+  width: 50px;
+  margin: 0px;
+}

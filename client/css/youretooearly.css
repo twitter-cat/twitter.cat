@@ -56,7 +56,8 @@
 
 .shake {
   display: inline-block;
-  animation: shake 0.3s cubic-bezier(0.55, 0, 0.1, 1) both,
+  animation:
+    shake 0.3s cubic-bezier(0.55, 0, 0.1, 1) both,
     shake 0.08s linear both infinite;
 }
 @keyframes shake {

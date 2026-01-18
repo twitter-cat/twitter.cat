@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>filter guide / twitter.cat</title>
+    <meta property="og:type" content="image" />
+    <link rel="icon" type="image/x-icon" href="/assets/svgs/face.svg" />
+    <meta itemprop="name" content="twitter (dot) cat" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="twitter (dot) cat" />
+    <meta name="twitter:site" content="@cvsilly_" />
+    <meta name="twitter:description" content="small tools for twitter" />
+    <meta name="twitter:image" content="https://twitter.cat/assets/images/bouncing.gif" />
+    <style>
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html {
+        scrollbar-width: thin;
+        scrollbar-color: hsla(255 0 255 / 15%) #14171a;
+        scrollbar-gutter: stable;
+        color-scheme: dark;
+      }
+      body {
+        background-color: #14171a;
+        color: white;
+        margin: 0;
+        font-size: 20px;
+        font-family: "chirp", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      }
+      .decor {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0px;
+        width: 100%;
+        z-index: -1;
+      }
+      main {
+        line-height: 1.75;
+        color: #ffffffd9;
+        max-width: 720px;
+        margin: 40px auto;
+        padding: 0 20px 60px;
+        font-size: 16px;
+      }
+      .logo {
+        margin-bottom: 2em;
+        display: block;
+        width: fit-content;
+        text-decoration: none;
+        transition: opacity 0.2s, transform 0.1s;
+      }
+      .logo:hover { opacity: 0.8; }
+      .logo:active { transform: scale(0.95); }
+      .logo img { width: 50px; }
+      h1, h2 {
+        color: #fff;
+        text-transform: lowercase;
+        margin-top: 2em;
+      }
+      h2 {
+        font-size: 1.3em;
+        margin-top: 3rem;
+        font-weight: 600;
+        margin-bottom: 1em;
+        line-height: 1.3333333;
+      }
+      h1 {
+        font-size: 1.8em;
+        margin-top: 0;
+      }
+      a {
+        color: #9cf;
+        text-underline-offset: 2px;
+      }
+      b {
+        color: white;
+        font-weight: 600;
+      }
+      ::marker { color: #4b5563; }
+      li {
+        padding-inline-start: 0.375em;
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+      }
+      ul {
+        list-style-type: disc;
+        margin-top: 1.25em;
+        margin-bottom: 1.25em;
+        padding-inline-start: 1.625em;
+      }
+      p {
+        margin-top: 0px;
+        margin-bottom: 1.25em;
+      }
+      code {
+        font-size: 14px;
+        display: block;
+        line-height: 1.5;
+        background-color: #1c2024;
+        border-radius: 12px;
+        border: 1px solid #3e4144;
+        padding: 10px;
+        overflow-x: auto;
+        margin: 1em 0;
+      }
+      .field-list {
+        background-color: #1c2024;
+        border-radius: 12px;
+        border: 1px solid #3e4144;
+        padding: 15px 20px;
+        margin: 1.5em 0;
+      }
+      .field-list code {
+        display: inline;
+        background: none;
+        border: none;
+        padding: 0;
+        color: #9cf;
+      }
+      @font-face {
+        font-family: "chirp";
+        src: url("../assets/fonts/chirp.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "chirp";
+        src: url("../assets/fonts/chirpmedium.woff2") format("woff2");
+        font-weight: 500;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "chirp";
+        src: url("../assets/fonts/chirpbold.woff2") format("woff2");
+        font-weight: 700;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "chirp";
+        src: url("../assets/fonts/chirpheavy.woff2") format("woff2");
+        font-weight: 900;
+        font-style: normal;
+      }
+    </style>
+  </head>
+  <body>
+    <svg class="decor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1519 200">
+      <path d="M708 103l9-5 13 1 2-2 5 1h8l1-1 42-5h7l7 3v1l12-2a9368 9368 0 0129-6l2-5 12 1 6-2 3 1 2 1v-2l13-2v1l4 2 7-1h1l17-3 1 2 4-1 18-7 3-1 4-1h9l13-1 1-4 3-2 13 1v2l22-2 10-3h6l10 5 16-5 15-3 2-1 8-4 6-2 12-1 7-2 8 5 7 1 22-9h7l5-1v-1l25-3 1 2 5 2v1h11l2 1 8-4h3l-1 1h11l10-6 6 3 9-1 4-1 1 1 1-2 6-1 1-1 10-2h2l7-5v1h4l3-1c11 0 23 2 34-3 2-2 7 0 10 0l12 1 4 1 9 2 12-1 11-3 11 1h4l10-6 17 1 2 1c9 2 19-3 22-11l1-1 9 1 15-5c3-1 9 4 9-5 5 0 5 3 5 7l2 3 4-1 4-2 9-4 3-3h3l8-4 6-3 26 2 7-4h18l7 1c10 3 13-6 17-12l8 4 3-1 14-3 15-2a38 38 0 01-5-1l-8-4 7-8 8-4-10-136-922 71 16 205z"></path>
+      <path d="M-36 193l9-5 13 1 2-2 5 1h8l1-1 42-5h7l7 3v1l12-2a9328 9328 0 0129-6l2-5 12 1 6-2 3 1 2 1v-2l13-2v1l4 2 7-1h1l17-3 1 2 4-1 18-7 3-1 4-1h9l13-1 1-4 3-2 13 1v2l22-2 10-3h6l10 5 16-5 15-3 2-1 8-4 6-2 12-1 7-2 8 5 7 1 22-9h7l5-1v-1l25-3 1 2 5 2v1h11l2 1 8-4h3l-1 1h9a6 6 0 002 0l10-6 6 3 9-1 4-1a6 6 0 001 1l1-2 6-1 1-1 10-2h2l7-5v1h4l3-1c11 0 23 2 34-3 2-2 7 0 10 0l12 1 4 1 9 2 12-1 11-3 11 1h4l10-6 17 1 2 1c9 2 19-3 22-11l1-1 9 1 15-5c3-1 9 4 9-5 5 0 5 3 5 7l2 3 4-1 4-2 9-4 3-3h3l8-4 6-3 26 2 7-4h18l7 1c10 3 13-6 17-12l8 4 3-1 14-3 15-2a37 37 0 01-5-1l-8-4 7-8 8-4-10-136-922 71 16 205z"></path>
+    </svg>
+    <main>
+      <a href="/" class="logo" draggable="false">
+        <img src="../assets/svgs/kitty.svg" draggable="false" />
+      </a>
+      <div class="content">
+        <h1>filter guide</h1>
+        
+        <p>twitter.cat uses the meilisearch filter syntax to help you search through tweets and accounts. this guide will show you how to use filters to find exactly what you're looking for.</p>
+
+        <h2>basic syntax</h2>
+        
+        <p>filters use simple comparison operators:</p>
+        <ul>
+          <li><b>=</b> equals</li>
+          <li><b>!=</b> not equals</li>
+          <li><b>&gt;</b> greater than</li>
+          <li><b>&gt;=</b> greater than or equal</li>
+          <li><b>&lt;</b> less than</li>
+          <li><b>&lt;=</b> less than or equal</li>
+        </ul>
+
+        <p>you can combine conditions using:</p>
+        <ul>
+          <li><b>AND</b> both conditions must be true</li>
+          <li><b>OR</b> either condition can be true</li>
+          <li><b>NOT</b> negates a condition</li>
+          <li><b>( )</b> parentheses to group conditions</li>
+        </ul>
+
+        <p><b>important:</b> text values must be wrapped in quotes like <code>"example"</code></p>
+
+        <h2>1. filtering accounts</h2>
+
+        <p>when filtering user accounts, you can use these fields:</p>
+
+        <div class="field-list">
+          <ul>
+            <li><code>id</code> - user's numeric id</li>
+            <li><code>username</code> - handle without @</li>
+            <li><code>name</code> - display name</li>
+            <li><code>bio</code> - profile description</li>
+            <li><code>location</code> - user's location</li>
+            <li><code>verified</code> - verification status (true/false)</li>
+            <li><code>protected</code> - account privacy (true/false)</li>
+            <li><code>followers</code> - follower count</li>
+            <li><code>following</code> - following count</li>
+            <li><code>fast_followers</code> - fast follower count</li>
+            <li><code>likes</code> - total likes given</li>
+            <li><code>media_count</code> - media uploads</li>
+            <li><code>listed_count</code> - times listed</li>
+            <li><code>tweets</code> - total tweet count</li>
+            <li><code>created_at</code> - account creation date (unix timestamp)</li>
+            <li><code>added_at</code> - when added to database (unix timestamp)</li>
+            <li><code>professional_type</code> - professional account type</li>
+            <li><code>professional_category</code> - professional category</li>
+          </ul>
+        </div>
+
+        <h2>account filter examples</h2>
+
+        <p><b>find verified accounts with over 100k followers:</b></p>
+        <code>verified = true AND followers > 100000</code>
+
+        <p><b>find accounts from a specific location:</b></p>
+        <code>location = "New York"</code>
+
+        <p><b>find active accounts (high tweet count, recent):</b></p>
+        <code>tweets > 1000 AND followers > 5000</code>
+
+        <p><b>find accounts with specific words in bio:</b></p>
+        <code>bio = "developer" OR bio = "engineer"</code>
+
+        <p><b>find popular non-verified accounts:</b></p>
+        <code>verified = false AND followers > 50000</code>
+
+        <p><b>find accounts by follower to following ratio:</b></p>
+        <code>followers > 10000 AND following &lt; 1000</code>
+
+        <p><b>find protected accounts with high engagement:</b></p>
+        <code>protected = true AND (followers > 1000 OR tweets > 5000)</code>
+
+        <p><b>find professional accounts:</b></p>
+        <code>professional_type = "business"</code>
+
+        <h2>2. filtering tweets</h2>
+
+        <p>when filtering tweets, you can use these fields:</p>
+
+        <div class="field-list">
+          <ul>
+            <li><code>id</code> - tweet's numeric id</li>
+            <li><code>author_id</code> - id of the tweet author</li>
+            <li><code>body</code> - tweet text content</li>
+            <li><code>created_at</code> - when tweet was posted (unix timestamp)</li>
+            <li><code>like_count</code> - number of likes</li>
+            <li><code>reply_count</code> - number of replies</li>
+            <li><code>retweet_count</code> - number of retweets</li>
+            <li><code>quote_count</code> - number of quote tweets</li>
+            <li><code>views_count</code> - view count</li>
+            <li><code>bookmarks_count</code> - bookmark count</li>
+            <li><code>lang</code> - language code (e.g., "en", "es")</li>
+            <li><code>source</code> - posting platform</li>
+            <li><code>reply_to_status_id</code> - id of tweet being replied to</li>
+            <li><code>reply_to_user_id</code> - id of user being replied to</li>
+            <li><code>conversation_id</code> - thread conversation id</li>
+            <li><code>quoting_id</code> - id of quoted tweet</li>
+            <li><code>added_at</code> - when added to database (unix timestamp)</li>
+            <li><code>has_poll</code> - contains a poll (true/false)</li>
+            <li><code>has_embed</code> - has embedded content (true/false)</li>
+            <li><code>has_media</code> - has media attachments (true/false)</li>
+          </ul>
+        </div>
+
+        <h2>tweet filter examples</h2>
+
+        <p><b>find viral tweets (high engagement):</b></p>
+        <code>like_count > 10000 AND retweet_count > 1000</code>
+
+        <p><b>find tweets from a specific user:</b></p>
+        <code>author_id = "1774176655176556544"</code>
+
+        <p><b>find popular tweets with media:</b></p>
+        <code>has_media = true AND like_count > 5000</code>
+
+        <p><b>find tweets in english with high views:</b></p>
+        <code>lang = "en" AND views_count > 100000</code>
+
+        <p><b>find tweets that are replies:</b></p>
+        <code>reply_to_status_id EXISTS</code>
+
+        <p><b>find original tweets (not replies or quotes):</b></p>
+        <code>reply_to_status_id NOT EXISTS AND quoting_id NOT EXISTS</code>
+
+        <p><b>find tweets with polls:</b></p>
+        <code>has_poll = true</code>
+
+        <p><b>find recent viral content:</b></p>
+        <code>created_at > 1700000000 AND (like_count > 1000 OR retweet_count > 500)</code>
+
+        <p><b>find highly bookmarked tweets:</b></p>
+        <code>bookmarks_count > 1000</code>
+
+        <p><b>find tweets from mobile vs web:</b></p>
+        <code>source = "Twitter for iPhone"</code>
+
+        <p><b>find tweets in a specific conversation:</b></p>
+        <code>conversation_id = "1234567890123456789"</code>
+
+        <h2>advanced filtering</h2>
+
+        <p><b>combine multiple conditions with AND:</b></p>
+        <code>author_id = "12345" AND like_count > 100 AND has_media = true</code>
+
+        <p><b>use OR for alternatives:</b></p>
+        <code>lang = "en" OR lang = "es" OR lang = "fr"</code>
+
+        <p><b>use NOT to exclude:</b></p>
+        <code>like_count > 1000 AND NOT has_media = true</code>
+
+        <p><b>group conditions with parentheses:</b></p>
+        <code>author_id = "12345" AND (like_count > 1000 OR retweet_count > 500)</code>
+
+        <p><b>complex viral content filter:</b></p>
+        <code>(like_count > 10000 OR retweet_count > 5000) AND lang = "en" AND has_media = true AND NOT reply_to_status_id EXISTS</code>
+
+        <p><b>find tweets from multiple specific users:</b></p>
+        <code>(author_id = "12345" OR author_id = "67890") AND like_count > 100</code>
+
+        <h2>working with timestamps</h2>
+
+        <p>timestamps use unix format (seconds since january 1, 1970). some helpful conversions:</p>
+        <ul>
+          <li>december 1, 2024 = 1733011200</li>
+          <li>january 1, 2024 = 1704067200</li>
+          <li>january 1, 2023 = 1672531200</li>
+        </ul>
+
+        <p><b>find tweets from the last month:</b></p>
+        <code>created_at > 1733011200</code>
+
+        <p><b>find tweets in a date range:</b></p>
+        <code>created_at > 1704067200 AND created_at &lt; 1733011200</code>
+
+        <h2>tips</h2>
+
+        <ul>
+          <li>use parentheses when combining AND and OR to avoid confusion</li>
+          <li>remember that AND takes precedence over OR without parentheses</li>
+          <li>always wrap text values in quotes: <code>"example"</code></li>
+          <li>use <code>EXISTS</code> to check if a field has any value</li>
+          <li>use <code>NOT EXISTS</code> to check if a field is empty</li>
+          <li>boolean fields like <code>verified</code>, <code>has_media</code> use <code>true</code> or <code>false</code> (no quotes)</li>
+        </ul>
+
+        <p>experiment with different combinations to find exactly what you need!</p>
+      </div>
+    </main>
+  </body>
+</html>

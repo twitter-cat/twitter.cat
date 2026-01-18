@@ -1,4 +1,10 @@
-# twitter.cat
+<a href="https://twitter.cat" target="_blank">
+
+<img src="https://twitter.cat/assets/svgs/kitty.svg" width="50" alt="twitter.cat logo"/>
+
+</a>
+
+<h1><a href="https://twitter.cat" target="_blank">twitter.cat</a></h1>
 
 twitter search engine & crawler.
 
@@ -7,29 +13,26 @@ twitter search engine & crawler.
 ### requirements
 
 - postgres db with the required tables and indexes
-
-- your own crawler, this isn't open-source for obvious reasons
-
+- meilisearch instance with the required indexes
 - bun installed
-
 - a server accessible from the internet
 
 ### client
 
 1. set your server url in `client/js/config.js`
-
 2. `cd client`
-
 3. `bunx serve`
 
-this should be deployed to your preferred static hosting provider.
+this should be deployed to your preferred cdn.
 
 ### server
 
 1. `cd server`
-
 2. rename `.env.example` to `.env` and fill in your credentials
+3. `bun install` & `bun run dev
 
-3. `bun install` & `bun run dev`
+## crawling
 
-port `3001` or `env.PORT` should deployed to your server, along with the postgres database.
+in order for you to have any tweets to search, you'll need to manage crawlers that ingest tweet data to the postgres db, along with a sync script to push the data to meilisearch.
+
+these crawlers are not open-source. the production twitter.cat instance uses many crawlers running in parallel on different machines, ingesting hundreds of thousands of tweets per hour.

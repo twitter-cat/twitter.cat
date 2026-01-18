@@ -1,13 +1,16 @@
 import { SQL } from "bun";
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
+import { rateLimit } from "elysia-rate-limit";
+import * as jose from "jose";
 
 const postgresReadOnly = new SQL(
-  `postgres://${process.env.POSTGRES_USER_READONLY}:${process.env.POSTGRES_PASSWORD_READONLY}@${process.env.POSTGRES_HOST}:5432/twitter`
+  `postgres://${process.env.POSTGRES_USER_READONLY}:${process.env.POSTGRES_PASSWORD_READONLY}@${process.env.POSTGRES_HOST}:5432/twitter`,
 );
 
 const postgresReadWrite = new SQL(
-  `postgres://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:5432/twitter`
+  `postgres://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:5432/twitter`,
 );
+const secret = new TextEncoder().encode(process.env.CURSOR_SIGNING_KEY);
 
 const SYNDICATION_URL = "https://cdn.syndication.twimg.com";
 const TWEET_ID = /^[0-9]+$/;
@@ -18,7 +21,7 @@ function getToken(id) {
     .replace(/(0+|\.)/g, "");
 }
 
-export async function fetchTweet(id) {
+async function fetchTweet(id) {
   if (id.length > 40 || !TWEET_ID.test(id)) {
     throw new Error(`Invalid tweet id: ${id}`);
   }
@@ -44,7 +47,7 @@ export async function fetchTweet(id) {
       "tfw_show_gov_verified_badge:on",
       "tfw_show_business_affiliate_badge:on",
       "tfw_tweet_edit_frontend:on",
-    ].join(";")
+    ].join(";"),
   );
   url.searchParams.set("token", getToken(id));
 
@@ -101,7 +104,6 @@ async function parseTweetData(data) {
     reply_to_status_id: data.in_reply_to_status_id_str,
     quoting_id: data.quoted_tweet?.id_str,
     lang: data.lang,
-    source: data.source,
     author: {
       id: user?.id_str,
       username: user?.screen_name,
@@ -138,12 +140,11 @@ async function insertTweetToDatabase(tweetData) {
       `;
     }
 
-    // Insert the tweet
     await postgresReadWrite`
       INSERT INTO tweets (
         id, author_id, body, created_at, like_count, retweet_count, reply_count,
         quote_count, views_count, bookmarks_count, media, reply_to_status_id,
-        quoting_id, lang, source
+        quoting_id, lang
       )
       VALUES (
         ${tweetData.id},
@@ -159,8 +160,7 @@ async function insertTweetToDatabase(tweetData) {
         ${tweetData.media},
         ${tweetData.reply_to_status_id},
         ${tweetData.quoting_id},
-        ${tweetData.lang},
-        ${tweetData.source}
+        ${tweetData.lang}
       )
       ON CONFLICT (id) DO NOTHING
     `;
@@ -172,20 +172,30 @@ async function insertTweetToDatabase(tweetData) {
   }
 }
 
-export default new Elysia().get("/proxy", async ({ query }) => {
-  const { id, q } = query;
+export default new Elysia()
+  .use(
+    rateLimit({
+      duration: 15_000,
+      max: 50,
+      skip: (r) => r.method === "OPTIONS",
+      generator: (c) => c.headers.get("CF-Connecting-IP"),
+    }),
+  )
+  .get(
+    "/proxy",
+    async ({ query }) => {
+      const { id, q } = query;
 
-  if (!id) {
-    return { error: "missing id" };
-  }
-  if (!["video", "quoted"].includes(q)) {
-    return { error: "invalid query" };
-  }
+      if (!id) {
+        return { error: "missing id" };
+      }
+      if (!["quoted"].includes(q)) {
+        return { error: "invalid query" };
+      }
 
-  if (q === "quoted") {
-    try {
-      const dbTweet = await postgresReadOnly`
-        SELECT 
+      try {
+        const dbTweet = await postgresReadOnly`
+        SELECT
           tweets.id,
           tweets.body,
           tweets.created_at,
@@ -207,71 +217,171 @@ export default new Elysia().get("/proxy", async ({ query }) => {
         WHERE tweets.id = ${id}
       `;
 
-      if (dbTweet.length > 0) {
-        const tweet = dbTweet[0];
-        tweet.media = JSON.parse(tweet.media || "[]");
-        return { tweet, source: "db" };
+        if (dbTweet.length > 0) {
+          const tweet = dbTweet[0];
+          tweet.media = JSON.parse(tweet.media || "[]");
+          return { tweet };
+        }
+      } catch {}
+
+      const fetchedTweet = await fetchTweet(id);
+
+      if (fetchedTweet.notFound || fetchedTweet.tombstone) {
+        return { error: "not found" };
       }
-    } catch (error) {
-      console.error("Database lookup failed:", error);
-    }
 
-    const fetchedTweet = await fetchTweet(id);
+      const parsedTweet = await parseTweetData(fetchedTweet.data);
 
-    if (fetchedTweet.notFound || fetchedTweet.tombstone) {
-      return { error: "not found" };
-    }
+      if (parsedTweet) {
+        insertTweetToDatabase(parsedTweet);
 
-    const parsedTweet = await parseTweetData(fetchedTweet.data);
+        return {
+          tweet: {
+            id: parsedTweet.id,
+            body: parsedTweet.body,
+            created_at: parsedTweet.created_at,
+            like_count: parsedTweet.like_count,
+            retweet_count: parsedTweet.retweet_count,
+            reply_count: parsedTweet.reply_count,
+            quote_count: parsedTweet.quote_count,
+            views_count: parsedTweet.views_count,
+            bookmarks_count: parsedTweet.bookmarks_count,
+            media: JSON.parse(parsedTweet.media),
+            author_username: parsedTweet.author.username,
+            author_name: parsedTweet.author.name,
+            author_avatar: parsedTweet.author.avatar,
+            author_verified: parsedTweet.author.verified,
+            author_protected: parsedTweet.author.protected,
+            author_square_avatar: parsedTweet.author.square_avatar,
+          },
+        };
+      }
 
-    if (parsedTweet) {
-      await insertTweetToDatabase(parsedTweet);
+      return { error: "failed to parse tweet" };
+    },
+    {
+      query: t.Object({
+        id: t.String(),
+        q: t.String(),
+      }),
+    },
+  )
+  .post(
+    "/permalink/sign",
+    async ({ query }) => {
+      const { id } = query;
 
-      return {
-        tweet: {
-          id: parsedTweet.id,
-          body: parsedTweet.body,
-          created_at: parsedTweet.created_at,
-          like_count: parsedTweet.like_count,
-          retweet_count: parsedTweet.retweet_count,
-          reply_count: parsedTweet.reply_count,
-          quote_count: parsedTweet.quote_count,
-          views_count: parsedTweet.views_count,
-          bookmarks_count: parsedTweet.bookmarks_count,
-          media: JSON.parse(parsedTweet.media),
-          author_username: parsedTweet.author.username,
-          author_name: parsedTweet.author.name,
-          author_avatar: parsedTweet.author.avatar,
-          author_verified: parsedTweet.author.verified,
-          author_protected: parsedTweet.author.protected,
-          author_square_avatar: parsedTweet.author.square_avatar,
-        },
-        source: "api",
-      };
-    }
+      const entry = await postgresReadOnly`
+        SELECT
+          t.*,
+          p.id AS author_id,
+          p.username AS author_username,
+          p.name AS author_name,
+          p.avatar AS author_avatar,
+          p.verified AS author_verified,
+          p.protected AS author_protected,
+          p.square_avatar AS author_square_avatar
+        FROM tweets t
+        JOIN profiles p ON p.id = t.author_id
+        WHERE t.id = ${id}
+        LIMIT 1
+      `;
 
-    return { error: "failed to parse tweet" };
-  }
+      if (entry.length === 0) {
+        return { error: "not found" };
+      }
 
-  const tweet = await fetchTweet(id);
-
-  if (tweet.notFound || tweet.tombstone) {
-    return { error: "not found" };
-  }
-
-  if (q === "video") {
-    const video = tweet.data.mediaDetails?.[0]?.video_info?.variants
-      ?.filter((variant) => {
-        return variant.content_type === "video/mp4";
+      const jwt = await new jose.SignJWT({
+        type: "permalink",
+        entry: entry[0],
       })
-      .sort((a, b) => {
-        return b.bitrate - a.bitrate;
-      })[0]?.url;
+        .setProtectedHeader({ alg: "HS256" })
+        .setIssuedAt()
+        .sign(secret);
 
-    if (!video) {
-      return { error: "no video found" };
-    }
+      return { jwt };
+    },
+    {
+      query: t.Object({
+        id: t.String(),
+      }),
+    },
+  )
+  .get(
+    "/permalink/verify",
+    async ({ query }) => {
+      const { jwt } = query;
 
-    return { video };
-  }
-});
+      try {
+        const { payload } = await jose.jwtVerify(jwt, secret, {
+          algorithms: ["HS256"],
+        });
+
+        if (payload.type !== "permalink" || !payload.entry) {
+          return {};
+        }
+
+        const { entry } = payload;
+
+        if (
+          entry.avatar &&
+          typeof entry.avatar === "string" &&
+          entry.avatar.startsWith("https://pbs.twimg.com/profile_images/")
+        ) {
+          entry.avatar = entry.avatar
+            .replace("_normal.", ";")
+            .replace("https://pbs.twimg.com/profile_images/", "");
+        } else if (entry.avatar) {
+          entry.avatar = null;
+        }
+
+        if (
+          entry.banner &&
+          typeof entry.banner === "string" &&
+          entry.banner.startsWith("https://pbs.twimg.com/profile_banners/")
+        ) {
+          entry.banner = entry.banner.replace(
+            "https://pbs.twimg.com/profile_banners/",
+            "",
+          );
+        } else if (entry.banner) {
+          entry.banner = null;
+        }
+
+        return { tweet: entry };
+      } catch {
+        return {};
+      }
+    },
+    {
+      query: t.Object({
+        jwt: t.String(),
+      }),
+    },
+  )
+  .get(
+    "/typeahead",
+    async ({ query }) => {
+      return (
+        await (
+          await fetch(
+            `https://grok.com/_worker/typeahead?q=${encodeURIComponent(query.q)}&lang=en-US&platform=android`,
+            {
+              headers: {
+                "user-agent":
+                  "Mozilla/5.0 (compatible; twittercat/0.0.1; +https://twitter.cat)",
+              },
+            },
+          )
+        ).json()
+      ).items;
+    },
+    {
+      query: t.Object({
+        q: t.String({
+          maxLength: 500,
+          minLength: 1,
+        }),
+      }),
+    },
+  );

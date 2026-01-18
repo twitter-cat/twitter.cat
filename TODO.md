@@ -1,5 +1,5 @@
 - ads search (possibly through twitter's dsa compliance platform)
 - list search
-- more and better filters / overall better search ui
 - export results
 - visualize results
+- signed quotes

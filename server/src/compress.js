@@ -7,7 +7,9 @@ export const compression = new Elysia({ name: "compressResponses" })
       .get("Accept-Encoding")
       ?.includes("zstd");
 
-    const text = isJson ? JSON.stringify(response) : response?.toString() ?? "";
+    const text = isJson
+      ? JSON.stringify(response)
+      : (response?.toString() ?? "");
 
     if (!compressionRequested || text.length < 2048) {
       return response;
