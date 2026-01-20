@@ -79,6 +79,26 @@ const executeTweetSearchQuery = async (q, filterString, offset, sortOption) => {
     authorMap.set(author.id, author);
   });
 
+  const tweetIdsWithMedia = result.hits
+    .filter((t) => t.has_media)
+    .map((t) => t.id);
+
+  const mediaMap = new Map();
+  if (tweetIdsWithMedia.length > 0) {
+    const tweetsWithMedia = await postgresReadOnly`
+      SELECT id, media
+      FROM tweets
+      WHERE id = ANY(${postgresReadOnly.array(tweetIdsWithMedia, "text")})
+    `;
+    tweetsWithMedia.forEach((tweet) => {
+      if (tweet.media) {
+        try {
+          mediaMap.set(tweet.id, JSON.parse(tweet.media));
+        } catch {}
+      }
+    });
+  }
+
   result.hits = result.hits.map((e) => {
     e.body = e._formatted.body;
     delete e._formatted;
@@ -88,9 +108,16 @@ const executeTweetSearchQuery = async (q, filterString, offset, sortOption) => {
   return {
     rows: result.hits.map((tweet) => {
       const author = authorMap.get(tweet.author_id);
+      const media = mediaMap.get(tweet.id);
+
+      const enrichedTweet = {
+        ...tweet,
+        media: media || [],
+      };
+
       if (author) {
         return {
-          ...tweet,
+          ...enrichedTweet,
           author_username: author.username,
           author_name: author.name,
           author_avatar: author.avatar,
@@ -100,7 +127,7 @@ const executeTweetSearchQuery = async (q, filterString, offset, sortOption) => {
         };
       }
 
-      return tweet;
+      return enrichedTweet;
     }),
     processingTimeMs: result.processingTimeMs,
     estimatedTotalHits: result.estimatedTotalHits,
@@ -123,9 +150,6 @@ export default new Elysia()
       try {
         const { type, q, cursor, filter, sort, session: sessionToken } = body;
 
-        if (type === "dummy") {
-          return "OK";
-        }
         if (!["accounts", "tweets", "media"].includes(type)) {
           return { error: "only accounts, tweets, and media are supported" };
         }
@@ -161,8 +185,20 @@ export default new Elysia()
         const { offset } = await decodeCursor(cursor);
 
         if (type === "tweets" || type === "media") {
+          let effectiveFilter = filterString;
+          if (type === "media") {
+            effectiveFilter = filterString
+              ? `(${filterString}) AND has_media = true`
+              : "has_media = true";
+          }
+
           const { rows, processingTimeMs, estimatedTotalHits, requestUid } =
-            await executeTweetSearchQuery(q, filterString, offset, sortOption);
+            await executeTweetSearchQuery(
+              q,
+              effectiveFilter,
+              offset,
+              sortOption,
+            );
 
           let hasMore = false;
           if (rows.length > DEFAULT_LIMIT) {

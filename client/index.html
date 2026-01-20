@@ -141,12 +141,6 @@
         </div>
 
         <div class="search" role="main">
-          <img
-            src="assets/svgs/search.svg"
-            class="searchicon"
-            draggable="false"
-            alt="search icon"
-          />
           <input
             class="searchbar"
             placeholder="search"
@@ -158,50 +152,13 @@
         <!-- these aren't linked as normal files because i can't get them to recolor otherwise 😭 god dammit -->
         <div class="buttons">
           <button class="toggle" data-toggle="tweets">
-            <span class="svgwrapper">
-              <span class="togglebg tweetsbg"></span>
-
-              <svg
-                class="buttonicon"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366a8.13 8.13 0 0 1 8.129 8.13c0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067A8.005 8.005 0 0 1 1.751 10m8.005-6a6.005 6.005 0 1 0 .133 12.01l.351-.01h1.761v2.3l5.087-2.81A6.127 6.127 0 0 0 14.122 4z"
-                />
-              </svg>
-            </span>
-            <span>tweets</span>
+            tweets
           </button>
           <button class="toggle" data-toggle="accounts">
-            <span class="svgwrapper">
-              <span class="togglebg accountsbg"></span>
-              <svg
-                class="buttonicon"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M5.651 19h12.698c-.337-1.8-1.023-3.21-1.945-4.19C15.318 13.65 13.838 13 12 13s-3.317.65-4.404 1.81c-.922.98-1.608 2.39-1.945 4.19m.486-5.56C7.627 11.85 9.648 11 12 11s4.373.85 5.863 2.44c1.477 1.58 2.366 3.8 2.632 6.46l.11 1.1H3.395l.11-1.1c.266-2.66 1.155-4.88 2.632-6.46M12 4c-1.105 0-2 .9-2 2s.895 2 2 2 2-.9 2-2-.895-2-2-2M8 6a4 4 0 1 1 8 0 4 4 0 0 1-8 0"
-                />
-              </svg>
-            </span>
-            <span>accounts</span>
+            accounts
           </button>
           <button class="toggle" data-toggle="media">
-            <span class="svgwrapper">
-              <span class="togglebg mediabg"></span>
-              <svg
-                class="buttonicon"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13zM5.5 5c-.276 0-.5.224-.5.5v9.086l3-3 3 3 5-5 3 3V5.5c0-.276-.224-.5-.5-.5h-13zM19 15.414l-3-3-5 5-3-3-3 3V18.5c0 .276.224.5.5.5h13c.276 0 .5-.224.5-.5v-3.086zM9.75 7C8.784 7 8 7.784 8 8.75s.784 1.75 1.75 1.75 1.75-.784 1.75-1.75S10.716 7 9.75 7z"
-                />
-              </svg>
-            </span>
-            <span>media</span>
+            media
           </button>
 
           <!--
@@ -240,7 +197,7 @@
 
           <div class="sort-dropdown" id="sort-dropdown">
             <button class="sort-toggle" id="sort-toggle" title="Sort results">
-              <span class="sort-label">Relevance</span>
+              <span class="sort-label">relevance</span>
               <svg
                 class="dropdown-arrow"
                 viewBox="0 0 24 24"
@@ -252,11 +209,11 @@
             </button>
             <div class="sort-menu" id="sort-menu">
               <button class="sort-option active" data-sort="relevance">
-                Relevance
+                relevance
               </button>
-              <button class="sort-option" data-sort="likes">Likes</button>
-              <button class="sort-option" data-sort="newest">Newest</button>
-              <button class="sort-option" data-sort="oldest">Oldest</button>
+              <button class="sort-option" data-sort="likes">likes</button>
+              <button class="sort-option" data-sort="newest">newest</button>
+              <button class="sort-option" data-sort="oldest">oldest</button>
             </div>
           </div>
 
@@ -265,9 +222,6 @@
             id="filter-toggle"
             title="Advanced filters"
           >
-            <span class="svgwrapper">
-              <span class="togglebg filterbg"></span>
-
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -284,7 +238,6 @@
                   d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"
                 ></path>
               </svg>
-            </span>
           </button>
         </div>
 
