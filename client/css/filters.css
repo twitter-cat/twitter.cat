@@ -127,16 +127,32 @@
   color: white;
 }
 
-.filter-toggle {
+.buttons .filter-toggle {
   outline: none;
-  width: 40px;
-  aspect-ratio: 1 / 1;
+  width: 38px;
+  height: 31px;
+  border: 1px solid #2f3336;
+  padding-bottom: 0px;
+  border-radius: 100px;
+  margin-bottom: 8px;
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    transform 0.2s;
 }
 
-.filter-toggle .svgwrapper {
-  position: relative;
-  left: unset;
-  margin-right: 0px;
+.buttons .filter-toggle:hover {
+  border-color: white;
+}
+
+.buttons .filter-toggle.pressed {
+  border-bottom: 1px solid #2f3336;
+}
+.buttons .filter-toggle.pressed:hover {
+  border-bottom: 1px solid white;
+}
+.buttons .filter-toggle:active {
+  transform: scale(0.95);
 }
 
 .center:not(.center:has(.results)) .filter-toggle {
@@ -157,6 +173,7 @@
   position: relative;
   display: none;
   margin-left: auto;
+  margin-right: -10px;
 }
 
 .center:has(.results) .sort-dropdown {
@@ -167,14 +184,18 @@
   font-family: "chirp", sans-serif;
   font-size: 0.7em;
   gap: 0px;
-  border: navajowhite;
+  border: none;
   border-radius: 50px;
   cursor: pointer;
-  height: 36px;
-  padding: 0px;
   transition:
     border-color 0.2s,
     color 0.2s;
+
+  border-bottom: 2px solid transparent;
+  padding: 0px;
+  padding-bottom: 6px;
+  height: fit-content;
+  font-weight: 400;
 }
 
 .buttons button.sort-toggle > span:not(.svgwrapper) {
@@ -253,7 +274,7 @@
   }
 }
 
-.buttons button.sort-option,
+.buttons .sort-option,
 .context-popup button {
   display: flex;
   align-items: center;
@@ -270,6 +291,7 @@
   font-size: 14.5px;
   cursor: pointer;
   height: fit-content;
+  font-weight: 400;
 
   svg {
     width: 18px;
@@ -284,6 +306,7 @@
 
 .sort-option.active {
   color: #1da1f2;
+  font-weight: 500;
 }
 
 .sort-option.active::after {
@@ -333,21 +356,5 @@
   .context-popup button {
     padding: 8px 14px;
     height: 42px;
-  }
-}
-
-.results-info {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-  margin-top: -17px;
-}
-
-.results-meta {
-  color: #8e9499;
-  font-size: 14px;
-
-  span {
-    opacity: 0.5;
   }
 }

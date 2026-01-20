@@ -59,7 +59,7 @@ body {
 .results {
   width: 100%;
   text-align: left;
-  margin-top: 1.5em;
+  margin-top: 0.8em;
 }
 
 .logo {
@@ -68,7 +68,7 @@ body {
   align-items: center;
   font-size: 2.5em;
   gap: 10px;
-  margin-bottom: 18px;
+  margin-bottom: 30px;
   user-select: none;
   pointer-events: none;
   transition:
@@ -89,6 +89,11 @@ body {
   margin-top: 0.8em;
   pointer-events: all;
   cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.center:not(:has(.results)) .buttons {
+  display: none;
 }
 
 .center:has(.results) .logo:active {
@@ -138,37 +143,32 @@ body {
 .searchbar {
   font-family: "chirp", sans-serif;
   font-size: 0.8em;
-  padding-left: 40px;
   width: 100%;
-  height: 43px;
-  background-color: rgba(0, 0, 0, 0);
+  height: 48px;
+  background-color: #202327;
   color: white;
   border-radius: 50px;
-  border: none;
-  outline: 1px solid #3e4144;
-  transition:
-    outline-color 0.2s,
-    box-shadow 0.2s;
+  border: 1px solid #3e4144d1;
   caret-color: #1da1f2;
+  margin: -1px;
+
+  padding-right: 1.5rem;
+  padding-left: 2.5rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+
+  background-image: url("/assets/svgs/search.svg");
+  background-size: 17px;
+  background-repeat: no-repeat;
+  background-position: 1rem 50%;
 }
 
 .searchbar::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgb(113, 118, 123);
 }
 
 .searchbar:focus {
-  outline: 2px solid #1da1f2;
-  outline-offset: 0;
-  box-shadow: 0 0 5px rgba(29, 161, 242, 0.5);
-}
-
-.searchicon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
+  outline: none;
 }
 
 .buttons {
@@ -178,7 +178,8 @@ body {
 
   width: 100%;
   margin-top: 10px;
-  gap: 6px;
+  gap: 18px;
+  align-items: center;
 }
 
 .buttons button {
@@ -186,31 +187,125 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: inherit;
   color: #71767b;
   font-family: "chirp", sans-serif;
-  font-size: 0.7em;
   flex-shrink: 0;
-  gap: 3px;
-  border: 1px solid #3e4144;
-  border-radius: 50px;
-  cursor: pointer;
+  border: none;
   overflow: hidden;
-  height: 36px;
-  padding: 10px;
-  transition:
-    width 0.2s,
-    border-color 0.2s,
-    color 0.2s,
-    transform 0.15s;
+  padding: 0px;
+  padding-bottom: 6px;
+  cursor: pointer;
+  background: transparent;
+  height: fit-content;
+
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
 }
 
-.buttons button:active {
-  transform: scale(0.98);
+.buttons button.pressed {
+  border-bottom: 2px solid currentColor;
+}
+.buttons button:not(.pressed):hover {
+  color: white;
 }
 
-.buttons button > span:not(.svgwrapper) {
-  margin-left: 23px;
+@media (max-width: 350px) {
+  .buttons {
+    max-width: 100%;
+    width: 100%;
+    overflow: auto;
+    position: relative;
+    padding-right: 20px;
+    height: 40px;
+    min-height: 40px;
+    scrollbar-width: none;
+  }
+}
+
+.buttonicon {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  transition: color 0.2s;
+  color: #71767b;
+  fill: currentColor;
+}
+
+.toggle {
+  outline: none;
+  position: relative;
+}
+
+.buttons button.toggle.pressed {
+  overflow: visible;
+}
+button.toggle.pressed::before {
+  content: attr(data-results-count);
+  margin-left: 6px;
+  color: transparent;
+  font-weight: 400;
+  padding: 0px 8px;
+  background-color: #14171a;
+  border-radius: 0px;
+  position: absolute;
+  right: 0px;
+  bottom: -2px;
+  z-index: 100;
+  height: 2px;
+  padding-left: 12px;
+}
+
+button.toggle.pressed::after {
+  content: attr(data-results-count);
+  margin-left: 6px;
+  color: rgb(113 118 123);
+  font-weight: 400;
+  height: 20px;
+  padding: 0px 8px;
+  background-color: rgb(113 118 123 / 9%);
+  border-radius: 100px;
+  margin-bottom: -1px;
+}
+
+body:has(.skeleton-text) button.toggle.pressed::after {
+  background: linear-gradient(
+    90deg,
+    rgba(158, 158, 158, 0.08) 0%,
+    rgba(158, 158, 158, 0.14) 20%,
+    rgba(158, 158, 158, 0.08) 40%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.4s infinite linear;
+  min-width: 23px;
+}
+body:has(.skeleton-text) button.toggle.pressed::before {
+  min-width: 23px;
+}
+body:has(.error-zone) button.toggle.pressed::before,
+body:has(.error-zone) button.toggle.pressed::after {
+  display: none;
+}
+
+.toggle[data-toggle="accounts"].pressed {
+  color: #00ba7c;
+}
+
+.toggle[data-toggle="tweets"].pressed {
+  color: #1da1f2;
+}
+
+.toggle[data-toggle="media"].pressed {
+  color: #f91880;
+}
+
+.toggle[data-toggle="lists"].pressed {
+  color: #7856ff;
+}
+
+.toggle[data-toggle="ads"].pressed {
+  color: #ff7a00;
 }
 
 .center:not(:has(.results)) .buttons {
@@ -243,142 +338,6 @@ body {
   margin-top: 6px;
   opacity: 0.9;
   line-height: 1.4;
-}
-
-@media (max-width: 350px) {
-  .buttons {
-    max-width: 100%;
-    width: 100%;
-    overflow: auto;
-    position: relative;
-    padding-right: 20px;
-    height: 40px;
-    min-height: 40px;
-    scrollbar-width: none;
-  }
-}
-
-.svgwrapper {
-  position: absolute;
-  left: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  margin-right: 3px;
-}
-
-.togglebg {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%) scale(0.9);
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  opacity: 0;
-  filter: blur(2px);
-  z-index: 0;
-  transition:
-    background 0.2s,
-    opacity 0.2s,
-    transform 0.2s,
-    filter 0.2s;
-}
-
-.accountsbg {
-  background: rgba(0, 186, 124, 0.15);
-}
-
-.tweetsbg {
-  background: rgba(29, 161, 242, 0.15);
-}
-
-.mediabg {
-  background: rgba(249, 24, 128, 0.15);
-}
-
-.listsbg {
-  background: rgba(120, 86, 255, 0.15);
-}
-
-.adsbg {
-  background: rgba(255, 122, 0, 0.15);
-}
-
-.filterbg {
-  background: rgba(29, 161, 242, 0.15);
-}
-
-.buttonicon {
-  position: relative;
-  width: 20px;
-  height: 20px;
-  transition: color 0.2s;
-  color: #71767b;
-  fill: currentColor;
-}
-
-.toggle[data-toggle="tweets"]:hover .buttonicon,
-.toggle[data-toggle="tweets"].pressed .buttonicon {
-  color: #1da1f2;
-}
-
-.toggle[data-toggle="accounts"]:hover .buttonicon,
-.toggle[data-toggle="accounts"].pressed .buttonicon {
-  color: #00ba7c;
-}
-
-.toggle[data-toggle="media"]:hover .buttonicon,
-.toggle[data-toggle="media"].pressed .buttonicon {
-  color: #f91880;
-}
-
-.toggle[data-toggle="lists"]:hover .buttonicon,
-.toggle[data-toggle="lists"].pressed .buttonicon {
-  color: #7856ff;
-}
-
-.toggle[data-toggle="ads"]:hover .buttonicon,
-.toggle[data-toggle="ads"].pressed .buttonicon {
-  color: #ff7a00;
-}
-
-.toggle {
-  outline: none;
-}
-
-.toggle:focus {
-  outline: 2px solid #1da1f2;
-  outline-offset: 0;
-}
-
-.toggle:hover .togglebg,
-.toggle:focus .togglebg {
-  opacity: 1;
-  filter: blur(0px);
-  transform: translate(-50%, -50%) scale(0.94);
-}
-
-.toggle[data-toggle="accounts"].pressed {
-  border-color: #00ba7c;
-}
-
-.toggle[data-toggle="tweets"].pressed {
-  border-color: #1da1f2;
-}
-
-.toggle[data-toggle="media"].pressed {
-  border-color: #f91880;
-}
-
-.toggle[data-toggle="lists"].pressed {
-  border-color: #7856ff;
-}
-
-.toggle[data-toggle="ads"].pressed {
-  border-color: #ff7a00;
 }
 
 .bottom {
@@ -441,7 +400,7 @@ sub {
   display: flex;
   gap: 1em;
   position: absolute;
-  bottom: 46px;
+  bottom: 50px;
   transition: opacity 0.5s ease-in-out;
   opacity: 0;
   -webkit-user-drag: none;
@@ -507,6 +466,8 @@ sub {
     position: relative;
     padding-top: 42px;
     animation: modal-in 0.2s;
+    max-height: 90vh;
+    overflow: auto;
 
     button.close-permalink {
       position: absolute;
@@ -603,7 +564,7 @@ sub {
   margin: 0px auto;
   text-align: center;
   line-height: 1.4;
-  opacity: .5;
+  opacity: 0.5;
   margin-top: -9px;
 }
 

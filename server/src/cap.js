@@ -4,6 +4,7 @@ import { Elysia } from "elysia";
 import * as jose from "jose";
 
 const db = new SQL("sqlite:../.cap.db");
+const difficulty = 80;
 
 db`
   CREATE TABLE IF NOT EXISTS challenges (
@@ -31,7 +32,7 @@ db`
 const SESSION_SECRET = new TextEncoder().encode(process.env.CURSOR_SIGNING_KEY);
 const SESSION_DURATION_MS = 60 * 60 * 1000;
 
-const MAX_SEARCHES = 20;
+const MAX_SEARCHES = 25;
 
 export const cap = new Cap({
   storage: {
@@ -177,7 +178,7 @@ setInterval(
 export default new Elysia()
   .post("/cap/challenge", async () => {
     return await cap.createChallenge({
-      challengeCount: 100,
+      challengeCount: difficulty,
     });
   })
   .post("/cap/redeem", async ({ body, set }) => {

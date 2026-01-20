@@ -8,22 +8,17 @@ import {
 
 startSessionCreation(API_URL);
 
-const defaultColor = "#71767b";
 const buttons = {
   tweets: {
-    color: "#1da1f2",
     toggled: false,
   },
   accounts: {
-    color: "#00ba7c",
     toggled: false,
   },
   media: {
-    color: "#f91880",
     toggled: false,
   },
   lists: {
-    color: "#7856ff",
     toggled: false,
   },
   ads: {
@@ -33,9 +28,6 @@ const buttons = {
 };
 
 const buttonElements = document.querySelectorAll(".toggle");
-const svgfill = (btn, color) => {
-  btn.querySelector(".buttonicon").fill = color;
-};
 
 let searchQuery;
 let currentCursor = null;
@@ -45,6 +37,10 @@ let currentFilterString = "";
 let currentSearchType = "tweets";
 let currentSort = "relevance";
 let lastRequestMeta = null;
+const renderedMediaUrls = new Set();
+let lastQueryTime = 0;
+let activeObserver = null;
+const QUERY_COOLDOWN_MS = 500;
 
 const filtersPanel = document.querySelector("#filters-panel");
 const filterToggle = document.querySelector("#filter-toggle");
@@ -235,28 +231,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-
-const COOKIE_NAME = "__cors-preflight-cached";
-if (
-  !document.cookie
-    .split("; ")
-    .find((row) => row.startsWith(`${COOKIE_NAME}=`)) &&
-  !location.search.includes("?q=")
-) {
-  fetch(`${API_URL}/query`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ type: "dummy" }),
-  }).then(() => {
-    if (typeof cookieStore === "object") {
-      cookieStore.set({ name: COOKIE_NAME, value: "1", maxAge: 86399 });
-      return;
-    }
-    const expires = new Date(Date.now() + 86399 * 1000).toUTCString();
-    // biome-ignore lint/suspicious/noDocumentCookie: sybau
-    document.cookie = `${COOKIE_NAME}=1; expires=${expires}; path=/`;
-  });
-}
 
 filterToggle.addEventListener("click", () => {
   const isExpanded = filtersPanel.classList.contains("expanded");
@@ -886,12 +860,26 @@ const createTweetEl = (result) => {
 const query = async (text, loadMore = false) => {
   if (isLoading) return;
 
+  // Prevent rapid-fire requests
+  const now = Date.now();
+  if (now - lastQueryTime < QUERY_COOLDOWN_MS) {
+    return;
+  }
+  lastQueryTime = now;
+
+  // Disconnect any existing observer
+  if (activeObserver) {
+    activeObserver.disconnect();
+    activeObserver = null;
+  }
+
   if (!loadMore) {
     if (document.querySelector(".results")) {
       document.querySelector(".results").remove();
     }
     currentCursor = null;
     hasMore = true;
+    renderedMediaUrls.clear();
   }
 
   if (!text) return;
@@ -920,13 +908,25 @@ const query = async (text, loadMore = false) => {
     }
   }
 
+  if (!loadMore) {
+    document.querySelectorAll(".toggle").forEach((toggle) => {
+      toggle.setAttribute("data-results-count", "");
+    });
+  }
+
   const createSkeletons = (count = 5) => {
     const skeletons = [];
 
     const randomIntBetween = (min, max) =>
       Math.floor(Math.random() * (max - min + 1)) + min;
 
-    if (currentSearchType === "tweets" || currentSearchType === "media") {
+    if (currentSearchType === "media") {
+      for (let i = 0; i < count; i++) {
+        const skeleton = document.createElement("div");
+        skeleton.className = "media-item skeleton";
+        skeletons.push(skeleton);
+      }
+    } else if (currentSearchType === "tweets") {
       for (let i = 0; i < count; i++) {
         const skeleton = document.createElement("div");
         skeleton.className = "result tweet skeleton";
@@ -981,16 +981,18 @@ const query = async (text, loadMore = false) => {
     const existingLoadMore = document.querySelector(".load-more");
     if (existingLoadMore) existingLoadMore.remove();
 
-    createSkeletons(3).forEach((e) => {
+    const skeletonCount = currentSearchType === "media" ? 6 : 3;
+    createSkeletons(skeletonCount).forEach((e) => {
       resultsEl.appendChild(e);
     });
   } else {
     resultsEl.innerHTML = "";
-    createSkeletons(8).forEach((e) => {
+    const skeletonCount = currentSearchType === "media" ? 12 : 8;
+    createSkeletons(skeletonCount).forEach((e) => {
       resultsEl.appendChild(e);
     });
   }
-  
+
   let sessionToken = await ensureSession(API_URL);
 
   try {
@@ -1054,7 +1056,7 @@ const query = async (text, loadMore = false) => {
       ),
     );
 
-    document.querySelectorAll(".result.skeleton").forEach((e) => {
+    document.querySelectorAll(".skeleton").forEach((e) => {
       e.remove();
     });
 
@@ -1068,29 +1070,25 @@ const query = async (text, loadMore = false) => {
     }
 
     if (!loadMore && lastRequestMeta) {
+      document
+        .querySelector(".toggle.pressed")
+        ?.setAttribute?.(
+          "data-results-count",
+          lastRequestMeta.count === 1000
+            ? "10k"
+            : lastRequestMeta.count.toLocaleString(),
+        );
+
       const resultsInfo = document.createElement("div");
       resultsInfo.className = "results-info";
-
-      const resultsMeta = document.createElement("div");
-      resultsMeta.className = "results-meta";
-      resultsMeta.title = lastRequestMeta.uid
-        ? `copy "${lastRequestMeta.uid}"`
-        : "";
-      resultsMeta.innerHTML = `${lastRequestMeta.count === 1000 ? "10,000" : `${lastRequestMeta.count.toLocaleString()}`} results <span>in ${Math.max(lastRequestMeta.time / 1000, 0.01).toFixed(2)}s</span>`;
-
-      resultsMeta.addEventListener("dblclick", () => {
-        if (lastRequestMeta.uid)
-          navigator.clipboard.writeText(lastRequestMeta.uid);
-      });
-
-      resultsInfo.appendChild(resultsMeta);
-      resultsEl.appendChild(resultsInfo);
     }
 
     hasMore = !!_results.cursor || false;
     currentCursor = _results.cursor || null;
 
     let mediaItemsRendered = 0;
+    const hadMediaItemsBefore =
+      resultsEl.querySelectorAll(".media-item:not(.skeleton)").length > 0;
 
     results.forEach((result) => {
       if (currentSearchType === "tweets") {
@@ -1102,34 +1100,63 @@ const query = async (text, loadMore = false) => {
           result.media.length > 0
         ) {
           result.media.forEach((media) => {
-            if (media.type === "photo" || media.type === "gif") {
+            if (
+              media.type === "photo" ||
+              media.type === "gif" ||
+              media.type === "animated_gif"
+            ) {
               const mediaItem = document.createElement("a");
               mediaItem.className = "media-item";
-              mediaItem.href = `https://x.com/${result.username}/status/${result.id}`;
+              mediaItem.draggable = false;
+
+              const username = result.author_username || result.username;
+              mediaItem.href = `https://x.com/${username}/status/${result.id}`;
               mediaItem.target = "_blank";
               mediaItem.rel = "noopener";
 
               const img = document.createElement("img");
               let imgUrl;
 
-              if (media.url.startsWith(`{"display_url":`)) {
-                const parsed = JSON.parse(media.url);
-                imgUrl = parsed.media_url_https;
-              } else {
-                imgUrl = media.url;
+              try {
+                if (
+                  typeof media.url === "string" &&
+                  media.url.startsWith("{")
+                ) {
+                  const parsed = JSON.parse(media.url);
+                  imgUrl = parsed.media_url_https || parsed.url;
+                } else {
+                  imgUrl = media.url || media.media_url_https;
+                }
+              } catch {
+                imgUrl = media.url || media.media_url_https;
               }
 
+              // Skip invalid URLs (including literal "null" strings)
               if (
                 imgUrl &&
+                typeof imgUrl === "string" &&
+                imgUrl !== "null" &&
                 (imgUrl.startsWith("https://") || imgUrl.startsWith("http://"))
               ) {
+                // Skip duplicate images using tweet ID + media URL as key
+                const mediaKey = `${result.id}:${imgUrl}`;
+                if (renderedMediaUrls.has(mediaKey)) {
+                  return;
+                }
+                renderedMediaUrls.add(mediaKey);
                 img.src = imgUrl;
               } else {
                 return;
               }
 
+              mediaItemsRendered++;
+
               img.loading = "lazy";
               img.alt = "Tweet image";
+              img.draggable = false;
+              img.onerror = () => {
+                mediaItem.remove();
+              };
 
               const overlay = document.createElement("div");
               overlay.className = "media-overlay";
@@ -1139,6 +1166,7 @@ const query = async (text, loadMore = false) => {
 
               const avatar = document.createElement("img");
               avatar.className = "media-avatar";
+              avatar.setAttribute("loading", "lazy");
               const avatarUrl = result.author_avatar?.replaceAll(
                 ";",
                 "_bigger.",
@@ -1159,11 +1187,11 @@ const query = async (text, loadMore = false) => {
 
               const authorName = document.createElement("span");
               authorName.className = "media-author-name";
-              authorName.textContent = result.author_name || result.username;
+              authorName.textContent = result.author_name || username;
 
               const authorUsername = document.createElement("span");
               authorUsername.className = "media-author-username";
-              authorUsername.textContent = `@${result.username}`;
+              authorUsername.textContent = `@${username}`;
 
               authorText.appendChild(authorName);
               authorText.appendChild(authorUsername);
@@ -1404,12 +1432,11 @@ const query = async (text, loadMore = false) => {
       }
     });
 
-    // Check if no media was rendered in media view
     if (
-      !loadMore &&
       currentSearchType === "media" &&
       mediaItemsRendered === 0 &&
-      results.length > 0
+      !hadMediaItemsBefore &&
+      !hasMore
     ) {
       resultsEl.innerHTML = `<div class="error-zone">
     <img src="/assets/svgs/woozy.svg">
@@ -1422,34 +1449,92 @@ const query = async (text, loadMore = false) => {
     if (hasMore) {
       const loadMoreDiv = document.createElement("div");
       loadMoreDiv.className = "load-more";
-      loadMoreDiv.innerHTML = `<div style="text-align:center;margin-top:.5em"><svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><style>.spinner_ajPY{transform-origin:center;animation:spinner_AtaB .5s infinite linear}@keyframes spinner_AtaB{100%{transform:rotate(360deg)}}</style><path d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25" fill="#1EA1F1"/><path d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z" fill="#1EA1F1" class="spinner_ajPY"/></svg></div>`;
+
+      // Use skeletons instead of spinner
+      if (currentSearchType === "media") {
+        loadMoreDiv.innerHTML = "";
+        for (let i = 0; i < 3; i++) {
+          const skeleton = document.createElement("div");
+          skeleton.className = "media-item skeleton";
+          loadMoreDiv.appendChild(skeleton);
+        }
+      } else {
+        loadMoreDiv.innerHTML = "";
+        const skeletonCount = currentSearchType === "tweets" ? 2 : 2;
+        for (let i = 0; i < skeletonCount; i++) {
+          const skeleton = document.createElement("div");
+          skeleton.className =
+            currentSearchType === "tweets"
+              ? "result tweet skeleton"
+              : "result account skeleton";
+          if (currentSearchType === "tweets") {
+            skeleton.innerHTML = `
+              <div class="tweet-author">
+                <div class="avatar skeleton-box"></div>
+                <div class="author-info">
+                  <div class="skeleton-text skeleton-name" style="width:120px"></div>
+                  <div class="skeleton-text skeleton-username" style="width:150px"></div>
+                </div>
+              </div>
+              <div class="tweet-body">
+                <div class="skeleton-text skeleton-line"></div>
+                <div class="skeleton-text skeleton-line-short" style="width:60%"></div>
+              </div>
+              <div class="tweet-stats">
+                <div class="skeleton-text skeleton-stat"></div>
+                <div class="skeleton-text skeleton-stat"></div>
+                <div class="skeleton-text skeleton-stat"></div>
+              </div>
+            `;
+          } else {
+            skeleton.innerHTML = `
+              <div class="avatar skeleton-box"></div>
+              <div class="info">
+                <div class="skeleton-text skeleton-name" style="width:140px"></div>
+                <div class="skeleton-text skeleton-username" style="width:170px"></div>
+                <div class="skeleton-text skeleton-bio-line"></div>
+                <div class="skeleton-text skeleton-bio-line-short"></div>
+                <div class="stats">
+                  <div class="skeleton-text skeleton-stat"></div>
+                  <div class="skeleton-text skeleton-stat"></div>
+                </div>
+              </div>
+            `;
+          }
+          loadMoreDiv.appendChild(skeleton);
+        }
+      }
       resultsEl.appendChild(loadMoreDiv);
 
       let hasTriggered = false;
-      const observer = new IntersectionObserver(
+      activeObserver = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting && !hasTriggered && !isLoading) {
               hasTriggered = true;
-              observer.disconnect();
+              if (activeObserver) {
+                activeObserver.disconnect();
+                activeObserver = null;
+              }
               query(searchQuery, true);
             }
           });
         },
-        { threshold: 0.1, rootMargin: "100px" },
+        { threshold: 0.1, rootMargin: "200px" },
       );
 
       setTimeout(() => {
-        if (loadMoreDiv.isConnected) {
-          observer.observe(loadMoreDiv);
+        if (loadMoreDiv.isConnected && activeObserver) {
+          activeObserver.observe(loadMoreDiv);
         }
-      }, 50);
+      }, 100);
     }
 
     isLoading = false;
   } catch (e) {
     console.error(e);
-    document.querySelectorAll(".result.skeleton").forEach((e) => {
+    isLoading = false;
+    document.querySelectorAll(".skeleton").forEach((e) => {
       e.remove();
     });
     if (!loadMore) {
@@ -1469,39 +1554,12 @@ const query = async (text, loadMore = false) => {
         resultsEl.querySelector(".error-zone p").style.fontSize = "16px";
         resultsEl.querySelector(".error-zone p").style.fontWeight = "400";
       }
-
-      isLoading = false;
     }
   }
 };
 
 buttonElements.forEach((btn, i) => {
   const type = btn.getAttribute("data-toggle");
-
-  svgfill(btn, defaultColor);
-
-  btn.addEventListener("mousedown", (e) => e.preventDefault());
-  btn.addEventListener("mouseenter", () => {
-    svgfill(btn, buttons[type].color);
-  });
-
-  btn.addEventListener("mouseleave", () => {
-    svgfill(
-      btn,
-      btn.classList.contains("pressed") ? buttons[type].color : defaultColor,
-    );
-  });
-
-  btn.addEventListener("focus", () => {
-    svgfill(btn, buttons[type].color);
-  });
-
-  btn.addEventListener("blur", () => {
-    svgfill(
-      btn,
-      btn.classList.contains("pressed") ? buttons[type].color : defaultColor,
-    );
-  });
 
   btn.addEventListener("click", () => {
     const selected = btn.classList.contains("pressed");
@@ -1511,17 +1569,11 @@ buttonElements.forEach((btn, i) => {
     buttonElements.forEach((b) => {
       b.classList.remove("pressed");
       buttons[b.getAttribute("data-toggle")].toggled = false;
-
-      svgfill(b, defaultColor);
-      b.style.color = defaultColor;
     });
 
     if (!selected) {
       btn.classList.add("pressed");
       buttons[type].toggled = true;
-
-      btn.style.color = buttons[type].color;
-      svgfill(btn, buttons[type].color);
 
       currentSearchType = type;
 
@@ -1577,6 +1629,10 @@ if (location.search.startsWith("?q=")) {
     restoreFromUrlParams();
     query(q);
   }
+} else {
+  setTimeout(() => {
+    document.querySelector(".searchbar").focus();
+  });
 }
 
 if (location.search.startsWith("?pt=")) {

@@ -8,16 +8,21 @@
 
 .typeahead-dropdown {
   background-color: #202327;
-  border-radius: 16px;
+  border-radius: 8px;
   box-shadow: 0 2px 12px rgb(0 0 0 / 27%);
   overflow: hidden;
 
   border: 1px solid #3e4144;
   border-top-left-radius: 0px;
   border-top-right-radius: 0px;
-  padding: 0px;
   margin-left: -1px;
   margin-right: -1px;
+  width: 100%;
+  border-top: none;
+
+  padding: 4px;
+  margin-top: 1px;
+  padding-top: 0px;
 }
 
 .typeahead-dropdown:empty {
@@ -26,20 +31,23 @@
 
 body:has(.typeahead-dropdown:not(:empty)) {
   .searchbar {
-    border-radius: 20px;
+    border-radius: 24px;
     border-bottom-left-radius: 0px;
     border-bottom-right-radius: 0px;
     z-index: 1000000;
     position: relative;
+    border-bottom: none;
   }
 }
 
 .typeahead-item {
   display: flex;
   align-items: center;
-  padding: 10px 12px;
+  padding: 0px 10px;
   cursor: pointer;
-  gap: 12px;
+  gap: 8px;
+  height: 36px;
+  border-radius: 4px;
 }
 
 .typeahead-item:hover,
@@ -47,23 +55,19 @@ body:has(.typeahead-dropdown:not(:empty)) {
   background-color: rgba(255, 255, 255, 0.08);
 }
 
-.typeahead-item:active {
-  background-color: rgba(255, 255, 255, 0.12);
-}
-
-.typeahead-item:last-child {
-  border-radius: 0 0 16px 16px;
-}
-
 .typeahead-item:only-child {
   border-radius: 16px;
 }
 
 .typeahead-icon {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   flex-shrink: 0;
   opacity: 0.3;
+  margin-left: calc(1rem - 14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .typeahead-icon svg {
@@ -75,7 +79,7 @@ body:has(.typeahead-dropdown:not(:empty)) {
 .typeahead-text {
   flex: 1;
   font-size: 15px;
-  color: #e7e9eade;
+  color: #9c9da0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -84,8 +88,7 @@ body:has(.typeahead-dropdown:not(:empty)) {
 
 .typeahead-text em {
   font-style: normal;
-  font-weight: 500;
-  color: #ededf2;
+  color: white;
 }
 
 .typeahead-hint {

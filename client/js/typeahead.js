@@ -70,7 +70,7 @@ searchInput.addEventListener("input", (e) => {
         currentRequest = null;
       }
     }
-  }, DEBOUNCE_DELAY);
+  }, query.length === 1 ? 0 : DEBOUNCE_DELAY);
 });
 
 searchInput.addEventListener("keydown", (e) => {
