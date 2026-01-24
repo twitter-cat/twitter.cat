@@ -269,7 +269,7 @@ button.toggle.pressed::after {
   margin-bottom: -1px;
 }
 
-body:has(.skeleton-text) button.toggle.pressed::after {
+body:not(:has(.result)) button.toggle.pressed::after {
   background: linear-gradient(
     90deg,
     rgba(158, 158, 158, 0.08) 0%,
@@ -280,7 +280,7 @@ body:has(.skeleton-text) button.toggle.pressed::after {
   animation: skeleton-loading 1.4s infinite linear;
   min-width: 23px;
 }
-body:has(.skeleton-text) button.toggle.pressed::before {
+body:not(:has(.result)) button.toggle.pressed::before {
   min-width: 23px;
 }
 body:has(.error-zone) button.toggle.pressed::before,
