@@ -185,7 +185,7 @@
   font-size: 0.7em;
   gap: 0px;
   border: none;
-  border-radius: 50px;
+  border-radius: 0px;
   cursor: pointer;
   transition:
     border-color 0.2s,
