@@ -6,106 +6,190 @@
   margin-top: 16px;
   max-height: 0;
   overflow: hidden;
-  border: 1px solid #3e4144;
-
+  border: 1px solid #2f3336;
   display: none;
   transition:
-    box-shadow 0.1s,
-    border-color 0.1s;
+    box-shadow 0.15s,
+    border-color 0.15s;
 }
 
 .filters-panel.expanded {
   height: auto;
   min-height: fit-content;
   display: block;
-  animation: filtersIn 0.1s ease;
+  animation: filtersIn 0.12s ease;
 }
 
 @keyframes filtersIn {
   from {
-    opacity: 0.3;
-    transform: translateY(-6px);
-    filter: blur(1px);
+    opacity: 0;
+    transform: translateY(-4px);
   }
-
   to {
     opacity: 1;
-    transform: translateY(0px);
-    filter: blur(0px);
+    transform: translateY(0);
   }
 }
 
-.filter-section {
+.filters-content {
+  padding: 10px 12px;
+}
+
+/* filter rows GUI */
+.filter-rows {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
 }
 
-.filter-section label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #e7e9ea;
-}
-
-.filter-textarea {
-  width: 100%;
-  background: transparent;
-  color: #e7e9ea;
-  border: none;
-  border-radius: 0px;
-  padding: 12px;
-  font-size: 13px;
-  font-family:
-    "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New",
-    monospace;
-  line-height: 1.5;
-  resize: none;
-  caret-color: #1da1f2;
-  height: 38px;
-  min-height: 38px;
-}
-
-.filter-textarea:focus {
-  outline: none;
-}
-
-.filters-panel:has(.filter-textarea:focus-within) {
-  border-color: #1da1f2;
-  box-shadow: 0 0 0 2px rgba(29, 161, 242, 0.2);
-}
-
-.filter-textarea::placeholder {
-  color: #71767b;
-  opacity: 0.7;
-}
-
-.filter-help {
-  margin: 8px;
-  font-size: 12px;
-  color: #71767b;
-  user-select: none;
-}
-
-.filter-help a {
-  color: #1da1f2;
-  text-decoration: none;
-  transition: color 0.2s;
+.filter-row {
   display: flex;
   align-items: center;
-  gap: 4px;
-  width: fit-content;
+  gap: 6px;
+  animation: filterRowIn 0.15s ease;
 }
 
-.filter-help svg {
-  width: 16px;
-  height: 16px;
+@keyframes filterRowIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.filter-help a:hover {
-  color: #1d9bf0;
-  text-decoration: underline;
+.filter-row select,
+.filter-row input {
+  font-family: "chirp", sans-serif;
+  font-size: 13px;
+  background: #14171a;
+  color: #e7e9ea;
+  border: 1px solid #2f3336;
+  border-radius: 8px;
+  padding: 6px 8px;
+  height: 32px;
+  outline: none;
+  transition: border-color 0.15s;
 }
 
+.filter-row select:focus,
+.filter-row input:focus {
+  border-color: #1da1f2;
+}
+
+.filter-row select {
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z' fill='%2371767b'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 22px;
+}
+
+.filter-row .filter-field {
+  min-width: 90px;
+}
+
+.filter-row .filter-op {
+  min-width: 52px;
+  width: 52px;
+  text-align: center;
+  font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+  font-size: 12px;
+}
+
+.filter-row .filter-value {
+  flex: 1;
+  min-width: 60px;
+  caret-color: #1da1f2;
+}
+
+.filter-row .filter-value::placeholder {
+  color: #536471;
+}
+
+.filter-row .filter-remove {
+  background: none;
+  border: none;
+  color: #536471;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: color 0.15s, background-color 0.15s;
+  flex-shrink: 0;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.filter-row .filter-remove:hover {
+  color: #f4212e;
+  background-color: rgba(244, 33, 46, 0.1);
+}
+
+.filter-logic-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 0;
+}
+
+.filter-logic-toggle button {
+  font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+  font-size: 11px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #536471;
+  cursor: pointer;
+  padding: 1px 8px;
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+  user-select: none;
+  height: 20px;
+}
+
+.filter-logic-toggle button:hover {
+  color: #1da1f2;
+  border-color: #1da1f2;
+  background-color: rgba(29, 161, 242, 0.08);
+}
+
+.filter-logic-toggle button.logic-or {
+  color: #f91880;
+}
+
+.filter-logic-toggle button.logic-or:hover {
+  border-color: #f91880;
+  background-color: rgba(249, 24, 128, 0.08);
+}
+
+.filter-add-row {
+  font-family: "chirp", sans-serif;
+  font-size: 12px;
+  background: none;
+  border: 1px dashed #2f3336;
+  border-radius: 8px;
+  color: #536471;
+  cursor: pointer;
+  padding: 5px 12px;
+  margin-top: 8px;
+  transition: color 0.15s, border-color 0.15s;
+  width: 100%;
+}
+
+.filter-add-row:hover {
+  color: #1da1f2;
+  border-color: #1da1f2;
+}
+
+/* toggle button */
 .filter-toggle.pressed {
   border-color: rgb(29, 161, 242);
   color: white;
@@ -160,15 +244,22 @@
 }
 
 @media (max-width: 600px) {
-  .filter-grid {
-    grid-template-columns: 1fr;
-  }
-
   .filters-panel.expanded {
     max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .filter-row {
+    flex-wrap: wrap;
+  }
+
+  .filter-row .filter-value {
+    min-width: 100%;
+    margin-top: 2px;
   }
 }
 
+/* sort dropdown */
 .sort-dropdown {
   position: relative;
   display: none;
@@ -190,7 +281,6 @@
   transition:
     border-color 0.2s,
     color 0.2s;
-
   border-bottom: 2px solid transparent;
   padding: 0px;
   padding-bottom: 6px;
@@ -266,7 +356,6 @@
     transform: translateY(-8px) scale(0.95);
     filter: blur(2px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);

@@ -1,74 +1,184 @@
 const MANTICORE = process.env.MANTICORE_URL || "http://localhost:9308";
 
-// Parse meilisearch-style filter string into Manticore JSON filter
-function parseFilter(filterStr) {
-  if (!filterStr) return null;
+const FIELD_MAP = {
+  // tweet fields
+  author_id: "author_id",
+  like_count: "like_count",
+  reply_count: "reply_count",
+  retweet_count: "retweet_count",
+  views_count: "views_count",
+  bookmarks_count: "bookmarks_count",
+  has_media: "has_media",
+  lang: "lang",
+  created_at: "created_at_ts",
+  added_at: "added_at_ts",
+  // profile fields
+  followers: "followers",
+  following: "following",
+  likes: "likes",
+  tweets: "tweet_count",
+  listed_count: "listed_count",
+  verified: "verified",
+};
 
-  // Field name mapping (meilisearch field -> manticore field)
-  const fieldMap = {
-    author_id: "author_id",
-    like_count: "like_count",
-    reply_count: "reply_count",
-    retweet_count: "retweet_count",
-    views_count: "views_count",
-    bookmarks_count: "bookmarks_count",
-    has_media: "has_media",
-    lang: "lang",
-    created_at: "created_at_ts",
-    added_at: "added_at_ts",
-  };
+const ALLOWED_FIELDS = new Set(Object.keys(FIELD_MAP));
+const NUMERIC_FIELDS = new Set([
+  "like_count", "reply_count", "retweet_count", "views_count",
+  "bookmarks_count", "has_media", "created_at", "added_at",
+  "followers", "following", "likes", "tweets", "listed_count", "verified",
+]);
+const ALLOWED_OPS = new Set(["=", "!=", ">", ">=", "<", "<="]);
 
-  const allowedFields = new Set(Object.keys(fieldMap));
-  const numericFields = new Set([
-    "like_count", "reply_count", "retweet_count", "views_count",
-    "bookmarks_count", "has_media", "created_at", "added_at",
-  ]);
+function filterToCondition(field, op, rawValue) {
+  if (!ALLOWED_FIELDS.has(field) || !ALLOWED_OPS.has(op)) return null;
 
-  const conditions = [];
+  const manticoreField = FIELD_MAP[field];
+  let value = typeof rawValue === "string" ? rawValue.trim().replace(/^["']|["']$/g, "") : rawValue;
 
-  // Split by AND (case insensitive)
-  const parts = filterStr.split(/\s+AND\s+/i);
+  if (value === "true" || value === true) value = 1;
+  else if (value === "false" || value === false) value = 0;
+  else if (NUMERIC_FIELDS.has(field)) value = Number(value);
 
-  for (const part of parts) {
-    const trimmed = part.trim();
-    if (!trimmed) continue;
+  if (op === "=") return { equals: { [manticoreField]: value } };
+  if (op === "!=") return { not: { equals: { [manticoreField]: value } } };
+  if (op === ">=") return { range: { [manticoreField]: { gte: value } } };
+  if (op === "<=") return { range: { [manticoreField]: { lte: value } } };
+  if (op === ">") return { range: { [manticoreField]: { gt: value } } };
+  if (op === "<") return { range: { [manticoreField]: { lt: value } } };
+  return null;
+}
 
-    // Match: field op value
-    const match = trimmed.match(/^(\w+)\s*(>=|<=|!=|=|>|<)\s*(.+)$/);
-    if (!match) continue;
+// Tokenizer for filter expressions
+function tokenize(str) {
+  const tokens = [];
+  let i = 0;
+  while (i < str.length) {
+    if (/\s/.test(str[i])) { i++; continue; }
+    if (str[i] === "(") { tokens.push({ type: "LPAREN" }); i++; continue; }
+    if (str[i] === ")") { tokens.push({ type: "RPAREN" }); i++; continue; }
 
-    const [, field, op, rawValue] = match;
-    if (!allowedFields.has(field)) continue;
-
-    const manticoreField = fieldMap[field];
-    let value = rawValue.trim().replace(/^["']|["']$/g, "");
-
-    // Convert booleans
-    if (value === "true") value = 1;
-    else if (value === "false") value = 0;
-    else if (numericFields.has(field)) value = Number(value);
-
-    if (op === "=") {
-      conditions.push({ equals: { [manticoreField]: value } });
-    } else if (op === ">=") {
-      conditions.push({ range: { [manticoreField]: { gte: value } } });
-    } else if (op === "<=") {
-      conditions.push({ range: { [manticoreField]: { lte: value } } });
-    } else if (op === ">") {
-      conditions.push({ range: { [manticoreField]: { gt: value } } });
-    } else if (op === "<") {
-      conditions.push({ range: { [manticoreField]: { lt: value } } });
-    } else if (op === "!=") {
-      conditions.push({ not: { equals: { [manticoreField]: value } } });
+    // AND / OR keywords
+    const upper = str.slice(i).toUpperCase();
+    if (upper.startsWith("AND") && (i + 3 >= str.length || /[\s(]/.test(str[i + 3]))) {
+      tokens.push({ type: "AND" }); i += 3; continue;
     }
+    if (upper.startsWith("OR") && (i + 2 >= str.length || /[\s(]/.test(str[i + 2]))) {
+      tokens.push({ type: "OR" }); i += 2; continue;
+    }
+
+    // condition: field op value
+    const condMatch = str.slice(i).match(/^(\w+)\s*(>=|<=|!=|=|>|<)\s*("[^"]*"|'[^']*'|\S+)/);
+    if (condMatch) {
+      tokens.push({ type: "COND", field: condMatch[1], op: condMatch[2], value: condMatch[3] });
+      i += condMatch[0].length;
+      continue;
+    }
+
+    // skip unknown char
+    i++;
+  }
+  return tokens;
+}
+
+// Recursive descent parser: expr = andExpr ( OR andExpr )*
+// andExpr = atom ( AND atom )*
+// atom = COND | LPAREN expr RPAREN
+function parseExpr(tokens, pos) {
+  let [left, nextPos] = parseAndExpr(tokens, pos);
+  if (!left) return [null, nextPos];
+
+  const orParts = [left];
+  while (nextPos < tokens.length && tokens[nextPos].type === "OR") {
+    const [right, np] = parseAndExpr(tokens, nextPos + 1);
+    if (right) orParts.push(right);
+    nextPos = np;
   }
 
-  return conditions.length > 0 ? conditions : null;
+  if (orParts.length === 1) return [orParts[0], nextPos];
+  return [{ bool: { should: orParts } }, nextPos];
+}
+
+function parseAndExpr(tokens, pos) {
+  let [left, nextPos] = parseAtom(tokens, pos);
+  if (!left) return [null, nextPos];
+
+  const andParts = [left];
+  while (nextPos < tokens.length && (tokens[nextPos].type === "AND" || tokens[nextPos].type === "COND" || tokens[nextPos].type === "LPAREN")) {
+    if (tokens[nextPos].type === "AND") nextPos++;
+    const [right, np] = parseAtom(tokens, nextPos);
+    if (!right) break;
+    andParts.push(right);
+    nextPos = np;
+  }
+
+  if (andParts.length === 1) return [andParts[0], nextPos];
+  return [{ bool: { must: andParts } }, nextPos];
+}
+
+function parseAtom(tokens, pos) {
+  if (pos >= tokens.length) return [null, pos];
+
+  if (tokens[pos].type === "LPAREN") {
+    const [expr, nextPos] = parseExpr(tokens, pos + 1);
+    const closePos = nextPos < tokens.length && tokens[nextPos].type === "RPAREN" ? nextPos + 1 : nextPos;
+    return [expr, closePos];
+  }
+
+  if (tokens[pos].type === "COND") {
+    const { field, op, value } = tokens[pos];
+    const cond = filterToCondition(field, op, value);
+    return [cond, pos + 1];
+  }
+
+  return [null, pos + 1];
+}
+
+function parseFilterString(str) {
+  const tokens = tokenize(str);
+  if (tokens.length === 0) return null;
+
+  // Fast path: all conditions, no OR/parens (common case) -> flat array for bool.filter
+  const hasGrouping = tokens.some(t => t.type === "OR" || t.type === "LPAREN");
+  if (!hasGrouping) {
+    const conditions = [];
+    for (const t of tokens) {
+      if (t.type === "COND") {
+        const cond = filterToCondition(t.field, t.op, t.value);
+        if (cond) conditions.push(cond);
+      }
+    }
+    return conditions.length > 0 ? conditions : null;
+  }
+
+  // Full parse for OR / grouping
+  const [result] = parseExpr(tokens, 0);
+  return result ? [result] : null;
+}
+
+function parseFilter(filter) {
+  if (!filter) return null;
+
+  // Structured format: array of { field, op, value }
+  if (Array.isArray(filter)) {
+    const conditions = [];
+    for (const f of filter) {
+      if (!f || !f.field || !f.op || f.value === undefined || f.value === "") continue;
+      const cond = filterToCondition(f.field, f.op, f.value);
+      if (cond) conditions.push(cond);
+    }
+    return conditions.length > 0 ? conditions : null;
+  }
+
+  if (typeof filter === "string") {
+    return parseFilterString(filter);
+  }
+
+  return null;
 }
 
 function buildMatchQuery(q) {
   if (!q || !q.trim()) return null;
-  // Manticore handles quoted phrases natively in match queries
+
   return q.trim();
 }
 
@@ -85,7 +195,6 @@ export async function searchTweets(q, { filter, sort, limit, offset }) {
     query.bool.filter = filterConditions;
   }
 
-  // If no query and no filter, return empty
   if (!matchStr && !filterConditions) {
     return { hits: [], processingTimeMs: 0, estimatedTotalHits: 0 };
   }
