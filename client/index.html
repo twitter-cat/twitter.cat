@@ -48,87 +48,6 @@
     <!-- <link rel="stylesheet" href="/css/youretooearly.css" /> -->
   </head>
   <body>
-    <style>
-      .notice {
-        position: absolute;
-        top: 15px;
-        left: 0px;
-        right: 0px;
-        font-size: 15px;
-        user-select: none;
-      }
-
-      .notice p {
-        max-width: 390px;
-        margin: 0px auto;
-        line-height: 1.4;
-        text-align: center;
-        color: #9fa5aa;
-        opacity: 0.9;
-
-        a {
-          color: #dadfe4;
-          text-decoration: underline;
-          text-underline-offset: 3px;
-        }
-      }
-
-      .notice button {
-        background: transparent;
-        border: none;
-        aspect-ratio: 1 / 1;
-        cursor: pointer;
-        right: 17px;
-        position: absolute;
-        top: 5px;
-        color: #c6ccd1;
-      }
-
-      .notice button:hover {
-        color: white;
-      }
-
-      html:has(.center .results) .notice {
-        display: none !important;
-      }
-    </style>
-    <div class="notice" style="display: none">
-      <p>
-        search is currently being synced, so results are temporarily using a
-        smaller dataset.
-        <a href="https://x.com/twittdotcat" target="_blank">more updates</a>
-      </p>
-
-      <button
-        title="close"
-        onclick="
-          this.parentElement.remove();
-          localStorage.setItem('syctwbanner', 'h');
-        "
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="icon icon-tabler icons-tabler-outline icon-tabler-x"
-        >
-          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-          <path d="M18 6l-12 12" />
-          <path d="M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-    <script>
-      if (localStorage.getItem("syctwbanner") !== "h") {
-        document.querySelector(".notice").style.display = "flex";
-      }
-    </script>
     <div class="center-wrapper">
       <div class="center">
         <div class="logo" role="banner">
@@ -243,41 +162,8 @@
 
         <div class="filters-panel" id="filters-panel">
           <div class="filters-content">
-            <div class="filter-section">
-              <textarea
-                id="filter-textarea"
-                class="filter-textarea"
-                placeholder="e.g., followers >= 1000 AND verified = true"
-                rows="8"
-                spellcheck="false"
-                maxlength="600"
-              ></textarea>
-              <p class="filter-help">
-                <a
-                  href="https://www.meilisearch.com/docs/reference/api/search#filter"
-                  target="_blank"
-                  rel="noopener"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="lucide lucide-circle-question-mark-icon lucide-circle-question-mark"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                    <path d="M12 17h.01" />
-                  </svg>
-                  learn filter syntax →
-                </a>
-              </p>
-            </div>
+            <div class="filter-rows" id="filter-rows"></div>
+            <button class="filter-add-row" id="filter-add-row" type="button">+ add filter</button>
           </div>
         </div>
 
@@ -319,7 +205,7 @@
     src="https://a.tiago.zip/js/script.js"
   ></script>
   <script
-    src="https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.32"
+    src="https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.41"
     async
   ></script>
   <!-- <script src="/js/youretooearly.js"></script> -->

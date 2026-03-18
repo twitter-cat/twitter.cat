@@ -2,13 +2,8 @@ import { SQL } from "bun";
 import { Elysia, t } from "elysia";
 import { rateLimit } from "elysia-rate-limit";
 import * as jose from "jose";
-import { MeiliSearch } from "meilisearch";
 import { validateSession } from "./cap.js";
-
-const meilisearch = new MeiliSearch({
-  host: process.env.MEILISEARCH_HOST,
-  apiKey: process.env.MEILISEARCH_MASTER_KEY,
-});
+import { searchTweets, searchProfiles } from "./manticore.js";
 
 const postgresReadOnly = new SQL(
   `postgres://${process.env.POSTGRES_USER_READONLY}:${process.env.POSTGRES_PASSWORD_READONLY}@${process.env.POSTGRES_HOST}:5432/twitter`,
@@ -18,8 +13,6 @@ const postgresReadWrite = new SQL(
 );
 
 const DEFAULT_LIMIT = 12;
-const profilesIndex = meilisearch.index("profiles");
-const tweetsIndex = meilisearch.index("tweets");
 
 const secret = new TextEncoder().encode(process.env.CURSOR_SIGNING_KEY);
 
@@ -48,36 +41,32 @@ const createCursor = async (offset) => {
 };
 
 const executeTweetSearchQuery = async (q, filterString, offset, sortOption) => {
-  let sort;
-  if (sortOption === "likes") {
-    sort = ["like_count:desc"];
-  } else if (sortOption === "newest") {
-    sort = ["created_at:desc"];
-  } else if (sortOption === "oldest") {
-    sort = ["created_at:asc"];
-  }
+  const t0 = Date.now();
 
-  const result = await tweetsIndex.search(q, {
-    filter: filterString || undefined,
-    sort,
+  const result = await searchTweets(q, {
+    filter: filterString,
+    sort: sortOption,
     limit: DEFAULT_LIMIT + 1,
     offset,
-    attributesToHighlight: ["body"],
   });
+  const tManticore = Date.now();
 
   const authorIds = Array.from(
     new Set(result.hits.map((t) => t.author_id).filter(Boolean)),
   );
-  const authors = await postgresReadOnly`
-    SELECT id, username, name, avatar, verified, protected, square_avatar
-    FROM profiles
-    WHERE id = ANY(${postgresReadOnly.array(authorIds, "text")})
-  `;
 
-  const authorMap = new Map();
-  authors.forEach((author) => {
-    authorMap.set(author.id, author);
-  });
+  let authorMap = new Map();
+  if (authorIds.length > 0) {
+    const authors = await postgresReadOnly`
+      SELECT id, username, name, avatar, verified, protected, square_avatar
+      FROM profiles
+      WHERE id = ANY(${postgresReadOnly.array(authorIds, "text")})
+    `;
+    authors.forEach((author) => {
+      authorMap.set(author.id, author);
+    });
+  }
+  const tAuthors = Date.now();
 
   const tweetIdsWithMedia = result.hits
     .filter((t) => t.has_media)
@@ -98,12 +87,11 @@ const executeTweetSearchQuery = async (q, filterString, offset, sortOption) => {
       }
     });
   }
+  const tMedia = Date.now();
 
-  result.hits = result.hits.map((e) => {
-    e.body = e._formatted.body;
-    delete e._formatted;
-    return e;
-  });
+  console.log(
+    `[query] tweets q="${q}" offset=${offset} sort=${sortOption} | manticore=${tManticore - t0}ms authors=${tAuthors - tManticore}ms media=${tMedia - tAuthors}ms total=${tMedia - t0}ms hits=${result.estimatedTotalHits}`,
+  );
 
   return {
     rows: result.hits.map((tweet) => {
@@ -129,9 +117,8 @@ const executeTweetSearchQuery = async (q, filterString, offset, sortOption) => {
 
       return enrichedTweet;
     }),
-    processingTimeMs: result.processingTimeMs,
+    processingTimeMs: tMedia - t0,
     estimatedTotalHits: result.estimatedTotalHits,
-    requestUid: result.requestUid,
   };
 };
 
@@ -148,6 +135,7 @@ export default new Elysia()
     "/query",
     async ({ body }) => {
       try {
+        const reqStart = Date.now();
         const { type, q, cursor, filter, sort, session: sessionToken } = body;
 
         if (!["accounts", "tweets", "media"].includes(type)) {
@@ -159,9 +147,17 @@ export default new Elysia()
         if (cursor?.length > 1000) {
           return { error: "invalid cursor" };
         }
-        const filterString = filter?.trim() || "";
-        if (filterString.length > 600) {
-          return { error: "filter string too long (max 600 characters)" };
+        // Normalize filter: accept string or structured array
+        let parsedFilter = filter || null;
+        if (typeof parsedFilter === "string") {
+          parsedFilter = parsedFilter.trim() || null;
+          if (parsedFilter && parsedFilter.length > 600) {
+            return { error: "filter string too long (max 600 characters)" };
+          }
+        } else if (Array.isArray(parsedFilter)) {
+          if (parsedFilter.length > 20) {
+            return { error: "too many filter conditions (max 20)" };
+          }
         }
         if (q.length > 1_000) {
           return { error: "search query too long (max 1000 characters)" };
@@ -171,7 +167,9 @@ export default new Elysia()
           return { error: "missing session" };
         }
 
+        const tBeforeSession = Date.now();
         const sessionResult = await validateSession(sessionToken, "search");
+        const tAfterSession = Date.now();
         if (!sessionResult.success) {
           if (sessionResult.reason === "search_limit_exceeded") {
             return { error: "session_exhausted" };
@@ -182,17 +180,27 @@ export default new Elysia()
         const validSorts = ["relevance", "likes", "newest", "oldest"];
         const sortOption = validSorts.includes(sort) ? sort : "relevance";
 
+        const tBeforeCursor = Date.now();
         const { offset } = await decodeCursor(cursor);
+        const tAfterCursor = Date.now();
+
+        console.log(
+          `[query] type=${type} q="${q.slice(0, 50)}" | session=${tAfterSession - tBeforeSession}ms cursor=${tAfterCursor - tBeforeCursor}ms`,
+        );
 
         if (type === "tweets" || type === "media") {
-          let effectiveFilter = filterString;
+          let effectiveFilter = parsedFilter;
           if (type === "media") {
-            effectiveFilter = filterString
-              ? `(${filterString}) AND has_media = true`
-              : "has_media = true";
+            if (typeof effectiveFilter === "string" && effectiveFilter) {
+              effectiveFilter = `(${effectiveFilter}) AND has_media = true`;
+            } else if (Array.isArray(effectiveFilter)) {
+              effectiveFilter = [...effectiveFilter, { field: "has_media", op: "=", value: "true" }];
+            } else {
+              effectiveFilter = "has_media = true";
+            }
           }
 
-          const { rows, processingTimeMs, estimatedTotalHits, requestUid } =
+          const { rows, processingTimeMs, estimatedTotalHits } =
             await executeTweetSearchQuery(
               q,
               effectiveFilter,
@@ -237,15 +245,19 @@ export default new Elysia()
             cursor: hasMore ? nextCursor : null,
             ms: processingTimeMs,
             hits: estimatedTotalHits,
-            req: requestUid,
           };
         }
 
-        const result = await profilesIndex.search(q || "", {
-          filter: filterString || undefined,
+        const tBeforeProfiles = Date.now();
+        const result = await searchProfiles(q || "", {
+          filter: parsedFilter,
           limit: DEFAULT_LIMIT + 1,
           offset: offset,
         });
+        const tAfterProfiles = Date.now();
+        console.log(
+          `[query] profiles q="${q.slice(0, 50)}" offset=${offset} | manticore=${tAfterProfiles - tBeforeProfiles}ms total=${tAfterProfiles - reqStart}ms hits=${result.estimatedTotalHits}`,
+        );
         const rows = result.hits;
 
         let hasMore = false;
@@ -294,7 +306,6 @@ export default new Elysia()
           cursor: hasMore ? nextCursor : null,
           ms: result.processingTimeMs,
           hits: result.estimatedTotalHits,
-          req: result.requestUid,
         };
       } catch (err) {
         return {
@@ -308,7 +319,15 @@ export default new Elysia()
         session: t.String(),
         q: t.String(),
         cursor: t.Optional(t.Union([t.String(), t.Null()])),
-        filter: t.Optional(t.Union([t.String(), t.Null()])),
+        filter: t.Optional(t.Union([
+          t.String(),
+          t.Array(t.Object({
+            field: t.String(),
+            op: t.String(),
+            value: t.Union([t.String(), t.Number(), t.Boolean()]),
+          })),
+          t.Null(),
+        ])),
         sort: t.Optional(t.Union([t.String(), t.Null()])),
       }),
     },

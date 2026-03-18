@@ -47,6 +47,49 @@ const filterToggle = document.querySelector("#filter-toggle");
 const sortToggle = document.querySelector("#sort-toggle");
 const sortMenu = document.querySelector("#sort-menu");
 
+const FILTER_FIELDS = {
+  tweets: [
+    { value: "like_count", label: "likes" },
+    { value: "reply_count", label: "replies" },
+    { value: "retweet_count", label: "retweets" },
+    { value: "views_count", label: "views" },
+    { value: "bookmarks_count", label: "bookmarks" },
+    { value: "has_media", label: "has media", boolOnly: true },
+    { value: "lang", label: "lang", textOnly: true },
+    { value: "author_id", label: "author id", textOnly: true },
+  ],
+  accounts: [
+    { value: "followers", label: "followers" },
+    { value: "following", label: "following" },
+    { value: "likes", label: "likes" },
+    { value: "tweets", label: "tweets" },
+    { value: "listed_count", label: "listed" },
+    { value: "verified", label: "verified", boolOnly: true },
+  ],
+};
+FILTER_FIELDS.media = FILTER_FIELDS.tweets;
+
+// --- Tab indicator ---
+const tabIndicator = document.createElement("div");
+tabIndicator.className = "tab-indicator";
+document.querySelector(".buttons").appendChild(tabIndicator);
+
+const updateTabIndicator = () => {
+  const activeTab = document.querySelector(".toggle.pressed");
+  if (!activeTab) {
+    tabIndicator.style.opacity = "0";
+    return;
+  }
+  const buttonsRect = document.querySelector(".buttons").getBoundingClientRect();
+  const tabRect = activeTab.getBoundingClientRect();
+  tabIndicator.style.opacity = "1";
+  tabIndicator.style.width = `${tabRect.width}px`;
+  tabIndicator.style.transform = `translateX(${tabRect.left - buttonsRect.left}px)`;
+  tabIndicator.style.backgroundColor = getComputedStyle(activeTab).color;
+};
+
+const renderedProfileIds = new Set();
+
 const updateUrlParams = () => {
   if (!searchQuery) return;
 
@@ -70,7 +113,7 @@ const restoreFromUrlParams = () => {
   const params = new URLSearchParams(window.location.search);
 
   const type = params.get("type");
-  if (type && ["accounts", "tweets", "lists", "ads"].includes(type)) {
+  if (type && ["accounts", "tweets", "media", "lists", "ads"].includes(type)) {
     currentSearchType = type;
 
     const btn = document.querySelector(`.toggle[data-toggle="${type}"]`);
@@ -82,11 +125,8 @@ const restoreFromUrlParams = () => {
   const filterParam = params.get("filter");
   if (filterParam) {
     currentFilterString = filterParam;
-    const textarea = document.getElementById("filter-textarea");
-    textarea.value = filterParam;
-
-    textarea.style.height = `${textarea.scrollHeight}px`;
-    textarea.style.overflowY = "hidden";
+    // Parse filter string back into rows for the GUI
+    parseFilterStringIntoRows(filterParam);
     updateFilterIndicator();
   }
 
@@ -209,28 +249,211 @@ const createMediaElement = (obj, tweetId) => {
   return videoThumb;
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-  const filterTextarea = document.getElementById("filter-textarea");
+const filterRowsContainer = document.getElementById("filter-rows");
+const filterAddBtn = document.getElementById("filter-add-row");
+let filterDebounceTimer = null;
 
-  filterTextarea.style.height = `${filterTextarea.scrollHeight}px`;
-  filterTextarea.style.overflowY = "hidden";
+const filterRows = []; // { field, op, value, logic: "AND"|"OR" }
 
-  filterTextarea.addEventListener("input", () => {
-    filterTextarea.style.height = "38px";
-    filterTextarea.style.height = `${filterTextarea.scrollHeight}px`;
+const getFieldsForCurrentType = () => {
+  return FILTER_FIELDS[currentSearchType] || FILTER_FIELDS.tweets;
+};
 
-    currentFilterString = filterTextarea.value.trim();
-    updateFilterIndicator();
-    updateUrlParams();
+const getFieldDef = (fieldValue) => {
+  const fields = getFieldsForCurrentType();
+  return fields.find((f) => f.value === fieldValue) || null;
+};
 
-    if (searchQuery) {
-      clearTimeout(filterTextarea.debounceTimer);
-      filterTextarea.debounceTimer = setTimeout(() => {
-        query(searchQuery);
-      }, 500);
+const OPS_NUMERIC = [">=", "<=", "=", "!=", ">", "<"];
+const OPS_TEXT = ["=", "!="];
+const OPS_BOOL = ["="];
+
+const getOpsForField = (fieldValue) => {
+  const def = getFieldDef(fieldValue);
+  if (!def) return OPS_NUMERIC;
+  if (def.boolOnly) return OPS_BOOL;
+  if (def.textOnly) return OPS_TEXT;
+  return OPS_NUMERIC;
+};
+
+const serializeFilters = () => {
+  const parts = [];
+  for (let i = 0; i < filterRows.length; i++) {
+    const row = filterRows[i];
+    if (!row.field || row.value === "") continue;
+    if (parts.length > 0) {
+      parts.push(row.logic || "AND");
     }
+    parts.push(`${row.field} ${row.op} ${row.value}`);
+  }
+  return parts.join(" ");
+};
+
+const syncFilterString = () => {
+  currentFilterString = serializeFilters();
+  updateFilterIndicator();
+  updateUrlParams();
+};
+
+const renderFilterRows = () => {
+  filterRowsContainer.innerHTML = "";
+  const fields = getFieldsForCurrentType();
+
+  filterRows.forEach((row, i) => {
+    // logic toggle between rows
+    if (i > 0) {
+      const logicDiv = document.createElement("div");
+      logicDiv.className = "filter-logic-toggle";
+      const logicBtn = document.createElement("button");
+      logicBtn.type = "button";
+      logicBtn.textContent = row.logic || "AND";
+      if (row.logic === "OR") logicBtn.classList.add("logic-or");
+      logicBtn.addEventListener("click", () => {
+        row.logic = row.logic === "AND" ? "OR" : "AND";
+        renderFilterRows();
+        syncFilterString();
+        triggerFilterSearch();
+      });
+      logicDiv.appendChild(logicBtn);
+      filterRowsContainer.appendChild(logicDiv);
+    }
+
+    const rowEl = document.createElement("div");
+    rowEl.className = "filter-row";
+
+    // field select
+    const fieldSel = document.createElement("select");
+    fieldSel.className = "filter-field";
+    for (const f of fields) {
+      const opt = document.createElement("option");
+      opt.value = f.value;
+      opt.textContent = f.label;
+      if (f.value === row.field) opt.selected = true;
+      fieldSel.appendChild(opt);
+    }
+    fieldSel.addEventListener("change", () => {
+      row.field = fieldSel.value;
+      const def = getFieldDef(row.field);
+      if (def?.boolOnly) {
+        row.op = "=";
+        row.value = "true";
+      } else {
+        const ops = getOpsForField(row.field);
+        if (!ops.includes(row.op)) row.op = ops[0];
+      }
+      renderFilterRows();
+      syncFilterString();
+      triggerFilterSearch();
+    });
+
+    // op select
+    const ops = getOpsForField(row.field);
+    const opSel = document.createElement("select");
+    opSel.className = "filter-op";
+    for (const op of ops) {
+      const opt = document.createElement("option");
+      opt.value = op;
+      opt.textContent = op;
+      if (op === row.op) opt.selected = true;
+      opSel.appendChild(opt);
+    }
+    opSel.addEventListener("change", () => {
+      row.op = opSel.value;
+      syncFilterString();
+      triggerFilterSearch();
+    });
+
+    // value input
+    const def = getFieldDef(row.field);
+    const valueInput = document.createElement("input");
+    valueInput.className = "filter-value";
+    valueInput.type = "text";
+    valueInput.value = row.value;
+    if (def?.boolOnly) {
+      valueInput.value = "true";
+      valueInput.disabled = true;
+      valueInput.style.opacity = "0.5";
+      valueInput.style.maxWidth = "60px";
+    } else if (def?.textOnly) {
+      valueInput.placeholder = def.value === "lang" ? "en" : "value";
+    } else {
+      valueInput.placeholder = "0";
+      valueInput.inputMode = "numeric";
+    }
+    valueInput.addEventListener("input", () => {
+      row.value = valueInput.value.trim();
+      syncFilterString();
+      triggerFilterSearch();
+    });
+
+    // remove button
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "filter-remove";
+    removeBtn.type = "button";
+    removeBtn.innerHTML = "×";
+    removeBtn.addEventListener("click", () => {
+      filterRows.splice(i, 1);
+      if (filterRows.length > 0 && i === 0) {
+        filterRows[0].logic = "AND";
+      }
+      renderFilterRows();
+      syncFilterString();
+      triggerFilterSearch();
+    });
+
+    rowEl.appendChild(fieldSel);
+    rowEl.appendChild(opSel);
+    rowEl.appendChild(valueInput);
+    rowEl.appendChild(removeBtn);
+    filterRowsContainer.appendChild(rowEl);
   });
-});
+};
+
+const addFilterRow = () => {
+  const fields = getFieldsForCurrentType();
+  const defaultField = fields[0];
+  filterRows.push({
+    field: defaultField.value,
+    op: defaultField.boolOnly ? "=" : ">=",
+    value: defaultField.boolOnly ? "true" : "",
+    logic: "AND",
+  });
+  renderFilterRows();
+  // focus the value input of the new row
+  const lastRow = filterRowsContainer.querySelector(".filter-row:last-child .filter-value");
+  if (lastRow && !lastRow.disabled) lastRow.focus();
+};
+
+filterAddBtn.addEventListener("click", addFilterRow);
+
+const triggerFilterSearch = () => {
+  if (searchQuery) {
+    clearTimeout(filterDebounceTimer);
+    filterDebounceTimer = setTimeout(() => {
+      query(searchQuery);
+    }, 500);
+  }
+};
+
+const parseFilterStringIntoRows = (str) => {
+  filterRows.length = 0;
+  if (!str || !str.trim()) return;
+  // Split by AND/OR preserving the logic operator
+  const parts = str.split(/\s+(AND|OR)\s+/i);
+  for (let i = 0; i < parts.length; i += 2) {
+    const cond = parts[i].trim();
+    const logic = i > 0 && parts[i - 1] ? parts[i - 1].toUpperCase() : "AND";
+    const match = cond.match(/^(\w+)\s*(>=|<=|!=|=|>|<)\s*(.+)$/);
+    if (match) {
+      filterRows.push({
+        field: match[1],
+        op: match[2],
+        value: match[3].trim(),
+        logic,
+      });
+    }
+  }
+};
 
 filterToggle.addEventListener("click", () => {
   const isExpanded = filtersPanel.classList.contains("expanded");
@@ -241,7 +464,8 @@ filterToggle.addEventListener("click", () => {
   } else {
     filtersPanel.classList.add("expanded");
     filterToggle.classList.add("pressed");
-    document.querySelector("#filter-textarea").focus();
+    if (filterRows.length === 0) addFilterRow();
+    renderFilterRows();
   }
 });
 
@@ -874,12 +1098,12 @@ const query = async (text, loadMore = false) => {
   }
 
   if (!loadMore) {
-    if (document.querySelector(".results")) {
-      document.querySelector(".results").remove();
-    }
+    document.querySelector(".results")?.remove();
+    document.querySelector(".results-meta")?.remove();
     currentCursor = null;
     hasMore = true;
     renderedMediaUrls.clear();
+    renderedProfileIds.clear();
   }
 
   if (!text) return;
@@ -900,6 +1124,7 @@ const query = async (text, loadMore = false) => {
       resultsEl.classList.add("media-gallery");
     }
     document.querySelector(".center").appendChild(resultsEl);
+    requestAnimationFrame(updateTabIndicator);
   } else {
     if (currentSearchType === "media") {
       resultsEl.classList.add("media-gallery");
@@ -909,9 +1134,7 @@ const query = async (text, loadMore = false) => {
   }
 
   if (!loadMore) {
-    document.querySelectorAll(".toggle").forEach((toggle) => {
-      toggle.setAttribute("data-results-count", "");
-    });
+    document.querySelector(".results-meta")?.remove();
   }
 
   const createSkeletons = (count = 5) => {
@@ -994,6 +1217,7 @@ const query = async (text, loadMore = false) => {
   }
 
   let sessionToken = await ensureSession(API_URL);
+  const queryStartTime = Date.now();
 
   try {
     let _results = await (
@@ -1008,7 +1232,7 @@ const query = async (text, loadMore = false) => {
             Object.entries(buttons).find(([_, b]) => b.toggled)?.[0] ||
             "accounts",
           cursor: currentCursor,
-          filter: currentFilterString,
+          filter: currentFilterString || null,
           sort: currentSort,
           session: sessionToken,
         }),
@@ -1030,7 +1254,7 @@ const query = async (text, loadMore = false) => {
               Object.entries(buttons).find(([_, b]) => b.toggled)?.[0] ||
               "accounts",
             cursor: currentCursor,
-            filter: currentFilterString,
+            filter: currentFilterString || null,
             sort: currentSort,
             session: sessionToken,
           }),
@@ -1070,17 +1294,11 @@ const query = async (text, loadMore = false) => {
     }
 
     if (!loadMore && lastRequestMeta) {
-      document
-        .querySelector(".toggle.pressed")
-        ?.setAttribute?.(
-          "data-results-count",
-          lastRequestMeta.count === 1000
-            ? "10k"
-            : lastRequestMeta.count.toLocaleString(),
-        );
-
-      const resultsInfo = document.createElement("div");
-      resultsInfo.className = "results-info";
+      const metaEl = document.createElement("div");
+      metaEl.className = "results-meta";
+      metaEl.innerHTML = `Found <span>${lastRequestMeta.count.toLocaleString()}</span> results <span class="wallTime">— ${(lastRequestMeta.time / 1000).toFixed(2)}s</span>`;
+      
+      resultsEl.parentNode.insertBefore(metaEl, resultsEl);
     }
 
     hasMore = !!_results.cursor || false;
@@ -1210,6 +1428,9 @@ const query = async (text, loadMore = false) => {
           });
         }
       } else if (result.username) {
+        if (result.id && renderedProfileIds.has(result.id)) return;
+        if (result.id) renderedProfileIds.add(result.id);
+
         const el = document.createElement("a");
         el.className = "result account";
         el.href = result.id
@@ -1548,7 +1769,7 @@ const query = async (text, loadMore = false) => {
             .replaceAll(">", "&gt;")
             .replaceAll("\n", "<br>")
     }</p>
-    <small>${e.message.includes("filter") || e.message.includes("expecting an") ? `<a href="https://www.meilisearch.com/docs/reference/api/search#filter" target="_blank">learn how to use filters →</a>` : "an error occurred. please try again later"}</small></div>`;
+    <small>${e.message.includes("filter") ? "check your filter values and try again" : "an error occurred. please try again later"}</small></div>`;
 
       if (resultsEl.querySelector(".error-zone p").innerText.length > 230) {
         resultsEl.querySelector(".error-zone p").style.fontSize = "16px";
@@ -1576,6 +1797,9 @@ buttonElements.forEach((btn, i) => {
       buttons[type].toggled = true;
 
       currentSearchType = type;
+      renderFilterRows();
+
+      requestAnimationFrame(updateTabIndicator);
 
       if (document.querySelector(".results")) {
         query(document.querySelector(".searchbar").value.trim());
@@ -1585,6 +1809,10 @@ buttonElements.forEach((btn, i) => {
 
   if (i === 0) btn.click();
 });
+
+// init tab indicator after first tab is clicked
+requestAnimationFrame(updateTabIndicator);
+window.addEventListener("resize", updateTabIndicator);
 
 document.querySelector(".searchbar").addEventListener("keydown", (e) => {
   if (e.key !== "Enter") return;
@@ -1609,6 +1837,7 @@ window.addEventListener("popstate", () => {
 
   if (document.querySelector(".results")) {
     document.querySelector(".results").remove();
+    document.querySelector(".results-meta")?.remove();
     filtersPanel.classList.remove("expanded");
     filterToggle.classList.remove("pressed");
     currentSort = "relevance";
@@ -1617,6 +1846,7 @@ window.addEventListener("popstate", () => {
     searchQuery = null;
     currentCursor = null;
     hasMore = true;
+    requestAnimationFrame(updateTabIndicator);
   }
 });
 
@@ -1704,6 +1934,7 @@ document.querySelector(".logo").addEventListener("click", () => {
   document.querySelector(".searchbar").value = "";
   if (document.querySelector(".results")) {
     document.querySelector(".results").remove();
+    document.querySelector(".results-meta")?.remove();
     filtersPanel.classList.remove("expanded");
     filterToggle.classList.remove("pressed");
     currentSort = "relevance";
@@ -1712,6 +1943,7 @@ document.querySelector(".logo").addEventListener("click", () => {
     searchQuery = null;
     currentCursor = null;
     hasMore = true;
+    requestAnimationFrame(updateTabIndicator);
   }
 });
 

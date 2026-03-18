@@ -79,7 +79,7 @@ async function createNewSession(apiUrl, showUI = true) {
 
 	try {
 		const cap = new window.Cap({
-			apiEndpoint: `${apiUrl}/cap/`,
+			apiEndpoint: "https://cap.tiago.zip/c18a824a18/",
 		});
 
 		const { token: capToken } = await cap.solve();

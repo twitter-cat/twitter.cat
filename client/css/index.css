@@ -175,6 +175,7 @@ body {
   display: flex;
   flex-direction: row;
   user-select: none;
+  position: relative;
 
   width: 100%;
   margin-top: 10px;
@@ -193,7 +194,6 @@ body {
   border: none;
   overflow: hidden;
   padding: 0px;
-  padding-bottom: 6px;
   cursor: pointer;
   background: transparent;
   height: fit-content;
@@ -202,10 +202,26 @@ body {
   line-height: 20px;
   font-weight: 500;
   border-bottom: 2px solid transparent;
+
+  padding-left: 6px;
+  padding-right: 6px;
 }
 
 .buttons button.pressed {
-  border-bottom: 2px solid currentColor;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  border-radius: 1px;
+  pointer-events: none;
+  transition:
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.25s ease;
 }
 .buttons button:not(.pressed):hover {
   color: white;
@@ -241,51 +257,19 @@ body {
 .buttons button.toggle.pressed {
   overflow: visible;
 }
-button.toggle.pressed::before {
-  content: attr(data-results-count);
-  margin-left: 6px;
-  color: transparent;
-  font-weight: 400;
-  padding: 0px 8px;
-  background-color: #14171a;
-  border-radius: 0px;
-  position: absolute;
-  right: 0px;
-  bottom: -2px;
-  z-index: 100;
-  height: 2px;
-  padding-left: 12px;
+
+.results-meta {
+  width: 100%;
+  color: #919698;
+  font-family: "chirp", sans-serif;
+  margin-top: 12px;
+  text-align: left;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
 }
 
-button.toggle.pressed::after {
-  content: attr(data-results-count);
-  margin-left: 6px;
-  color: rgb(113 118 123);
-  font-weight: 400;
-  height: 20px;
-  padding: 0px 8px;
-  background-color: rgb(113 118 123 / 9%);
-  border-radius: 100px;
-  margin-bottom: -1px;
-}
-
-body:not(:has(.result)) button.toggle.pressed::after {
-  background: linear-gradient(
-    90deg,
-    rgba(158, 158, 158, 0.08) 0%,
-    rgba(158, 158, 158, 0.14) 20%,
-    rgba(158, 158, 158, 0.08) 40%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-loading 1.4s infinite linear;
-  min-width: 23px;
-}
-body:not(:has(.result)) button.toggle.pressed::before {
-  min-width: 23px;
-}
-body:has(.error-zone) button.toggle.pressed::before,
-body:has(.error-zone) button.toggle.pressed::after {
-  display: none;
+.results-meta .wallTime {
+  opacity: 0.6;
 }
 
 .toggle[data-toggle="accounts"].pressed {
@@ -318,7 +302,6 @@ body:has(.error-zone) button.toggle.pressed::after {
   display: flex;
   flex-direction: column;
   max-width: 500px;
-  margin: 0px auto;
   margin-top: 1em;
   margin-bottom: 2em;
   animation: fade-in 0.3s ease-out both;

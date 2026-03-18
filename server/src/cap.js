@@ -1,25 +1,8 @@
-import Cap from "@cap.js/server";
 import { SQL } from "bun";
 import { Elysia } from "elysia";
 import * as jose from "jose";
 
 const db = new SQL("sqlite:../.cap.db");
-const difficulty = 80;
-
-db`
-  CREATE TABLE IF NOT EXISTS challenges (
-    token TEXT PRIMARY KEY,
-    data TEXT NOT NULL,
-    expires INTEGER NOT NULL
-  );
-`;
-
-db`
-  CREATE TABLE IF NOT EXISTS tokens (
-    key TEXT PRIMARY KEY,
-    expires INTEGER NOT NULL
-  );
-`;
 
 db`
   CREATE TABLE IF NOT EXISTS sessions (
@@ -34,70 +17,19 @@ const SESSION_DURATION_MS = 60 * 60 * 1000;
 
 const MAX_SEARCHES = 25;
 
-export const cap = new Cap({
-  storage: {
-    challenges: {
-      store: async (token, challengeData) => {
-        await db`
-          INSERT INTO challenges (token, data, expires)
-          VALUES (${token}, ${JSON.stringify(challengeData)}, ${challengeData.expires})
-          ON CONFLICT(token) DO UPDATE SET
-            data = excluded.data,
-            expires = excluded.expires
-        `;
-      },
+const CAP_SECRET = process.env.CAP_SECRET_KEY;
+const CAP_INSTANCE = process.env.CAP_INSTANCE;
+const CAP_SITE_KEY = process.env.CAP_SITE_KEY;
 
-      read: async (token) => {
-        const [row] = await db`
-          SELECT data, expires
-          FROM challenges
-          WHERE token = ${token} AND expires > ${Date.now()}
-          LIMIT 1
-        `;
-        return row
-          ? { challenge: JSON.parse(row.data), expires: Number(row.expires) }
-          : null;
-      },
-
-      delete: async (token) => {
-        await db`DELETE FROM challenges WHERE token = ${token}`;
-      },
-
-      deleteExpired: async () => {
-        await db`DELETE FROM challenges WHERE expires <= ${Date.now()}`;
-      },
-    },
-
-    tokens: {
-      store: async (tokenKey, expires) => {
-        await db`
-          INSERT INTO tokens (key, expires)
-          VALUES (${tokenKey}, ${expires})
-          ON CONFLICT(key) DO UPDATE SET
-            expires = excluded.expires
-        `;
-      },
-
-      get: async (tokenKey) => {
-        const [row] = await db`
-          SELECT expires
-          FROM tokens
-          WHERE key = ${tokenKey} AND expires > ${Date.now()}
-          LIMIT 1
-        `;
-        return row ? Number(row.expires) : null;
-      },
-
-      delete: async (tokenKey) => {
-        await db`DELETE FROM tokens WHERE key = ${tokenKey}`;
-      },
-
-      deleteExpired: async () => {
-        await db`DELETE FROM tokens WHERE expires <= ${Date.now()}`;
-      },
-    },
-  },
-});
+async function verifyCapToken(token) {
+  const res = await fetch(`${CAP_INSTANCE}/${CAP_SITE_KEY}/siteverify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ secret: CAP_SECRET, response: token }),
+  });
+  const data = await res.json();
+  return data.success === true;
+}
 
 async function createSession() {
   const sessionId = crypto.randomUUID();
@@ -176,19 +108,6 @@ setInterval(
 );
 
 export default new Elysia()
-  .post("/cap/challenge", async () => {
-    return await cap.createChallenge({
-      challengeCount: difficulty,
-    });
-  })
-  .post("/cap/redeem", async ({ body, set }) => {
-    const { token, solutions } = body;
-    if (!token || !solutions) {
-      set.status = 400;
-      return { success: false };
-    }
-    return await cap.redeemChallenge({ token, solutions });
-  })
   .post("/cap/session", async ({ body, set }) => {
     const { capToken } = body;
     if (!capToken) {
@@ -196,8 +115,8 @@ export default new Elysia()
       return { success: false, error: "missing cap token" };
     }
 
-    const validation = await cap.validateToken(capToken);
-    if (!validation.success) {
+    const valid = await verifyCapToken(capToken);
+    if (!valid) {
       set.status = 400;
       return { success: false, error: "invalid cap token" };
     }

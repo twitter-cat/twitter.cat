@@ -13,7 +13,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@cap.js/server": "^4.0.5",
     "@elysiajs/cors": "^1.3.3",
     "@labzzhq/compressor": "^1.1.1",
     "elysia": "^1.3.20",
