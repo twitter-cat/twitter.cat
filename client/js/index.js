@@ -125,8 +125,6 @@ const restoreFromUrlParams = () => {
   const filterParam = params.get("filter");
   if (filterParam) {
     currentFilterString = filterParam;
-    // Parse filter string back into rows for the GUI
-    parseFilterStringIntoRows(filterParam);
     updateFilterIndicator();
   }
 
@@ -249,182 +247,33 @@ const createMediaElement = (obj, tweetId) => {
   return videoThumb;
 };
 
-const filterRowsContainer = document.getElementById("filter-rows");
-const filterAddBtn = document.getElementById("filter-add-row");
 let filterDebounceTimer = null;
+let filterEditor = null;
 
-const filterRows = []; // { field, op, value, logic: "AND"|"OR" }
-
-const getFieldsForCurrentType = () => {
-  return FILTER_FIELDS[currentSearchType] || FILTER_FIELDS.tweets;
-};
-
-const getFieldDef = (fieldValue) => {
-  const fields = getFieldsForCurrentType();
-  return fields.find((f) => f.value === fieldValue) || null;
-};
-
-const OPS_NUMERIC = [">=", "<=", "=", "!=", ">", "<"];
-const OPS_TEXT = ["=", "!="];
-const OPS_BOOL = ["="];
-
-const getOpsForField = (fieldValue) => {
-  const def = getFieldDef(fieldValue);
-  if (!def) return OPS_NUMERIC;
-  if (def.boolOnly) return OPS_BOOL;
-  if (def.textOnly) return OPS_TEXT;
-  return OPS_NUMERIC;
-};
-
-const serializeFilters = () => {
-  const parts = [];
-  for (let i = 0; i < filterRows.length; i++) {
-    const row = filterRows[i];
-    if (!row.field || row.value === "") continue;
-    if (parts.length > 0) {
-      parts.push(row.logic || "AND");
-    }
-    parts.push(`${row.field} ${row.op} ${row.value}`);
+async function ensureFilterEditor() {
+  if (filterEditor) return filterEditor;
+  const { createFilterEditor } = await import("./filter-editor.js");
+  filterEditor = createFilterEditor(document.getElementById("filter-editor"), {
+    onChange(value) {
+      currentFilterString = value;
+      updateFilterIndicator();
+      updateUrlParams();
+      triggerFilterSearch();
+    },
+    onSubmit() {
+      if (searchQuery) query(searchQuery);
+    },
+    fields: FILTER_FIELDS,
+    getSearchType() { return currentSearchType; },
+  });
+  if (currentFilterString) {
+    filterEditor.setValue(currentFilterString);
   }
-  return parts.join(" ");
-};
+  return filterEditor;
+}
 
-const syncFilterString = () => {
-  currentFilterString = serializeFilters();
-  updateFilterIndicator();
-  updateUrlParams();
-};
-
-const renderFilterRows = () => {
-  filterRowsContainer.innerHTML = "";
-  const fields = getFieldsForCurrentType();
-
-  filterRows.forEach((row, i) => {
-    // logic toggle between rows
-    if (i > 0) {
-      const logicDiv = document.createElement("div");
-      logicDiv.className = "filter-logic-toggle";
-      const logicBtn = document.createElement("button");
-      logicBtn.type = "button";
-      logicBtn.textContent = row.logic || "AND";
-      if (row.logic === "OR") logicBtn.classList.add("logic-or");
-      logicBtn.addEventListener("click", () => {
-        row.logic = row.logic === "AND" ? "OR" : "AND";
-        renderFilterRows();
-        syncFilterString();
-        triggerFilterSearch();
-      });
-      logicDiv.appendChild(logicBtn);
-      filterRowsContainer.appendChild(logicDiv);
-    }
-
-    const rowEl = document.createElement("div");
-    rowEl.className = "filter-row";
-
-    // field select
-    const fieldSel = document.createElement("select");
-    fieldSel.className = "filter-field";
-    for (const f of fields) {
-      const opt = document.createElement("option");
-      opt.value = f.value;
-      opt.textContent = f.label;
-      if (f.value === row.field) opt.selected = true;
-      fieldSel.appendChild(opt);
-    }
-    fieldSel.addEventListener("change", () => {
-      row.field = fieldSel.value;
-      const def = getFieldDef(row.field);
-      if (def?.boolOnly) {
-        row.op = "=";
-        row.value = "true";
-      } else {
-        const ops = getOpsForField(row.field);
-        if (!ops.includes(row.op)) row.op = ops[0];
-      }
-      renderFilterRows();
-      syncFilterString();
-      triggerFilterSearch();
-    });
-
-    // op select
-    const ops = getOpsForField(row.field);
-    const opSel = document.createElement("select");
-    opSel.className = "filter-op";
-    for (const op of ops) {
-      const opt = document.createElement("option");
-      opt.value = op;
-      opt.textContent = op;
-      if (op === row.op) opt.selected = true;
-      opSel.appendChild(opt);
-    }
-    opSel.addEventListener("change", () => {
-      row.op = opSel.value;
-      syncFilterString();
-      triggerFilterSearch();
-    });
-
-    // value input
-    const def = getFieldDef(row.field);
-    const valueInput = document.createElement("input");
-    valueInput.className = "filter-value";
-    valueInput.type = "text";
-    valueInput.value = row.value;
-    if (def?.boolOnly) {
-      valueInput.value = "true";
-      valueInput.disabled = true;
-      valueInput.style.opacity = "0.5";
-      valueInput.style.maxWidth = "60px";
-    } else if (def?.textOnly) {
-      valueInput.placeholder = def.value === "lang" ? "en" : "value";
-    } else {
-      valueInput.placeholder = "0";
-      valueInput.inputMode = "numeric";
-    }
-    valueInput.addEventListener("input", () => {
-      row.value = valueInput.value.trim();
-      syncFilterString();
-      triggerFilterSearch();
-    });
-
-    // remove button
-    const removeBtn = document.createElement("button");
-    removeBtn.className = "filter-remove";
-    removeBtn.type = "button";
-    removeBtn.innerHTML = "×";
-    removeBtn.addEventListener("click", () => {
-      filterRows.splice(i, 1);
-      if (filterRows.length > 0 && i === 0) {
-        filterRows[0].logic = "AND";
-      }
-      renderFilterRows();
-      syncFilterString();
-      triggerFilterSearch();
-    });
-
-    rowEl.appendChild(fieldSel);
-    rowEl.appendChild(opSel);
-    rowEl.appendChild(valueInput);
-    rowEl.appendChild(removeBtn);
-    filterRowsContainer.appendChild(rowEl);
-  });
-};
-
-const addFilterRow = () => {
-  const fields = getFieldsForCurrentType();
-  const defaultField = fields[0];
-  filterRows.push({
-    field: defaultField.value,
-    op: defaultField.boolOnly ? "=" : ">=",
-    value: defaultField.boolOnly ? "true" : "",
-    logic: "AND",
-  });
-  renderFilterRows();
-  // focus the value input of the new row
-  const lastRow = filterRowsContainer.querySelector(".filter-row:last-child .filter-value");
-  if (lastRow && !lastRow.disabled) lastRow.focus();
-};
-
-filterAddBtn.addEventListener("click", addFilterRow);
+// Preload filter editor module when idle
+setTimeout(() => import("./filter-editor.js"), 2000);
 
 const triggerFilterSearch = () => {
   if (searchQuery) {
@@ -435,27 +284,8 @@ const triggerFilterSearch = () => {
   }
 };
 
-const parseFilterStringIntoRows = (str) => {
-  filterRows.length = 0;
-  if (!str || !str.trim()) return;
-  // Split by AND/OR preserving the logic operator
-  const parts = str.split(/\s+(AND|OR)\s+/i);
-  for (let i = 0; i < parts.length; i += 2) {
-    const cond = parts[i].trim();
-    const logic = i > 0 && parts[i - 1] ? parts[i - 1].toUpperCase() : "AND";
-    const match = cond.match(/^(\w+)\s*(>=|<=|!=|=|>|<)\s*(.+)$/);
-    if (match) {
-      filterRows.push({
-        field: match[1],
-        op: match[2],
-        value: match[3].trim(),
-        logic,
-      });
-    }
-  }
-};
 
-filterToggle.addEventListener("click", () => {
+filterToggle.addEventListener("click", async () => {
   const isExpanded = filtersPanel.classList.contains("expanded");
 
   if (isExpanded) {
@@ -464,8 +294,8 @@ filterToggle.addEventListener("click", () => {
   } else {
     filtersPanel.classList.add("expanded");
     filterToggle.classList.add("pressed");
-    if (filterRows.length === 0) addFilterRow();
-    renderFilterRows();
+    const editor = await ensureFilterEditor();
+    editor.focus();
   }
 });
 
@@ -1217,8 +1047,24 @@ const query = async (text, loadMore = false) => {
   }
 
   let sessionToken = await ensureSession(API_URL);
-  const queryStartTime = Date.now();
 
+  async function sha256(message) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+  }
+  
+  const pid = await sha256(crypto.randomUUID());
+  
+  const pots = [
+    pid,
+    await sha256(`${sessionToken}${currentCursor}${currentFilterString}${currentSort}${text}${pid}${navigator.userAgent}`),
+  ]
+  pots.push(await sha256(JSON.stringify(pots)))
+  
   try {
     let _results = await (
       await fetch(`${API_URL}/query`, {
@@ -1235,6 +1081,7 @@ const query = async (text, loadMore = false) => {
           filter: currentFilterString || null,
           sort: currentSort,
           session: sessionToken,
+          pots
         }),
       })
     ).json();
@@ -1257,6 +1104,7 @@ const query = async (text, loadMore = false) => {
             filter: currentFilterString || null,
             sort: currentSort,
             session: sessionToken,
+            pots
           }),
         })
       ).json();
@@ -1797,7 +1645,7 @@ buttonElements.forEach((btn, i) => {
       buttons[type].toggled = true;
 
       currentSearchType = type;
-      renderFilterRows();
+      if (filterEditor) filterEditor.refresh();
 
       requestAnimationFrame(updateTabIndicator);
 
