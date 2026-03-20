@@ -1,7 +1,7 @@
 .filters-panel {
   width: 100%;
   max-width: 600px;
-  background-color: #1c2024;
+  background-color: #14171a;
   border-radius: 12px;
   margin-top: 16px;
   max-height: 0;
@@ -35,161 +35,30 @@
   padding: 10px 12px;
 }
 
-/* filter rows GUI */
-.filter-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.filter-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  animation: filterRowIn 0.15s ease;
-}
-
-@keyframes filterRowIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.filter-row select,
-.filter-row input {
-  font-family: "chirp", sans-serif;
-  font-size: 13px;
-  background: #14171a;
-  color: #e7e9ea;
-  border: 1px solid #2f3336;
-  border-radius: 8px;
-  padding: 6px 8px;
-  height: 32px;
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.filter-row select:focus,
-.filter-row input:focus {
-  border-color: #1da1f2;
-}
-
-.filter-row select {
-  cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z' fill='%2371767b'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 6px center;
-  padding-right: 22px;
-}
-
-.filter-row .filter-field {
-  min-width: 90px;
-}
-
-.filter-row .filter-op {
-  min-width: 52px;
-  width: 52px;
-  text-align: center;
-  font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
-  font-size: 12px;
-}
-
-.filter-row .filter-value {
-  flex: 1;
-  min-width: 60px;
-  caret-color: #1da1f2;
-}
-
-.filter-row .filter-value::placeholder {
-  color: #536471;
-}
-
-.filter-row .filter-remove {
-  background: none;
-  border: none;
-  color: #536471;
-  cursor: pointer;
-  padding: 0;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: color 0.15s, background-color 0.15s;
-  flex-shrink: 0;
-  font-size: 16px;
-  line-height: 1;
-}
-
-.filter-row .filter-remove:hover {
-  color: #f4212e;
-  background-color: rgba(244, 33, 46, 0.1);
-}
-
-.filter-logic-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 0;
-}
-
-.filter-logic-toggle button {
-  font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
-  font-size: 11px;
-  background: none;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  color: #536471;
-  cursor: pointer;
-  padding: 1px 8px;
-  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
-  user-select: none;
-  height: 20px;
-}
-
-.filter-logic-toggle button:hover {
-  color: #1da1f2;
-  border-color: #1da1f2;
-  background-color: rgba(29, 161, 242, 0.08);
-}
-
-.filter-logic-toggle button.logic-or {
-  color: #f91880;
-}
-
-.filter-logic-toggle button.logic-or:hover {
-  border-color: #f91880;
-  background-color: rgba(249, 24, 128, 0.08);
-}
-
-.filter-add-row {
-  font-family: "chirp", sans-serif;
-  font-size: 12px;
-  background: none;
-  border: 1px dashed #2f3336;
-  border-radius: 8px;
-  color: #536471;
-  cursor: pointer;
-  padding: 5px 12px;
-  margin-top: 8px;
-  transition: color 0.15s, border-color 0.15s;
+#filter-editor {
   width: 100%;
 }
 
-.filter-add-row:hover {
-  color: #1da1f2;
-  border-color: #1da1f2;
+#filter-editor .cm-editor {
+  max-height: 80px;
 }
 
-/* toggle button */
+.filter-hint {
+  font-family: "chirp", sans-serif;
+  font-size: 11px;
+  color: #536471;
+  margin-top: 6px;
+}
+
+.filter-hint a {
+  color: #1da1f2;
+  text-decoration: none;
+}
+
+.filter-hint a:hover {
+  text-decoration: underline;
+}
+
 .filter-toggle.pressed {
   border-color: rgb(29, 161, 242);
   color: white;
@@ -247,15 +116,6 @@
   .filters-panel.expanded {
     max-height: 70vh;
     overflow-y: auto;
-  }
-
-  .filter-row {
-    flex-wrap: wrap;
-  }
-
-  .filter-row .filter-value {
-    min-width: 100%;
-    margin-top: 2px;
   }
 }
 
@@ -446,4 +306,8 @@
     padding: 8px 14px;
     height: 42px;
   }
+}
+
+.ͼo .cm-selectionBackground {
+  border-radius: 3px;
 }
