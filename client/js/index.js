@@ -1727,3 +1727,43 @@ setInterval(() => {
     searchQuery ? `${searchQuery} -` : `(${Math.floor(Math.random() * 900) + 100}) /`
   } twitter.cat`;
 }, 100);
+
+fetch("https://soggy.cat/static/ssoggycat/main/images/soggycat.webp")
+  .then(resp => resp.blob())
+  .then(blob => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const webpBase64 = reader.result.split(",")[1];
+
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+
+        const MAX = 400;
+        if (width > MAX || height > MAX) {
+          const ratio = Math.min(MAX / width, MAX / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        const svg = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+            <image href="data:image/webp;base64,${webpBase64}" width="${width}" height="${height}"/>
+          </svg>
+        `;
+        const svgDataUrl = `data:image/svg+xml;base64,${btoa(svg)}`;
+
+        console.log('%c ', `
+          background-image: url(${svgDataUrl});
+          padding-top: ${height}px;
+          padding-left: ${width}px;
+          background-size: contain;
+          background-position: center center;
+          background-repeat: no-repeat;
+        `);
+      };
+
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(blob);
+  });
