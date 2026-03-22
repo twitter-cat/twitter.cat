@@ -270,6 +270,19 @@ body {
 
 .results-meta .wallTime {
   opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+
+.results-meta .searching {
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  display: inline-block;
+  background-image: linear-gradient(90deg, #919698a6 0%, #919698a6 20%, #c8cacc 40%, #919698a6 60%, #919698a6 100%);
+  background-size: 200% 100%;
+  pointer-events: none;
+  animation: skeleton-loading 1.4s infinite linear;
+  margin-right: 4px;
 }
 
 .toggle[data-toggle="accounts"].pressed {

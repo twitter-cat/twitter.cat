@@ -51,9 +51,7 @@ const executeTweetSearchQuery = async (q, filterString, offset, sortOption) => {
   });
   const tManticore = Date.now();
 
-  const authorIds = Array.from(
-    new Set(result.hits.map((t) => t.author_id).filter(Boolean)),
-  );
+  const authorIds = Array.from(new Set(result.hits.map((t) => t.author_id).filter(Boolean)));
 
   let authorMap = new Map();
   if (authorIds.length > 0) {
@@ -68,9 +66,7 @@ const executeTweetSearchQuery = async (q, filterString, offset, sortOption) => {
   }
   const tAuthors = Date.now();
 
-  const tweetIdsWithMedia = result.hits
-    .filter((t) => t.has_media)
-    .map((t) => t.id);
+  const tweetIdsWithMedia = result.hits.filter((t) => t.has_media).map((t) => t.id);
 
   const mediaMap = new Map();
   if (tweetIdsWithMedia.length > 0) {
@@ -133,10 +129,15 @@ export default new Elysia()
   )
   .post(
     "/query",
-    async ({ body }) => {
+    async ({ body, request }) => {
       try {
         const reqStart = Date.now();
-        const { type, q, cursor, filter, sort, session: sessionToken } = body;
+        const { type, q, cursor, filter, sort } = body;
+        const sessionToken = request.headers.get("authorization")?.replace?.("Bearer ", "");
+
+        if (!sessionToken) {
+          return { error: "missing session" };
+        }
 
         if (!["accounts", "tweets", "media"].includes(type)) {
           return { error: "only accounts, tweets, and media are supported" };
@@ -147,7 +148,7 @@ export default new Elysia()
         if (cursor?.length > 1000) {
           return { error: "invalid cursor" };
         }
-        // Normalize filter: accept string or structured array
+
         let parsedFilter = filter || null;
         if (typeof parsedFilter === "string") {
           parsedFilter = parsedFilter.trim() || null;
@@ -161,10 +162,6 @@ export default new Elysia()
         }
         if (q.length > 1_000) {
           return { error: "search query too long (max 1000 characters)" };
-        }
-
-        if (!sessionToken) {
-          return { error: "missing session" };
         }
 
         const tBeforeSession = Date.now();
@@ -194,19 +191,21 @@ export default new Elysia()
             if (typeof effectiveFilter === "string" && effectiveFilter) {
               effectiveFilter = `(${effectiveFilter}) AND has_media = true`;
             } else if (Array.isArray(effectiveFilter)) {
-              effectiveFilter = [...effectiveFilter, { field: "has_media", op: "=", value: "true" }];
+              effectiveFilter = [
+                ...effectiveFilter,
+                { field: "has_media", op: "=", value: "true" },
+              ];
             } else {
               effectiveFilter = "has_media = true";
             }
           }
 
-          const { rows, processingTimeMs, estimatedTotalHits } =
-            await executeTweetSearchQuery(
-              q,
-              effectiveFilter,
-              offset,
-              sortOption,
-            );
+          const { rows, processingTimeMs, estimatedTotalHits } = await executeTweetSearchQuery(
+            q,
+            effectiveFilter,
+            offset,
+            sortOption,
+          );
 
           let hasMore = false;
           if (rows.length > DEFAULT_LIMIT) {
@@ -292,10 +291,7 @@ export default new Elysia()
               typeof row.banner === "string" &&
               row.banner.startsWith("https://pbs.twimg.com/profile_banners/")
             ) {
-              row.banner = row.banner.replace(
-                "https://pbs.twimg.com/profile_banners/",
-                "",
-              );
+              row.banner = row.banner.replace("https://pbs.twimg.com/profile_banners/", "");
             } else if (row.banner) {
               row.banner = null;
             }
@@ -316,24 +312,34 @@ export default new Elysia()
     {
       body: t.Object({
         type: t.String(),
-        session: t.String(),
         q: t.String(),
         cursor: t.Optional(t.Union([t.String(), t.Null()])),
-        filter: t.Optional(t.Union([
-          t.String(),
-          t.Array(t.Object({
-            field: t.String(),
-            op: t.String(),
-            value: t.Union([t.String(), t.Number(), t.Boolean()]),
-          })),
-          t.Null(),
-        ])),
+        filter: t.Optional(
+          t.Union([
+            t.String(),
+            t.Array(
+              t.Object({
+                field: t.String(),
+                op: t.String(),
+                value: t.Union([t.String(), t.Number(), t.Boolean()]),
+              }),
+            ),
+            t.Null(),
+          ]),
+        ),
         sort: t.Optional(t.Union([t.String(), t.Null()])),
       }),
     },
   )
-  .get("/:u/avfetch.jpg", async ({ params, redirect }) => {
+  .get("/:u/avfetch.jpg", async ({ params, query, redirect }) => {
     const { u } = params;
+    const sessionToken = query.session || null;
+    const sessionResult = await validateSession(sessionToken);
+    if (!sessionResult.success) {
+      return redirect(
+        `https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png`,
+      );
+    }
 
     if (!u || typeof u !== "string") {
       return "NOT_FOUND";
@@ -384,25 +390,15 @@ export default new Elysia()
 
     const arr = html.split('<meta content="').slice(4, -6);
 
-    const bioMatch = arr.find((a) =>
-      a?.trim()?.endsWith(`" property="og:description" />`),
-    );
-    const bio =
-      bioMatch?.replace(`" property="og:description" />`, "")?.trim() || "";
+    const bioMatch = arr.find((a) => a?.trim()?.endsWith(`" property="og:description" />`));
+    const bio = bioMatch?.replace(`" property="og:description" />`, "")?.trim() || "";
 
-    const pfpMatch = arr.find((a) =>
-      a?.trim()?.endsWith(`" property="og:image" />`),
-    );
+    const pfpMatch = arr.find((a) => a?.trim()?.endsWith(`" property="og:image" />`));
     const pfp =
-      pfpMatch
-        ?.replace(`" property="og:image" />`, "")
-        ?.trim()
-        ?.replaceAll(":large", "") ||
+      pfpMatch?.replace(`" property="og:image" />`, "")?.trim()?.replaceAll(":large", "") ||
       `https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png`;
 
-    const nameMatch = arr.find((a) =>
-      a?.trim()?.endsWith(`" property="og:title" />`),
-    );
+    const nameMatch = arr.find((a) => a?.trim()?.endsWith(`" property="og:title" />`));
     const name =
       nameMatch
         ?.replace(`" property="og:title" />`, "")
