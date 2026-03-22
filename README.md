@@ -13,7 +13,7 @@ twitter search engine & crawler.
 ### requirements
 
 - postgres db with the required tables and indexes
-- meilisearch instance with the required indexes
+- manticore instance with the required indexes
 - bun installed
 - a server accessible from the internet
 
@@ -33,6 +33,6 @@ this should be deployed to your preferred cdn.
 
 ## crawling
 
-in order for you to have any tweets to search, you'll need to manage crawlers that ingest tweet data to the postgres db, along with a sync script to push the data to meilisearch.
+in order for you to have any tweets to search, you'll need to manage crawlers that ingest tweet data to the postgres db, along with a sync script to push the data to manticore.
 
-these crawlers are not open-source. the production twitter.cat instance uses many crawlers running in parallel on different machines, ingesting hundreds of thousands of tweets per hour.
+these crawlers are not open-source. the production twitter.cat instance uses many crawlers running in parallel on different machines.
