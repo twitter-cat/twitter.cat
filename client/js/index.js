@@ -1734,35 +1734,47 @@ fetch("https://soggy.cat/static/ssoggycat/main/images/soggycat.webp")
     const reader = new FileReader();
     reader.onload = () => {
       const webpBase64 = reader.result.split(",")[1];
-
       const img = new Image();
       img.onload = () => {
         let { width, height } = img;
-
         const MAX = 400;
         if (width > MAX || height > MAX) {
           const ratio = Math.min(MAX / width, MAX / height);
           width = Math.round(width * ratio);
           height = Math.round(height * ratio);
         }
-
+        const svgHeight = Math.round(height * 1.25);
+        const yOffset = svgHeight - height;
+        const jump = Math.round(height * 0.18);
         const svg = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-            <image href="data:image/webp;base64,${webpBase64}" width="${width}" height="${height}"/>
+          <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${svgHeight}">
+            <style>
+              @keyframes soggyhop {
+                0%   { transform: translateY(0) scaleY(1) scaleX(1); }
+                30%  { transform: translateY(0) scaleY(0.82) scaleX(1.12); }
+                50%  { transform: translateY(-${jump}px) scaleY(1.08) scaleX(0.95); }
+                65%  { transform: translateY(0) scaleY(0.85) scaleX(1.1); }
+                80%  { transform: translateY(0) scaleY(1.03) scaleX(0.98); }
+                100% { transform: translateY(0) scaleY(1) scaleX(1); }
+              }
+              image {
+                animation: soggyhop 1.8s infinite ease-in-out;
+                transform-origin: center bottom;
+              }
+            </style>
+            <image href="data:image/webp;base64,${webpBase64}" width="${width}" height="${height}" y="${yOffset}"/>
           </svg>
         `;
         const svgDataUrl = `data:image/svg+xml;base64,${btoa(svg)}`;
-
         console.log('%c ', `
           background-image: url(${svgDataUrl});
-          padding-top: ${height}px;
+          padding-top: ${svgHeight}px;
           padding-left: ${width}px;
           background-size: contain;
           background-position: center center;
           background-repeat: no-repeat;
         `);
       };
-
       img.src = reader.result;
     };
     reader.readAsDataURL(blob);
