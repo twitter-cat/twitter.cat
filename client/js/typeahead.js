@@ -44,6 +44,8 @@ searchInput.addEventListener("input", (e) => {
       const response = await fetch(
         `${API_URL}/typeahead?q=${encodeURIComponent(query)}`,
         {
+          headers: {
+          },
           signal: controller.signal,
         },
       );

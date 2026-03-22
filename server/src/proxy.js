@@ -2,6 +2,7 @@ import { SQL } from "bun";
 import { Elysia, t } from "elysia";
 import { rateLimit } from "elysia-rate-limit";
 import * as jose from "jose";
+import { validateSession } from "./cap.js";
 
 const postgresReadOnly = new SQL(
   `postgres://${process.env.POSTGRES_USER_READONLY}:${process.env.POSTGRES_PASSWORD_READONLY}@${process.env.POSTGRES_HOST}:5432/twitter`,
@@ -183,7 +184,13 @@ export default new Elysia()
   )
   .get(
     "/proxy",
-    async ({ query }) => {
+    async ({ query, request }) => {
+      const sessionToken = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || null;
+      const sessionResult = await validateSession(sessionToken);
+      if (!sessionResult.success) {
+        return { error: "invalid session" };
+      }
+
       const { id, q } = query;
 
       if (!id) {

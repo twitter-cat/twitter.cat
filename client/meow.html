@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🐈</title>
+    <link rel="icon" type="image/x-icon" href="/assets/svgs/face.svg" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #14171a;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js" async onload="init()"></script>
+    <script>
+      const init = () => {
+        const {
+          Engine,
+          Render,
+          Runner,
+          Bodies,
+          Body,
+          Composite,
+          Mouse,
+          MouseConstraint,
+          Events,
+          Vector,
+        } = Matter;
+
+        const engine = Engine.create();
+        const world = engine.world;
+
+        const DPR = window.devicePixelRatio || 1;
+
+        function logicalSize() {
+          return { w: window.innerWidth, h: window.innerHeight };
+        }
+
+        const render = Render.create({
+          element: document.body,
+          engine,
+          options: {
+            width: window.innerWidth * DPR,
+            height: window.innerHeight * DPR,
+            background: "#14171A",
+            wireframes: false,
+            pixelRatio: DPR,
+          },
+        });
+
+        render.canvas.style.width = window.innerWidth + "px";
+        render.canvas.style.height = window.innerHeight + "px";
+
+        Render.run(render);
+        const runner = Runner.create();
+        Runner.run(runner, engine);
+
+        let wallBottom, wallLeft, wallRight;
+
+        function makeWalls(w, h) {
+          wallBottom = Bodies.rectangle(w / 2, h + 25, w * 3, 50, {
+            isStatic: true,
+            render: { fillStyle: "#111" },
+          });
+          wallLeft = Bodies.rectangle(-25, h / 2, 50, h * 3, {
+            isStatic: true,
+            render: { fillStyle: "#111" },
+          });
+          wallRight = Bodies.rectangle(w + 25, h / 2, 50, h * 3, {
+            isStatic: true,
+            render: { fillStyle: "#111" },
+          });
+          Composite.add(world, [wallBottom, wallLeft, wallRight]);
+        }
+
+        makeWalls(window.innerWidth, window.innerHeight);
+
+        const PHYS_SCALE = 3;
+
+        const hullSVG = [
+          { x: 3, y: 4 },
+          { x: 9, y: 1 },
+          { x: 27, y: 1 },
+          { x: 33, y: 5 },
+          { x: 36, y: 12 },
+          { x: 35, y: 22 },
+          { x: 30, y: 33 },
+          { x: 26, y: 36 },
+          { x: 18, y: 35 },
+          { x: 10, y: 36 },
+          { x: 5, y: 33 },
+          { x: 1, y: 22 },
+          { x: 0, y: 12 },
+        ];
+
+        const hullPhys = hullSVG.map((p) => ({ x: p.x * PHYS_SCALE, y: p.y * PHYS_SCALE }));
+
+        function centroid(pts) {
+          let cx = 0,
+            cy = 0;
+          for (const p of pts) {
+            cx += p.x;
+            cy += p.y;
+          }
+          return { x: cx / pts.length, y: cy / pts.length };
+        }
+
+        const hullCentroid = centroid(hullPhys);
+        const OFFSET_X = hullCentroid.x;
+        const OFFSET_Y = hullCentroid.y;
+
+        const CAT_PATH_STR = [
+          "M10.478 22.439s.702 2.281-.337 7.993c-.186 1.025-.46 2.072-.599 2.93-1.757 0-1.851 2.002-1.478 2.002h2.094c1.337 0 2.971-3.334 3.854-7.961s-3.534-4.964-3.534-4.964",
+          "M23.52 26.141s2.272 1.22 2.188 4.081c-.033 1.131-.249 2.091-.355 3.024-1.832 0-1.839 1.985-1.305 1.985h1.856c.923 0 3.001-3.158 3.379-7.281s-5.763-1.809-5.763-1.809",
+          "M36 8.447C36 3.525 31.859 1 27 1a1 1 0 1 0 0 2c1.804 0 6.717.934 6.717 5.447 0 2.881-1.567 5.462-3.77 5.982-.164-.073-.345-.104-.509-.192-7.239-3.917-13.457.902-15.226-.29-1.752-1.182-.539-3.255-2.824-5.243-.33-1.841-1.073-4.477-1.794-4.477-.549 0-1.265 1.825-1.74 3.656-.591-1.381-1.363-2.756-1.86-2.756-.64 0-1.278 2.273-1.594 4.235-1.68 1.147-2.906 2.809-2.906 4.765 0 2.7 4.05 3.357 5.4 3.411s3.023 3.562 3.585 5.072c1.242 4.367 2.051 8.699 2.698 11.183-1.649 0-1.804 2.111-1.348 2.111.713 0 1.953-.003 2.225 0 1.381.014 2.026-4.706 2.026-8.849 0-.212-.011-.627-.011-.627s1.93.505 6.038-.208c2.444-.424 5.03.849 5.746 3.163.527 1.704 1.399 3.305 1.868 4.484-1.589 0-1.545 2.037-1.084 2.037.787 0 1.801.014 2.183 0 1.468-.055.643-7.574 1.03-10.097s1.267-5.578-.229-8.797C34.857 15.236 36 11.505 36 8.447",
+        ].join(" ");
+
+        const CAT_PATH = new Path2D(CAT_PATH_STR);
+
+        function spawnCat() {
+          const { w, h } = logicalSize();
+          const x = 60 + Math.random() * (w - 120);
+          const y = -60;
+
+          const body = Bodies.fromVertices(
+            x,
+            y,
+            hullPhys,
+            {
+              restitution: 0.85,
+              friction: 0.2,
+              frictionAir: 0.008,
+              render: { fillStyle: "transparent", strokeStyle: "transparent", lineWidth: 0 },
+              label: "cat",
+            },
+            true,
+          );
+
+          Body.setAngle(body, Math.random() * Math.PI * 2);
+          Body.setVelocity(body, { x: (Math.random() - 0.5) * 5, y: Math.random() * 3 });
+          Composite.add(world, body);
+        }
+
+        Events.on(render, "afterRender", () => {
+          const ctx = render.context;
+
+          Composite.allBodies(world)
+            .filter((b) => b.label === "cat")
+            .forEach((body) => {
+              ctx.save();
+              ctx.translate(body.position.x, body.position.y);
+              ctx.rotate(body.angle);
+              ctx.translate(-OFFSET_X, -OFFSET_Y);
+              ctx.scale(PHYS_SCALE, PHYS_SCALE);
+              ctx.fillStyle = "#1DA1F2";
+              ctx.fill(CAT_PATH);
+              ctx.restore();
+            });
+        });
+
+        let count = 0;
+        const MAX = 20;
+        const spawnId = setInterval(() => {
+          if (count++ >= MAX) {
+            clearInterval(spawnId);
+            return;
+          }
+          spawnCat();
+        }, 300);
+        
+        render.canvas.addEventListener("click", () => {
+          
+          spawnCat();
+        })
+
+        const mouse = Mouse.create(render.canvas);
+        mouse.pixelRatio = DPR;
+
+        const mouseConstraint = MouseConstraint.create(engine, {
+          mouse,
+          constraint: { stiffness: 0.2, render: { visible: false } },
+        });
+        Composite.add(world, mouseConstraint);
+        render.mouse = mouse;
+
+        const resize = () => {
+          const w = window.innerWidth;
+          const h = window.innerHeight;
+
+          render.options.width = w * DPR;
+          render.options.height = h * DPR;
+          render.canvas.width = w * DPR;
+          render.canvas.height = h * DPR;
+          render.canvas.style.width = w + "px";
+          render.canvas.style.height = h + "px";
+          Render.lookAt(render, { min: { x: 0, y: 0 }, max: { x: w, y: h } });
+
+          Composite.remove(world, wallBottom);
+          Composite.remove(world, wallLeft);
+          Composite.remove(world, wallRight);
+          makeWalls(w, h);
+        };
+
+        window.addEventListener("resize", resize);
+        resize();
+      };
+    </script>
+  </body>
+</html>

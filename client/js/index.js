@@ -1,6 +1,7 @@
 import { API_URL } from "./config.js";
 import {
   ensureSession,
+  getSessionToken,
   incrementSearchCount,
   invalidateSession,
   startSessionCreation,
@@ -38,9 +39,7 @@ let currentSearchType = "tweets";
 let currentSort = "relevance";
 let lastRequestMeta = null;
 const renderedMediaUrls = new Set();
-let lastQueryTime = 0;
 let activeObserver = null;
-const QUERY_COOLDOWN_MS = 500;
 
 const filtersPanel = document.querySelector("#filters-panel");
 const filterToggle = document.querySelector("#filter-toggle");
@@ -129,10 +128,7 @@ const restoreFromUrlParams = () => {
   }
 
   const sortParam = params.get("sort");
-  if (
-    sortParam &&
-    ["relevance", "likes", "newest", "oldest"].includes(sortParam)
-  ) {
+  if (sortParam && ["relevance", "likes", "newest", "oldest"].includes(sortParam)) {
     currentSort = sortParam;
     updateSortUI();
   }
@@ -264,7 +260,9 @@ async function ensureFilterEditor() {
       if (searchQuery) query(searchQuery);
     },
     fields: FILTER_FIELDS,
-    getSearchType() { return currentSearchType; },
+    getSearchType() {
+      return currentSearchType;
+    },
   });
   if (currentFilterString) {
     filterEditor.setValue(currentFilterString);
@@ -272,8 +270,7 @@ async function ensureFilterEditor() {
   return filterEditor;
 }
 
-// Preload filter editor module when idle
-setTimeout(() => import("./filter-editor.js"), 2000);
+setTimeout(() => import("./filter-editor.js"), 5_000);
 
 const triggerFilterSearch = () => {
   if (searchQuery) {
@@ -283,7 +280,6 @@ const triggerFilterSearch = () => {
     }, 500);
   }
 };
-
 
 filterToggle.addEventListener("click", async () => {
   const isExpanded = filtersPanel.classList.contains("expanded");
@@ -302,8 +298,7 @@ filterToggle.addEventListener("click", async () => {
 function updateSortUI() {
   const label = sortToggle?.querySelector(".sort-label");
   if (label) {
-    label.textContent =
-      currentSort.charAt(0).toUpperCase() + currentSort.slice(1);
+    label.textContent = currentSort.charAt(0).toUpperCase() + currentSort.slice(1);
   }
 
   document.querySelectorAll(".sort-option").forEach((opt) => {
@@ -383,14 +378,12 @@ const linkifyTweetBody = (text) => {
 
   text = text.replace(
     new RegExp(`@(${word})`, "g"),
-    (_, name) =>
-      `<a class="tweet-mention" href="https://x.com/${stripMarkers(name)}">@${name}</a>`,
+    (_, name) => `<a class="tweet-mention" href="https://x.com/${stripMarkers(name)}">@${name}</a>`,
   );
 
   text = text.replace(
     new RegExp(`#(${word})`, "g"),
-    (_, tag) =>
-      `<a href="https://x.com/hashtag/${stripMarkers(tag)}">#${tag}</a>`,
+    (_, tag) => `<a href="https://x.com/hashtag/${stripMarkers(tag)}">#${tag}</a>`,
   );
 
   text = text.replace(
@@ -497,33 +490,24 @@ const createTweetEl = (result) => {
   avatar.height = 40;
 
   const avatarUrl = result.author_avatar?.replaceAll?.(";", "_bigger.");
-  if (
-    avatarUrl &&
-    !avatarUrl.startsWith("javascript:") &&
-    !avatarUrl.startsWith("data:")
-  ) {
+  if (avatarUrl && !avatarUrl.startsWith("javascript:") && !avatarUrl.startsWith("data:")) {
     avatar.src = avatarUrl.replace("_normal", "_bigger");
   } else {
-    avatar.src =
-      "https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png";
+    avatar.src = "https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png";
   }
 
   avatar.onerror = async function () {
     this.onerror = async () => {
       this.onerror = null;
-      this.src =
-        "https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png";
+      this.src = "https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png";
     };
 
-    const safeUsername = result.author_username?.replace?.(
-      /[^a-zA-Z0-9_]/g,
-      "",
-    );
+    const safeUsername = result.author_username?.replace?.(/[^a-zA-Z0-9_]/g, "");
     if (safeUsername) {
-      this.src = `${API_URL}/${safeUsername}/avfetch.jpg`;
+      const token = getSessionToken();
+      this.src = `${API_URL}/${safeUsername}/avfetch.jpg${token ? `?session=${encodeURIComponent(token)}` : ""}`;
     } else {
-      this.src =
-        "https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png";
+      this.src = "https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png";
     }
   };
 
@@ -539,10 +523,7 @@ const createTweetEl = (result) => {
   nameDiv.textContent = result.author_name || result.author_username;
 
   if (result.author_verified || result.author_square_avatar) {
-    const verifiedSvg = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg",
-    );
+    const verifiedSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     verifiedSvg.setAttribute("viewBox", "0 0 22 22");
     verifiedSvg.setAttribute("aria-label", "Verified account");
     verifiedSvg.setAttribute("role", "img");
@@ -564,10 +545,7 @@ const createTweetEl = (result) => {
   }
 
   if (result.author_protected) {
-    const protectedSvg = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg",
-    );
+    const protectedSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     protectedSvg.setAttribute("viewBox", "0 0 22 22");
     protectedSvg.setAttribute("aria-label", "Protected account");
     protectedSvg.setAttribute("role", "img");
@@ -587,13 +565,9 @@ const createTweetEl = (result) => {
     const timeCard = document.createElement("div");
     timeCard.className = "time-card";
     timeCard.style.position = "absolute";
-    timeCard.style.top = `${
-      usernameDiv.querySelector("time").getBoundingClientRect().top + 8
-    }px`;
+    timeCard.style.top = `${usernameDiv.querySelector("time").getBoundingClientRect().top + 8}px`;
 
-    timeCard.style.left = `${
-      usernameDiv.querySelector("time").getBoundingClientRect().left
-    }px`;
+    timeCard.style.left = `${usernameDiv.querySelector("time").getBoundingClientRect().left}px`;
     timeCard.style.transform = "translateY(calc(-100% - 18px))";
     timeCard.style.zIndex = "1000";
     timeCard.innerHTML = `
@@ -637,10 +611,7 @@ const createTweetEl = (result) => {
     bodyDiv.querySelector("a.tweet-mention")?.remove();
     bodyDiv.innerHTML = bodyDiv.innerHTML.trim();
 
-    const startMention = result.body
-      .split(" ")[0]
-      .replace("<em>", "")
-      .replace("</em>", "");
+    const startMention = result.body.split(" ")[0].replace("<em>", "").replace("</em>", "");
 
     const replyToDiv = document.createElement("div");
     replyToDiv.className = "reply-to";
@@ -649,8 +620,7 @@ const createTweetEl = (result) => {
     replyToDiv.querySelector(".mention-container").innerText = startMention
       .replace("<em>", "")
       .replace("</em>", "");
-    replyToDiv.querySelector(".mention-container").href =
-      `https://x.com/${startMention.slice(1)}`;
+    replyToDiv.querySelector(".mention-container").href = `https://x.com/${startMention.slice(1)}`;
     bodyDiv.prepend(replyToDiv);
   }
 
@@ -711,10 +681,7 @@ const createTweetEl = (result) => {
           imgUrl = media.url;
         }
 
-        if (
-          imgUrl &&
-          (imgUrl.startsWith("https://") || imgUrl.startsWith("http://"))
-        ) {
+        if (imgUrl && (imgUrl.startsWith("https://") || imgUrl.startsWith("http://"))) {
           img.src = imgUrl;
         } else {
           return;
@@ -743,20 +710,18 @@ const createTweetEl = (result) => {
   if (result.quoting_id) {
     const quotingDiv = document.createElement("div");
     quotingDiv.className = "quoting-tweet";
-    quotingDiv.innerHTML =
-      '<div class="quoted-loading">Loading quoted tweet...</div>';
+    quotingDiv.innerHTML = '<div class="quoted-loading">Loading quoted tweet...</div>';
     el.appendChild(quotingDiv);
 
     (async () => {
       try {
-        const response = await fetch(
-          `${API_URL}/proxy?id=${result.quoting_id}&q=quoted`,
-        );
+        const response = await fetch(`${API_URL}/proxy?id=${result.quoting_id}&q=quoted`, {
+          headers: { "Authorization": `Bearer ${getSessionToken()}` },
+        });
         const data = await response.json();
 
         if (data.error || !data.tweet) {
-          quotingDiv.innerHTML =
-            '<div class="quoted-error">Quoted tweet unavailable</div>';
+          quotingDiv.innerHTML = '<div class="quoted-error">Quoted tweet unavailable</div>';
           return;
         }
 
@@ -772,15 +737,8 @@ const createTweetEl = (result) => {
         quotedAvatar.width = 20;
         quotedAvatar.height = 20;
 
-        const avatarUrl = quotedTweet.author_avatar?.replaceAll(
-          ";",
-          "_bigger.",
-        );
-        if (
-          avatarUrl &&
-          !avatarUrl.startsWith("javascript:") &&
-          !avatarUrl.startsWith("data:")
-        ) {
+        const avatarUrl = quotedTweet.author_avatar?.replaceAll(";", "_bigger.");
+        if (avatarUrl && !avatarUrl.startsWith("javascript:") && !avatarUrl.startsWith("data:")) {
           quotedAvatar.src = avatarUrl;
         } else {
           quotedAvatar.src =
@@ -796,20 +754,13 @@ const createTweetEl = (result) => {
 
         const quotedName = document.createElement("span");
         quotedName.className = "quoted-name";
-        quotedName.textContent =
-          quotedTweet.author_name || quotedTweet.author_username;
+        quotedName.textContent = quotedTweet.author_name || quotedTweet.author_username;
 
         if (quotedTweet.author_verified || quotedTweet.author_square_avatar) {
-          const verifiedSvg = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "svg",
-          );
+          const verifiedSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
           verifiedSvg.setAttribute("viewBox", "0 0 22 22");
           verifiedSvg.setAttribute("width", "16px");
-          const path = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "path",
-          );
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
           path.setAttribute(
             "d",
             "M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z",
@@ -850,10 +801,7 @@ const createTweetEl = (result) => {
             const img = document.createElement("img");
             const imgUrl = firstMedia.url;
 
-            if (
-              imgUrl &&
-              (imgUrl.startsWith("https://") || imgUrl.startsWith("http://"))
-            ) {
+            if (imgUrl && (imgUrl.startsWith("https://") || imgUrl.startsWith("http://"))) {
               img.src = imgUrl;
               img.loading = "lazy";
               img.alt = "Quoted tweet image";
@@ -865,16 +813,13 @@ const createTweetEl = (result) => {
               });
             }
           } else if (firstMedia.type === "video") {
-            quotedMedia.appendChild(
-              createMediaElement(firstMedia, quotedTweet.id),
-            );
+            quotedMedia.appendChild(createMediaElement(firstMedia, quotedTweet.id));
             quotingDiv.appendChild(quotedMedia);
           }
         }
       } catch (error) {
         console.error("Failed to load quoted tweet:", error);
-        quotingDiv.innerHTML =
-          '<div class="quoted-error">Failed to load quoted tweet</div>';
+        quotingDiv.innerHTML = '<div class="quoted-error">Failed to load quoted tweet</div>';
       }
     })();
   }
@@ -914,14 +859,6 @@ const createTweetEl = (result) => {
 const query = async (text, loadMore = false) => {
   if (isLoading) return;
 
-  // Prevent rapid-fire requests
-  const now = Date.now();
-  if (now - lastQueryTime < QUERY_COOLDOWN_MS) {
-    return;
-  }
-  lastQueryTime = now;
-
-  // Disconnect any existing observer
   if (activeObserver) {
     activeObserver.disconnect();
     activeObserver = null;
@@ -970,8 +907,7 @@ const query = async (text, loadMore = false) => {
   const createSkeletons = (count = 5) => {
     const skeletons = [];
 
-    const randomIntBetween = (min, max) =>
-      Math.floor(Math.random() * (max - min + 1)) + min;
+    const randomIntBetween = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
     if (currentSearchType === "media") {
       for (let i = 0; i < count; i++) {
@@ -1030,6 +966,8 @@ const query = async (text, loadMore = false) => {
     return skeletons;
   };
 
+  let skeletonMeta, skeletonMetaI;
+
   if (loadMore) {
     const existingLoadMore = document.querySelector(".load-more");
     if (existingLoadMore) existingLoadMore.remove();
@@ -1044,6 +982,22 @@ const query = async (text, loadMore = false) => {
     createSkeletons(skeletonCount).forEach((e) => {
       resultsEl.appendChild(e);
     });
+    
+    resultsEl.querySelector(".results-meta")?.remove?.();
+
+    const start = performance.now();
+
+    skeletonMeta = document.createElement("div");
+    skeletonMeta.className = "results-meta";
+    skeletonMeta.innerHTML = `<span class="searching">Searching index…</span> <span class="wallTime">— 0.00s</span>`;
+
+    resultsEl.parentNode.insertBefore(skeletonMeta, resultsEl);
+
+    skeletonMetaI = setInterval(() => {
+      const elapsed = (performance.now() - start) / 1000;
+
+      skeletonMeta.querySelector(".wallTime").innerText = `— ${elapsed.toFixed(2)}s`;
+    }, 100);
   }
 
   let sessionToken = await ensureSession(API_URL);
@@ -1051,60 +1005,70 @@ const query = async (text, loadMore = false) => {
   async function sha256(message) {
     const encoder = new TextEncoder();
     const data = encoder.encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
     return hashHex;
   }
-  
-  const pid = await sha256(crypto.randomUUID());
-  
+
+  const nonce = await sha256(crypto.randomUUID());
+
   const pots = [
-    pid,
-    await sha256(`${sessionToken}${currentCursor}${currentFilterString}${currentSort}${text}${pid}${navigator.userAgent}`),
-  ]
-  pots.push(await sha256(JSON.stringify(pots)))
-  
+    nonce,
+    await sha256(
+      `${sessionToken}${currentCursor}${currentFilterString}${currentSort}${text}${nonce}${navigator.userAgent}`,
+    ),
+  ];
+  pots.push(await sha256(JSON.stringify(pots)));
+
   try {
     let _results = await (
       await fetch(`${API_URL}/query`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${sessionToken}`,
         },
         body: JSON.stringify({
           q: text,
-          type:
-            Object.entries(buttons).find(([_, b]) => b.toggled)?.[0] ||
-            "accounts",
+          type: Object.entries(buttons).find(([_, b]) => b.toggled)?.[0] || "accounts",
           cursor: currentCursor,
           filter: currentFilterString || null,
           sort: currentSort,
-          session: sessionToken,
-          pots
+          pots,
         }),
       })
     ).json();
 
+    clearInterval(skeletonMetaI);
+    skeletonMeta.remove();
+
     if (_results.error === "session_exhausted") {
+      skeletonMeta.style.display = "none";
+      const metaEl = document.createElement("div");
+      metaEl.className = "results-meta";
+      metaEl.innerHTML = `<span class="searching">Making sure you're human…</span>`;
+
+      resultsEl.parentNode.insertBefore(metaEl, resultsEl);
+      
       invalidateSession();
       sessionToken = await ensureSession(API_URL);
+      skeletonMeta.style.display = "block";
+      metaEl.remove();
       _results = await (
         await fetch(`${API_URL}/query`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${sessionToken}`,
           },
           body: JSON.stringify({
             q: text,
-            type:
-              Object.entries(buttons).find(([_, b]) => b.toggled)?.[0] ||
-              "accounts",
+            type: Object.entries(buttons).find(([_, b]) => b.toggled)?.[0] || "accounts",
             cursor: currentCursor,
             filter: currentFilterString || null,
             sort: currentSort,
-            session: sessionToken,
-            pots
+            pots,
           }),
         })
       ).json();
@@ -1123,9 +1087,7 @@ const query = async (text, loadMore = false) => {
     }
 
     const results = _results.rows.map((row) =>
-      Object.fromEntries(
-        row.map((val, i) => [_results.map.split(",")[i], val]),
-      ),
+      Object.fromEntries(row.map((val, i) => [_results.map.split(",")[i], val])),
     );
 
     document.querySelectorAll(".skeleton").forEach((e) => {
@@ -1133,6 +1095,12 @@ const query = async (text, loadMore = false) => {
     });
 
     if (!loadMore && results.length === 0) {
+      const metaEl = document.createElement("div");
+      metaEl.className = "results-meta";
+      metaEl.innerHTML = `No results found <span class="wallTime">— ${(lastRequestMeta.time / 1000).toFixed(2)}s</span>`;
+
+      resultsEl.parentNode.insertBefore(metaEl, resultsEl);
+      
       resultsEl.innerHTML = `<div class="error-zone">
     <img src="/assets/svgs/woozy.svg">
     <p>no results found</p>
@@ -1145,7 +1113,7 @@ const query = async (text, loadMore = false) => {
       const metaEl = document.createElement("div");
       metaEl.className = "results-meta";
       metaEl.innerHTML = `Found <span>${lastRequestMeta.count.toLocaleString()}</span> results <span class="wallTime">— ${(lastRequestMeta.time / 1000).toFixed(2)}s</span>`;
-      
+
       resultsEl.parentNode.insertBefore(metaEl, resultsEl);
     }
 
@@ -1153,24 +1121,15 @@ const query = async (text, loadMore = false) => {
     currentCursor = _results.cursor || null;
 
     let mediaItemsRendered = 0;
-    const hadMediaItemsBefore =
-      resultsEl.querySelectorAll(".media-item:not(.skeleton)").length > 0;
+    const hadMediaItemsBefore = resultsEl.querySelectorAll(".media-item:not(.skeleton)").length > 0;
 
     results.forEach((result) => {
       if (currentSearchType === "tweets") {
         resultsEl.appendChild(createTweetEl(result));
       } else if (currentSearchType === "media") {
-        if (
-          result.media &&
-          Array.isArray(result.media) &&
-          result.media.length > 0
-        ) {
+        if (result.media && Array.isArray(result.media) && result.media.length > 0) {
           result.media.forEach((media) => {
-            if (
-              media.type === "photo" ||
-              media.type === "gif" ||
-              media.type === "animated_gif"
-            ) {
+            if (media.type === "photo" || media.type === "gif" || media.type === "animated_gif") {
               const mediaItem = document.createElement("a");
               mediaItem.className = "media-item";
               mediaItem.draggable = false;
@@ -1184,10 +1143,7 @@ const query = async (text, loadMore = false) => {
               let imgUrl;
 
               try {
-                if (
-                  typeof media.url === "string" &&
-                  media.url.startsWith("{")
-                ) {
+                if (typeof media.url === "string" && media.url.startsWith("{")) {
                   const parsed = JSON.parse(media.url);
                   imgUrl = parsed.media_url_https || parsed.url;
                 } else {
@@ -1233,10 +1189,7 @@ const query = async (text, loadMore = false) => {
               const avatar = document.createElement("img");
               avatar.className = "media-avatar";
               avatar.setAttribute("loading", "lazy");
-              const avatarUrl = result.author_avatar?.replaceAll(
-                ";",
-                "_bigger.",
-              );
+              const avatarUrl = result.author_avatar?.replaceAll(";", "_bigger.");
               if (
                 avatarUrl &&
                 !avatarUrl.startsWith("javascript:") &&
@@ -1314,7 +1267,8 @@ const query = async (text, loadMore = false) => {
 
           const safeUsername = result.username?.replace(/[^a-zA-Z0-9_]/g, "");
           if (safeUsername) {
-            this.src = `${API_URL}/${safeUsername}/avfetch.jpg`;
+            const token = getSessionToken();
+            this.src = `${API_URL}/${safeUsername}/avfetch.jpg${token ? `?session=${encodeURIComponent(token)}` : ""}`;
           } else {
             this.src =
               "https://abs.twimg.com/sticky/default_profile_images/default_profile_bigger.png";
@@ -1333,19 +1287,13 @@ const query = async (text, loadMore = false) => {
         }
 
         if (result.verified || result.square_avatar) {
-          const verifiedSvg = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "svg",
-          );
+          const verifiedSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
           verifiedSvg.setAttribute("viewBox", "0 0 22 22");
           verifiedSvg.setAttribute("aria-label", "Verified account");
           verifiedSvg.setAttribute("role", "img");
           verifiedSvg.setAttribute("width", "20px");
           const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-          const path = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "path",
-          );
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
           path.setAttribute(
             "d",
             "M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z",
@@ -1361,10 +1309,7 @@ const query = async (text, loadMore = false) => {
         }
 
         if (result.protected) {
-          const protectedSvg = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "svg",
-          );
+          const protectedSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
           protectedSvg.setAttribute("viewBox", "0 0 22 22");
           protectedSvg.setAttribute("aria-label", "Protected account");
           protectedSvg.setAttribute("role", "img");
@@ -1433,10 +1378,7 @@ const query = async (text, loadMore = false) => {
           const interstitialWarning = document.createElement("div");
           interstitialWarning.className = "interstitial-warning";
 
-          const svg = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "svg",
-          );
+          const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
           svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
           svg.setAttribute("width", "24");
           svg.setAttribute("height", "24");
@@ -1444,9 +1386,7 @@ const query = async (text, loadMore = false) => {
           svg.innerHTML =
             '<g fill="none"><path d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"/><path fill="currentColor" d="m13.299 3.148l8.634 14.954a1.5 1.5 0 0 1-1.299 2.25H3.366a1.5 1.5 0 0 1-1.299-2.25l8.634-14.954c.577-1 2.02-1 2.598 0M12 15a1 1 0 1 0 0 2a1 1 0 0 0 0-2m0-7a1 1 0 0 0-.993.883L11 9v4a1 1 0 0 0 1.993.117L13 13V9a1 1 0 0 0-1-1"/></g>';
 
-          const messageText = document.createTextNode(
-            ` ${result.profile_interstitial}`,
-          );
+          const messageText = document.createTextNode(` ${result.profile_interstitial}`);
 
           interstitialWarning.appendChild(svg);
           interstitialWarning.appendChild(messageText);
@@ -1467,9 +1407,7 @@ const query = async (text, loadMore = false) => {
             el.querySelector(".time-stat").getBoundingClientRect().top + 8
           }px`;
 
-          timeCard.style.left = `${
-            el.querySelector(".time-stat").getBoundingClientRect().left
-          }px`;
+          timeCard.style.left = `${el.querySelector(".time-stat").getBoundingClientRect().left}px`;
           timeCard.style.transform = "translateY(calc(-100% - 18px))";
           timeCard.style.zIndex = "1000";
           timeCard.innerHTML = `
@@ -1495,8 +1433,7 @@ const query = async (text, loadMore = false) => {
         });
 
         el.querySelector(".time-stat").addEventListener("mouseleave", () => {
-          if (el.querySelector(".time-card"))
-            el.querySelector(".time-card").remove();
+          if (el.querySelector(".time-card")) el.querySelector(".time-card").remove();
         });
       }
     });
@@ -1519,7 +1456,6 @@ const query = async (text, loadMore = false) => {
       const loadMoreDiv = document.createElement("div");
       loadMoreDiv.className = "load-more";
 
-      // Use skeletons instead of spinner
       if (currentSearchType === "media") {
         loadMoreDiv.innerHTML = "";
         for (let i = 0; i < 3; i++) {
@@ -1533,9 +1469,7 @@ const query = async (text, loadMore = false) => {
         for (let i = 0; i < skeletonCount; i++) {
           const skeleton = document.createElement("div");
           skeleton.className =
-            currentSearchType === "tweets"
-              ? "result tweet skeleton"
-              : "result account skeleton";
+            currentSearchType === "tweets" ? "result tweet skeleton" : "result account skeleton";
           if (currentSearchType === "tweets") {
             skeleton.innerHTML = `
               <div class="tweet-author">
@@ -1612,12 +1546,11 @@ const query = async (text, loadMore = false) => {
     <p>${
       e.message.includes("rate-limit reached")
         ? "rate limit reached. please wait a few seconds and try again"
-        : e.message
-            .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;")
-            .replaceAll("\n", "<br>")
+        : e.message.replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br>")
     }</p>
     <small>${e.message.includes("filter") ? "check your filter values and try again" : "an error occurred. please try again later"}</small></div>`;
+      clearInterval(skeletonMetaI);
+      skeletonMeta.remove();
 
       if (resultsEl.querySelector(".error-zone p").innerText.length > 230) {
         resultsEl.querySelector(".error-zone p").style.fontSize = "16px";
@@ -1731,9 +1664,7 @@ if (location.search.startsWith("?pt=")) {
       const permalinkOverlay = document.createElement("div");
       permalinkOverlay.className = "permalink-overlay";
 
-      const iat = JSON.parse(
-        atob(jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
-      ).iat;
+      const iat = JSON.parse(atob(jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).iat;
 
       permalinkOverlay.innerHTML = `
       <div class="permalink-card">
@@ -1760,17 +1691,13 @@ if (location.search.startsWith("?pt=")) {
       </div>
       `;
 
-      permalinkOverlay
-        .querySelector(".close-permalink")
-        .addEventListener("click", () => {
-          permalinkOverlay.remove();
-          history.pushState({}, "", "/");
-        });
+      permalinkOverlay.querySelector(".close-permalink").addEventListener("click", () => {
+        permalinkOverlay.remove();
+        history.pushState({}, "", "/");
+      });
 
       permalinkOverlay.querySelector(".tweet-container").appendChild(tweet);
-      permalinkOverlay.querySelector(
-        ".tweet-container .tweet-body",
-      ).style.fontSize = "20px";
+      permalinkOverlay.querySelector(".tweet-container .tweet-body").style.fontSize = "20px";
 
       document.body.appendChild(permalinkOverlay);
     }
@@ -1797,8 +1724,6 @@ document.querySelector(".logo").addEventListener("click", () => {
 
 setInterval(() => {
   document.title = `${
-    searchQuery
-      ? `${searchQuery} -`
-      : `(${Math.floor(Math.random() * 900) + 100}) /`
+    searchQuery ? `${searchQuery} -` : `(${Math.floor(Math.random() * 900) + 100}) /`
   } twitter.cat`;
 }, 100);
