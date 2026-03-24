@@ -19,10 +19,7 @@
     <meta name="twitter:title" content="twitter (dot) cat" />
     <meta name="twitter:site" content="@cvsilly_" />
     <meta name="twitter:description" content="small tools for twitter" />
-    <meta
-      name="twitter:image"
-      content="https://twitter.cat/assets/images/bouncing.gif"
-    />
+    <meta name="twitter:image" content="https://twitter.cat/assets/images/bouncing.gif" />
 
     <style>
       html {
@@ -54,11 +51,7 @@
         top: 0;
         left: 0;
         right: 0;
-        background: linear-gradient(
-          180deg,
-          rgba(20, 23, 26, 1) 0%,
-          rgba(20, 23, 26, 0) 100%
-        );
+        background: linear-gradient(180deg, rgba(20, 23, 26, 1) 0%, rgba(20, 23, 26, 0) 100%);
 
         padding-left: 1rem;
         padding-right: 1rem;
@@ -334,6 +327,38 @@
           min-width: 140px;
         }
       }
+
+      .querying-text {
+        color: transparent;
+        -webkit-background-clip: text;
+        background-clip: text;
+        display: inline-block;
+        background-image: linear-gradient(
+          90deg,
+          #919698a6 0%,
+          #919698a6 20%,
+          #c8cacc 40%,
+          #919698a6 60%,
+          #919698a6 100%
+        );
+        background-size: 200% 100%;
+        pointer-events: none;
+        animation: skeleton-loading 1.4s infinite linear;
+        font-family: "chirp", sans-serif;
+        text-align: left;
+        font-size: 15px;
+        margin: 0px;
+        margin-top: -6px;
+      }
+      @keyframes skeleton-loading {
+        0% {
+          background-position: 200% 0;
+        }
+
+        100% {
+          background-position: -200% 0;
+        }
+      }
     </style>
   </head>
   <body>
@@ -371,13 +396,20 @@
             <th>Content</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+          <tr>
+            <td>
+              <div class="author-cell">
+                <p class="querying-text">Querying index...</p>
+              </div>
+            </td>
+            <td class="content-cell"></td>
+            <td class="time-cell"></td>
+          </tr>
+        </tbody>
       </table>
     </main>
-    <script
-      src="https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.41"
-      async
-    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.41" async></script>
   </body>
   <script>
     const SESSION_STORAGE_KEY = "twittercat_session";
@@ -485,7 +517,7 @@
 
       try {
         const cap = new window.Cap({
-          apiEndpoint: `${apiUrl}/cap/`,
+          apiEndpoint: `https://cap.tiago.zip/c18a824a18/`,
         });
 
         const { token: capToken } = await cap.solve();
@@ -735,7 +767,7 @@
             document.createTextNode(" tweets crawled in the last hour"),
           );
         });
-
+      
       startSessionCreation(API_URL);
 
       const initialResponse = await fetch(`${API_URL}/stats/tweets`, {
@@ -748,6 +780,10 @@
         hash: lastHash,
         cursor,
       } = await initialResponse.json();
+      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      document.querySelector("tbody").innerHTML = "";
 
       initialTweets.forEach((tweet) => {
         loadedTweetIds.add(tweet.id);

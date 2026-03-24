@@ -133,7 +133,7 @@
 
         function spawnCat() {
           const { w, h } = logicalSize();
-          const x = 60 + Math.random() * (w - 120);
+          const x = 60 + (0.5 - 0.5 * Math.cos(Math.PI * Math.random())) * (w - 120);
           const y = -60;
 
           const body = Bodies.fromVertices(
