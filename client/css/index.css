@@ -530,37 +530,51 @@ sub {
   left: 0;
   right: 0;
   bottom: 0;
-  background: #00000080;
+  background: #000000cc;
   display: flex;
   align-items: center;
   justify-content: center;
   animation: fade-in 0.2s;
   user-select: none;
+  z-index: 9999;
 }
 
 .cap-loading-indicator div {
   background-color: #14171a;
   max-width: 400px;
   width: 100%;
-  border-radius: 12px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
   font-size: 17px;
-  padding-bottom: 2em;
-  padding-top: 2em;
+  padding: 2em 1.5em;
+  border: 1px solid #2f3336;
 }
 
 .cap-loading-indicator .desc {
-  font-size: 15px;
+  font-size: 14px;
   max-width: 300px;
   margin: 0px auto;
   text-align: center;
   line-height: 1.4;
   opacity: 0.5;
-  margin-top: -9px;
+  margin-top: -6px;
+  margin-bottom: 4px;
+}
+
+.cap-loading-indicator cap-widget {
+  --cap-background: #1a1d21;
+  --cap-border-color: #2f3336;
+  --cap-border-radius: 10px;
+  --cap-color: #e7e9ea;
+  --cap-checkbox-border: 1px solid #555;
+  --cap-checkbox-background: #1a1d21;
+  --cap-spinner-color: #e7e9ea;
+  --cap-spinner-background-color: #333;
+  --cap-widget-width: 260px;
 }
 
 br,

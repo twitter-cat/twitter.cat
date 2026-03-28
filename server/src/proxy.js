@@ -17,9 +17,7 @@ const SYNDICATION_URL = "https://cdn.syndication.twimg.com";
 const TWEET_ID = /^[0-9]+$/;
 
 function getToken(id) {
-  return ((Number(id) / 1e15) * Math.PI)
-    .toString(6 ** 2)
-    .replace(/(0+|\.)/g, "");
+  return ((Number(id) / 1e15) * Math.PI).toString(6 ** 2).replace(/(0+|\.)/g, "");
 }
 
 async function fetchTweet(id) {
@@ -177,7 +175,7 @@ export default new Elysia()
   .use(
     rateLimit({
       duration: 15_000,
-      max: 50,
+      max: 100,
       skip: (r) => r.method === "OPTIONS",
       generator: (c) => c.headers.get("CF-Connecting-IP"),
     }),
@@ -275,8 +273,15 @@ export default new Elysia()
   )
   .post(
     "/permalink/sign",
-    async ({ query }) => {
+    async ({ query, headers }) => {
       const { id } = query;
+
+      if (
+        headers["x-twittercat-client"] !==
+        "igSshZ52A4QCk2UN7Ur36p56oRMVTFHXFw9KqMSRxzLjxkELRyHsgLyp7FxLazoW"
+      ) {
+        return {};
+      }
 
       const entry = await postgresReadOnly`
         SELECT
@@ -316,8 +321,15 @@ export default new Elysia()
   )
   .get(
     "/permalink/verify",
-    async ({ query }) => {
+    async ({ query, headers }) => {
       const { jwt } = query;
+
+      if (
+        headers["x-twittercat-client"] !==
+        "wtCji76iWhcEZMsA5awatQsGBJVgXsGncadhyUcWKoKVjSkH8Z3skvru7iVLU6k2"
+      ) {
+        return {};
+      }
 
       try {
         const { payload } = await jose.jwtVerify(jwt, secret, {
@@ -347,10 +359,7 @@ export default new Elysia()
           typeof entry.banner === "string" &&
           entry.banner.startsWith("https://pbs.twimg.com/profile_banners/")
         ) {
-          entry.banner = entry.banner.replace(
-            "https://pbs.twimg.com/profile_banners/",
-            "",
-          );
+          entry.banner = entry.banner.replace("https://pbs.twimg.com/profile_banners/", "");
         } else if (entry.banner) {
           entry.banner = null;
         }
@@ -368,15 +377,21 @@ export default new Elysia()
   )
   .get(
     "/typeahead",
-    async ({ query }) => {
+    async ({ query, headers }) => {
+      if (
+        headers["X-Twittercat-Client"] !==
+        "CzZS9RQdBqSfHQ2T4oZkXZBEbeszwPm53YtTHgWHz2cVzGavKq9mR2SoojD7CB7Y"
+      ) {
+        return [];
+      }
+
       return (
         await (
           await fetch(
             `https://grok.com/_worker/typeahead?q=${encodeURIComponent(query.q)}&lang=en-US&platform=android`,
             {
               headers: {
-                "user-agent":
-                  "Mozilla/5.0 (compatible; twittercat/0.0.1; +https://twitter.cat)",
+                "user-agent": "Mozilla/5.0 (compatible; twittercat/0.0.1; +https://twitter.cat)",
               },
             },
           )

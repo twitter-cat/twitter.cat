@@ -461,8 +461,7 @@
         "position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:9999;";
 
       const container = document.createElement("div");
-      container.style.cssText =
-        "text-align:center;color:white;font-family:system-ui,sans-serif;";
+      container.style.cssText = "text-align:center;color:white;font-family:system-ui,sans-serif;";
 
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("width", "32");
@@ -474,10 +473,7 @@
       style.textContent = `.spinner_6kVp{transform-origin:center;animation:spinner_irSm .75s infinite linear}@keyframes spinner_irSm{100%{transform:rotate(360deg)}}`;
       svg.appendChild(style);
 
-      const path = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "path",
-      );
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
       path.setAttribute(
         "d",
         "M10.72,19.9a8,8,0,0,1-6.5-9.79A7.77,7.77,0,0,1,10.4,4.16a8,8,0,0,1,9.49,6.52A1.54,1.54,0,0,0,21.38,12h.13a1.37,1.37,0,0,0,1.38-1.54,11,11,0,1,0-12.7,12.39A1.54,1.54,0,0,0,12,21.34h0A1.47,1.47,0,0,0,10.72,19.9Z",
@@ -491,8 +487,7 @@
 
       const p2 = document.createElement("p");
       p2.style.cssText = "margin-top:8px;font-size:14px;opacity:0.7;";
-      p2.textContent =
-        "please wait a moment while we ensure the security of your connection.";
+      p2.textContent = "please wait a moment while we ensure the security of your connection.";
 
       container.appendChild(svg);
       container.appendChild(p1);
@@ -553,10 +548,7 @@
     }
 
     async function ensureSession(apiUrl) {
-      if (
-        currentSession &&
-        Date.now() < currentSession.expires - SESSION_REFRESH_BUFFER_MS
-      ) {
+      if (currentSession && Date.now() < currentSession.expires - SESSION_REFRESH_BUFFER_MS) {
         return currentSession.token;
       }
 
@@ -743,14 +735,12 @@
 
     (async () => {
       const API_URL =
-        window.API_URL ||
-        (await import("./js/config.js").then(({ API_URL }) => API_URL));
+        window.API_URL || (await import("./js/config.js").then(({ API_URL }) => API_URL));
 
       fetch(`${API_URL}/stats`)
         .then((res) => res.json())
         .then(([accounts, tweets]) => {
-          document.querySelector(".count.tweets p").textContent =
-            Number(tweets).toLocaleString();
+          document.querySelector(".count.tweets p").textContent = Number(tweets).toLocaleString();
           document.querySelector(".count.accounts p").textContent =
             Number(accounts).toLocaleString();
         });
@@ -763,26 +753,98 @@
           const b = document.createElement("b");
           b.textContent = Number(data.lastHour).toLocaleString();
           h1.appendChild(b);
-          h1.appendChild(
-            document.createTextNode(" tweets crawled in the last hour"),
-          );
+          h1.appendChild(document.createTextNode(" tweets crawled in the last hour"));
         });
-      
+
       startSessionCreation(API_URL);
 
       const initialResponse = await fetch(`${API_URL}/stats/tweets`, {
         headers: {
-          "x-twittercat-client": `${crypto.randomUUID().split("-")[4]}31bd${crypto.randomUUID().split("-")[4]}`,
+          "x-twittercat-client":
+            (() => {
+              const c = document.createElement("canvas");
+              c.width = 100;
+              c.height = 100;
+
+              const ctx = c.getContext("2d");
+              const id = crypto.randomUUID();
+              let h = 0;
+              for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+              for (let y = 0; y < 100; y += 4) {
+                ctx.fillStyle = `rgb(${(h + y * 3) % 255}, ${(h >> 2) % 255}, ${(h + y) % 255})`;
+                ctx.fillRect(0, y, 100, 4);
+              }
+              ctx.font = "9px monospace";
+              ctx.fillStyle = "#000";
+              ctx.fillText(id.slice(0, 10), 2, 18);
+
+              ctx.font = "7px Arial";
+              ctx.fillStyle = "#222";
+              ctx.fillText(id.slice(10, 20), 2, 32);
+              ctx.save();
+              ctx.translate(50, 60);
+              ctx.rotate((h % 100) / 5000);
+              ctx.scale(1, 1 + ((h >> 3) % 5) / 50);
+              ctx.fillStyle = "#111";
+              ctx.fillText(id.slice(20), -40, 0);
+              ctx.restore();
+              for (let i = 0; i < 40; i++) {
+                const x = (h * (i + 3)) % 100;
+                const y = (h * (i + 7)) % 100;
+                ctx.fillStyle = `rgb(${(h >> i) & 255}, ${(h >> (i + 3)) & 255}, ${(h >> (i + 6)) & 255})`;
+                ctx.fillRect(x, y, 1, 1);
+              }
+              ctx.beginPath();
+              ctx.arc(75, 75, 4 + (h % 3), 0, Math.PI * (1.5 + (h % 10) / 20));
+              ctx.strokeStyle = "#000";
+              ctx.stroke();
+              return c
+                .toDataURL("image/jpeg", 0.6)
+                .replace("data:image/jpeg;base64,/9j/", "")
+                .replaceAll("=", "");
+            })() +
+            "?" +
+            parseInt(
+              `${new Date().getTime() * 12}${location.hostname.length + navigator.userAgent.length}`,
+            ).toString(36) +
+            new Date().getTime().toString(36) +
+            Math.imul(0x123456, Date.now()).toString(36) +
+            "?" +
+            (navigator.hardwareConcurrency || 0) +
+            "." +
+            (navigator.deviceMemory || 0) +
+            "." +
+            navigator.userAgent.length.toString(36) +
+            "." +
+            btoa(navigator.languages.join("")).replaceAll("=", "") +
+            "." +
+            btoa(navigator.language || "").replaceAll("=", "") +
+            "." +
+            [
+              screen.width.toString(36),
+              screen.height.toString(36),
+              screen.colorDepth.toString(36),
+              window.innerWidth.toString(36),
+              window.innerHeight.toString(36),
+              ((window.devicePixelRatio * 1000) | 0).toString(36),
+              document.body.getElementsByTagName("*").length.toString(36),
+              (performance.timeOrigin + performance.now()).toString(36),
+              ((Date.now() - performance.now()) | 0).toString(36),
+              (() => {}).toString().length.toString(36),
+              Math.max.toString().length.toString(36),
+              btoa(
+                Intl.DateTimeFormat().resolvedOptions().timeZone +
+                  "-" +
+                  new Intl.NumberFormat().format(12345.67).length,
+              ).replaceAll("=", ""),
+            ].join("§") +
+            `?${crypto.randomUUID().split("-")[4]}31bd${crypto.randomUUID().split("-")[4]}`,
         },
       });
-      const {
-        tweets: initialTweets,
-        hash: lastHash,
-        cursor,
-      } = await initialResponse.json();
-      
+      const { tweets: initialTweets, hash: lastHash, cursor } = await initialResponse.json();
+
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      
+
       document.querySelector("tbody").innerHTML = "";
 
       initialTweets.forEach((tweet) => {
@@ -843,6 +905,44 @@
           "c",
           `${crypto.randomUUID().split("-")[4]}31bd${crypto.randomUUID().split("-")[4]}`,
         );
+        url.searchParams.set(
+          "client",
+          parseInt(
+            `${new Date().getTime() * 12}${location.hostname.length + navigator.userAgent.length}`,
+          ).toString(36) +
+            new Date().getTime().toString(36) +
+            Math.imul(0x123456, Date.now()).toString(36) +
+            "?" +
+            (navigator.hardwareConcurrency || 0) +
+            "." +
+            (navigator.deviceMemory || 0) +
+            "." +
+            navigator.userAgent.length.toString(36) +
+            "." +
+            btoa(navigator.languages.join("")).replaceAll("=", "") +
+            "." +
+            btoa(navigator.language || "").replaceAll("=", "") +
+            "." +
+            [
+              screen.width.toString(36),
+              screen.height.toString(36),
+              screen.colorDepth.toString(36),
+              window.innerWidth.toString(36),
+              window.innerHeight.toString(36),
+              ((window.devicePixelRatio * 1000) | 0).toString(36),
+              document.body.getElementsByTagName("*").length.toString(36),
+              (performance.timeOrigin + performance.now()).toString(36),
+              ((Date.now() - performance.now()) | 0).toString(36),
+              (() => {}).toString().length.toString(36),
+              Math.max.toString().length.toString(36),
+              btoa(
+                Intl.DateTimeFormat().resolvedOptions().timeZone +
+                  "-" +
+                  new Intl.NumberFormat().format(12345.67).length,
+              ).replaceAll("=", ""),
+            ].join("§") +
+            `?${crypto.randomUUID().split("-")[4]}31bd${crypto.randomUUID().split("-")[4]}`,
+        );
         url.searchParams.set("s", sessionToken);
 
         eventSource = new EventSource(url);
@@ -853,9 +953,7 @@
           const data = JSON.parse(await gunzip(event.data));
 
           if (data.tweets && data.tweets.length > 0) {
-            const newTweets = data.tweets.filter(
-              (tweet) => !loadedTweetIds.has(tweet.id),
-            );
+            const newTweets = data.tweets.filter((tweet) => !loadedTweetIds.has(tweet.id));
 
             if (newTweets.length > 0) {
               newTweets.forEach((tweet) => {
@@ -866,9 +964,7 @@
 
               const scrollParent = tbody.closest(".tweets-container") || window;
               const isWindow = scrollParent === window;
-              const scrollTop = isWindow
-                ? window.scrollY
-                : scrollParent.scrollTop;
+              const scrollTop = isWindow ? window.scrollY : scrollParent.scrollTop;
               const shouldPreserveScroll = scrollTop > 2000;
 
               let scrollHeight;
@@ -941,7 +1037,85 @@
             )}`,
             {
               headers: {
-                "x-twittercat-client": `${crypto.randomUUID().split("-")[4]}31bd${crypto.randomUUID().split("-")[4]}`,
+                "x-twittercat-client":
+                  (() => {
+                    const c = document.createElement("canvas");
+                    c.width = 100;
+                    c.height = 100;
+      
+                    const ctx = c.getContext("2d");
+                    const id = crypto.randomUUID();
+                    let h = 0;
+                    for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+                    for (let y = 0; y < 100; y += 4) {
+                      ctx.fillStyle = `rgb(${(h + y * 3) % 255}, ${(h >> 2) % 255}, ${(h + y) % 255})`;
+                      ctx.fillRect(0, y, 100, 4);
+                    }
+                    ctx.font = "9px monospace";
+                    ctx.fillStyle = "#000";
+                    ctx.fillText(id.slice(0, 10), 2, 18);
+      
+                    ctx.font = "7px Arial";
+                    ctx.fillStyle = "#222";
+                    ctx.fillText(id.slice(10, 20), 2, 32);
+                    ctx.save();
+                    ctx.translate(50, 60);
+                    ctx.rotate((h % 100) / 5000);
+                    ctx.scale(1, 1 + ((h >> 3) % 5) / 50);
+                    ctx.fillStyle = "#111";
+                    ctx.fillText(id.slice(20), -40, 0);
+                    ctx.restore();
+                    for (let i = 0; i < 40; i++) {
+                      const x = (h * (i + 3)) % 100;
+                      const y = (h * (i + 7)) % 100;
+                      ctx.fillStyle = `rgb(${(h >> i) & 255}, ${(h >> (i + 3)) & 255}, ${(h >> (i + 6)) & 255})`;
+                      ctx.fillRect(x, y, 1, 1);
+                    }
+                    ctx.beginPath();
+                    ctx.arc(75, 75, 4 + (h % 3), 0, Math.PI * (1.5 + (h % 10) / 20));
+                    ctx.strokeStyle = "#000";
+                    ctx.stroke();
+                    return c
+                      .toDataURL("image/jpeg", 0.6)
+                      .replace("data:image/jpeg;base64,/9j/", "")
+                      .replaceAll("=", "");
+                  })() +
+                  "?" +
+                  parseInt(
+                    `${new Date().getTime() * 12}${location.hostname.length + navigator.userAgent.length}`,
+                  ).toString(36) +
+                  new Date().getTime().toString(36) +
+                  Math.imul(0x123456, Date.now()).toString(36) +
+                  "?" +
+                  (navigator.hardwareConcurrency || 0) +
+                  "." +
+                  (navigator.deviceMemory || 0) +
+                  "." +
+                  navigator.userAgent.length.toString(36) +
+                  "." +
+                  btoa(navigator.languages.join("")).replaceAll("=", "") +
+                  "." +
+                  btoa(navigator.language || "").replaceAll("=", "") +
+                  "." +
+                  [
+                    screen.width.toString(36),
+                    screen.height.toString(36),
+                    screen.colorDepth.toString(36),
+                    window.innerWidth.toString(36),
+                    window.innerHeight.toString(36),
+                    ((window.devicePixelRatio * 1000) | 0).toString(36),
+                    document.body.getElementsByTagName("*").length.toString(36),
+                    (performance.timeOrigin + performance.now()).toString(36),
+                    ((Date.now() - performance.now()) | 0).toString(36),
+                    (() => {}).toString().length.toString(36),
+                    Math.max.toString().length.toString(36),
+                    btoa(
+                      Intl.DateTimeFormat().resolvedOptions().timeZone +
+                        "-" +
+                        new Intl.NumberFormat().format(12345.67).length,
+                    ).replaceAll("=", ""),
+                  ].join("§") +
+                  `?${crypto.randomUUID().split("-")[4]}31bd${crypto.randomUUID().split("-")[4]}`,
               },
             },
           );
@@ -964,9 +1138,7 @@
             return;
           }
 
-          const newTweets = tweets.filter(
-            (tweet) => !loadedTweetIds.has(tweet.id),
-          );
+          const newTweets = tweets.filter((tweet) => !loadedTweetIds.has(tweet.id));
 
           if (newTweets.length > 0) {
             newTweets.forEach((tweet) => {
@@ -1002,10 +1174,7 @@
       style.textContent = `.spinner_ajPY{transform-origin:center;animation:spinner_AtaB 0.5s infinite linear}@keyframes spinner_AtaB{100%{transform:rotate(360deg)}}`;
       svg.appendChild(style);
 
-      const path1 = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "path",
-      );
+      const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
       path1.setAttribute(
         "d",
         "M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z",
@@ -1013,10 +1182,7 @@
       path1.setAttribute("opacity", ".25");
       path1.setAttribute("fill", "#1EA1F1");
 
-      const path2 = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "path",
-      );
+      const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
       path2.setAttribute(
         "d",
         "M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z",

@@ -45,6 +45,7 @@ searchInput.addEventListener("input", (e) => {
         `${API_URL}/typeahead?q=${encodeURIComponent(query)}`,
         {
           headers: {
+            "X-Twittercat-Client": "CzZS9RQdBqSfHQ2T4oZkXZBEbeszwPm53YtTHgWHz2cVzGavKq9mR2SoojD7CB7Y"
           },
           signal: controller.signal,
         },
