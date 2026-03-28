@@ -1,4 +1,5 @@
 import { API_URL } from "./config.js";
+import { signRequest } from "./integrity.js";
 import {
   ensureSession,
   getSessionToken,
@@ -68,7 +69,6 @@ const FILTER_FIELDS = {
 };
 FILTER_FIELDS.media = FILTER_FIELDS.tweets;
 
-// --- Tab indicator ---
 const tabIndicator = document.createElement("div");
 tabIndicator.className = "tab-indicator";
 document.querySelector(".buttons").appendChild(tabIndicator);
@@ -438,7 +438,7 @@ const createTweetEl = (result) => {
             await fetch(`${API_URL}/permalink/sign?id=${result.id}`, {
               method: "POST",
               headers: {
-                "X-Client": "WebPermalinks",
+                "X-Twittercat-Client": "igSshZ52A4QCk2UN7Ur36p56oRMVTFHXFw9KqMSRxzLjxkELRyHsgLyp7FxLazoW",
               },
             })
           ).json();
@@ -716,7 +716,7 @@ const createTweetEl = (result) => {
     (async () => {
       try {
         const response = await fetch(`${API_URL}/proxy?id=${result.quoting_id}&q=quoted`, {
-          headers: { "Authorization": `Bearer ${getSessionToken()}` },
+          headers: { Authorization: `Bearer ${getSessionToken()}` },
         });
         const data = await response.json();
 
@@ -865,6 +865,7 @@ const query = async (text, loadMore = false) => {
   }
 
   if (!loadMore) {
+    document.querySelector(".load-more")?.remove();
     document.querySelector(".results")?.remove();
     document.querySelector(".results-meta")?.remove();
     currentCursor = null;
@@ -910,9 +911,20 @@ const query = async (text, loadMore = false) => {
     const randomIntBetween = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
     if (currentSearchType === "media") {
+      // Ensure columns exist for skeletons
+      if (!resultsEl.querySelector(".media-column")) {
+        for (let i = 0; i < 3; i++) {
+          const col = document.createElement("div");
+          col.className = "media-column";
+          col.dataset.colIndex = i;
+          resultsEl.appendChild(col);
+        }
+      }
+      const cols = resultsEl.querySelectorAll(".media-column");
       for (let i = 0; i < count; i++) {
         const skeleton = document.createElement("div");
         skeleton.className = "media-item skeleton";
+        cols[i % 3].appendChild(skeleton);
         skeletons.push(skeleton);
       }
     } else if (currentSearchType === "tweets") {
@@ -973,16 +985,18 @@ const query = async (text, loadMore = false) => {
     if (existingLoadMore) existingLoadMore.remove();
 
     const skeletonCount = currentSearchType === "media" ? 6 : 3;
-    createSkeletons(skeletonCount).forEach((e) => {
-      resultsEl.appendChild(e);
-    });
+    const skels = createSkeletons(skeletonCount);
+    if (currentSearchType !== "media") {
+      skels.forEach((e) => resultsEl.appendChild(e));
+    }
   } else {
     resultsEl.innerHTML = "";
     const skeletonCount = currentSearchType === "media" ? 12 : 8;
-    createSkeletons(skeletonCount).forEach((e) => {
-      resultsEl.appendChild(e);
-    });
-    
+    const skels2 = createSkeletons(skeletonCount);
+    if (currentSearchType !== "media") {
+      skels2.forEach((e) => resultsEl.appendChild(e));
+    }
+
     resultsEl.querySelector(".results-meta")?.remove?.();
 
     const start = performance.now();
@@ -1002,24 +1016,12 @@ const query = async (text, loadMore = false) => {
 
   let sessionToken = await ensureSession(API_URL);
 
-  async function sha256(message) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(message);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-    return hashHex;
-  }
+  const bodyCursor = currentCursor;
+  const bodyFilter = currentFilterString || null;
+  const bodySort = currentSort;
+  const bodyType = Object.entries(buttons).find(([_, b]) => b.toggled)?.[0] || "accounts";
 
-  const nonce = await sha256(crypto.randomUUID());
-
-  const pots = [
-    nonce,
-    await sha256(
-      `${sessionToken}${currentCursor}${currentFilterString}${currentSort}${text}${nonce}${navigator.userAgent}`,
-    ),
-  ];
-  pots.push(await sha256(JSON.stringify(pots)));
+  const integrity = await signRequest(text, bodyType, bodyCursor, bodyFilter, bodySort);
 
   try {
     let _results = await (
@@ -1027,48 +1029,222 @@ const query = async (text, loadMore = false) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${sessionToken}`,
+          Authorization: `Bearer ${sessionToken}`,
+
+          "x-twittercat-client":
+            (() => {
+              const c = document.createElement("canvas");
+              c.width = 100;
+              c.height = 100;
+
+              const ctx = c.getContext("2d");
+              const id = crypto.randomUUID();
+              let h = 0;
+              for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+              for (let y = 0; y < 100; y += 4) {
+                ctx.fillStyle = `rgb(${(h + y * 3) % 255}, ${(h >> 2) % 255}, ${(h + y) % 255})`;
+                ctx.fillRect(0, y, 100, 4);
+              }
+              ctx.font = "9px monospace";
+              ctx.fillStyle = "#000";
+              ctx.fillText(id.slice(0, 10), 2, 18);
+
+              ctx.font = "7px Arial";
+              ctx.fillStyle = "#222";
+              ctx.fillText(id.slice(10, 20), 2, 32);
+              ctx.save();
+              ctx.translate(50, 60);
+              ctx.rotate((h % 100) / 5000);
+              ctx.scale(1, 1 + ((h >> 3) % 5) / 50);
+              ctx.fillStyle = "#111";
+              ctx.fillText(id.slice(20), -40, 0);
+              ctx.restore();
+              for (let i = 0; i < 40; i++) {
+                const x = (h * (i + 3)) % 100;
+                const y = (h * (i + 7)) % 100;
+                ctx.fillStyle = `rgb(${(h >> i) & 255}, ${(h >> (i + 3)) & 255}, ${(h >> (i + 6)) & 255})`;
+                ctx.fillRect(x, y, 1, 1);
+              }
+              ctx.beginPath();
+              ctx.arc(75, 75, 4 + (h % 3), 0, Math.PI * (1.5 + (h % 10) / 20));
+              ctx.strokeStyle = "#000";
+              ctx.stroke();
+              return c
+                .toDataURL("image/jpeg", 0.6)
+                .replace("data:image/jpeg;base64,/9j/", "")
+                .replaceAll("=", "");
+            })() +
+            "?" +
+            parseInt(
+              `${new Date().getTime() * 12}${location.hostname.length + navigator.userAgent.length}`,
+            ).toString(36) +
+            new Date().getTime().toString(36) +
+            Math.imul(0x123456, Date.now()).toString(36) +
+            "?" +
+            (navigator.hardwareConcurrency || 0) +
+            "." +
+            (navigator.deviceMemory || 0) +
+            "." +
+            navigator.userAgent.length.toString(36) +
+            "." +
+            btoa(navigator.languages.join("")).replaceAll("=", "") +
+            "." +
+            btoa(navigator.language || "").replaceAll("=", "") +
+            "." +
+            [
+              screen.width.toString(36),
+              screen.height.toString(36),
+              screen.colorDepth.toString(36),
+              window.innerWidth.toString(36),
+              window.innerHeight.toString(36),
+              ((window.devicePixelRatio * 1000) | 0).toString(36),
+              document.body.getElementsByTagName("*").length.toString(36),
+              (performance.timeOrigin + performance.now()).toString(36),
+              ((Date.now() - performance.now()) | 0).toString(36),
+              (() => {}).toString().length.toString(36),
+              Math.max.toString().length.toString(36),
+              btoa(
+                Intl.DateTimeFormat().resolvedOptions().timeZone +
+                  "-" +
+                  new Intl.NumberFormat().format(12345.67).length,
+              ).replaceAll("=", ""),
+            ].join("§") +
+            `?${crypto.randomUUID().split("-")[4]}31bd${crypto.randomUUID().split("-")[4]}`,
         },
         body: JSON.stringify({
           q: text,
-          type: Object.entries(buttons).find(([_, b]) => b.toggled)?.[0] || "accounts",
-          cursor: currentCursor,
-          filter: currentFilterString || null,
-          sort: currentSort,
-          pots,
+          type: bodyType,
+          cursor: bodyCursor,
+          filter: bodyFilter,
+          sort: bodySort,
+          integrity,
         }),
       })
     ).json();
 
     clearInterval(skeletonMetaI);
-    skeletonMeta.remove();
+    if (skeletonMeta) skeletonMeta.remove();
 
-    if (_results.error === "session_exhausted") {
+    if (
+      _results.error === "session_exhausted" ||
+      _results.error === "integrity check failed" ||
+      _results.error === "invalid session"
+    ) {
       skeletonMeta.style.display = "none";
       const metaEl = document.createElement("div");
       metaEl.className = "results-meta";
       metaEl.innerHTML = `<span class="searching">Making sure you're human…</span>`;
 
       resultsEl.parentNode.insertBefore(metaEl, resultsEl);
-      
+
       invalidateSession();
       sessionToken = await ensureSession(API_URL);
       skeletonMeta.style.display = "block";
       metaEl.remove();
+
+      const retryFilter = currentFilterString || null;
+      const retryType = Object.entries(buttons).find(([_, b]) => b.toggled)?.[0] || "accounts";
+      const retryIntegrity = await signRequest(
+        text,
+        retryType,
+        currentCursor,
+        retryFilter,
+        currentSort,
+      );
+
       _results = await (
         await fetch(`${API_URL}/query`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${sessionToken}`,
+            Authorization: `Bearer ${sessionToken}`,
+            "x-twittercat-client":
+              (() => {
+                const c = document.createElement("canvas");
+                c.width = 100;
+                c.height = 100;
+
+                const ctx = c.getContext("2d");
+                const id = crypto.randomUUID();
+                let h = 0;
+                for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+                for (let y = 0; y < 100; y += 4) {
+                  ctx.fillStyle = `rgb(${(h + y * 3) % 255}, ${(h >> 2) % 255}, ${(h + y) % 255})`;
+                  ctx.fillRect(0, y, 100, 4);
+                }
+                ctx.font = "9px monospace";
+                ctx.fillStyle = "#000";
+                ctx.fillText(id.slice(0, 10), 2, 18);
+
+                ctx.font = "7px Arial";
+                ctx.fillStyle = "#222";
+                ctx.fillText(id.slice(10, 20), 2, 32);
+                ctx.save();
+                ctx.translate(50, 60);
+                ctx.rotate((h % 100) / 5000);
+                ctx.scale(1, 1 + ((h >> 3) % 5) / 50);
+                ctx.fillStyle = "#111";
+                ctx.fillText(id.slice(20), -40, 0);
+                ctx.restore();
+                for (let i = 0; i < 40; i++) {
+                  const x = (h * (i + 3)) % 100;
+                  const y = (h * (i + 7)) % 100;
+                  ctx.fillStyle = `rgb(${(h >> i) & 255}, ${(h >> (i + 3)) & 255}, ${(h >> (i + 6)) & 255})`;
+                  ctx.fillRect(x, y, 1, 1);
+                }
+                ctx.beginPath();
+                ctx.arc(75, 75, 4 + (h % 3), 0, Math.PI * (1.5 + (h % 10) / 20));
+                ctx.strokeStyle = "#000";
+                ctx.stroke();
+                return c
+                  .toDataURL("image/jpeg", 0.6)
+                  .replace("data:image/jpeg;base64,/9j/", "")
+                  .replaceAll("=", "");
+              })() +
+              "?" +
+              parseInt(
+                `${new Date().getTime() * 12}${location.hostname.length + navigator.userAgent.length}`,
+              ).toString(36) +
+              new Date().getTime().toString(36) +
+              Math.imul(0x123456, Date.now()).toString(36) +
+              "?" +
+              (navigator.hardwareConcurrency || 0) +
+              "." +
+              (navigator.deviceMemory || 0) +
+              "." +
+              navigator.userAgent.length.toString(36) +
+              "." +
+              btoa(navigator.languages.join("")).replaceAll("=", "") +
+              "." +
+              btoa(navigator.language || "").replaceAll("=", "") +
+              "." +
+              [
+                screen.width.toString(36),
+                screen.height.toString(36),
+                screen.colorDepth.toString(36),
+                window.innerWidth.toString(36),
+                window.innerHeight.toString(36),
+                ((window.devicePixelRatio * 1000) | 0).toString(36),
+                document.body.getElementsByTagName("*").length.toString(36),
+                (performance.timeOrigin + performance.now()).toString(36),
+                ((Date.now() - performance.now()) | 0).toString(36),
+                (() => {}).toString().length.toString(36),
+                Math.max.toString().length.toString(36),
+                btoa(
+                  Intl.DateTimeFormat().resolvedOptions().timeZone +
+                    "-" +
+                    new Intl.NumberFormat().format(12345.67).length,
+                ).replaceAll("=", ""),
+              ].join("§") +
+              `?${crypto.randomUUID().split("-")[4]}31bd${crypto.randomUUID().split("-")[4]}`,
           },
           body: JSON.stringify({
             q: text,
-            type: Object.entries(buttons).find(([_, b]) => b.toggled)?.[0] || "accounts",
+            type: retryType,
             cursor: currentCursor,
-            filter: currentFilterString || null,
+            filter: retryFilter,
             sort: currentSort,
-            pots,
+            integrity: retryIntegrity,
           }),
         })
       ).json();
@@ -1076,7 +1252,7 @@ const query = async (text, loadMore = false) => {
 
     if (_results.error) throw new Error(_results.error);
 
-    incrementSearchCount();
+    await incrementSearchCount();
 
     if (!loadMore) {
       lastRequestMeta = {
@@ -1100,7 +1276,7 @@ const query = async (text, loadMore = false) => {
       metaEl.innerHTML = `No results found <span class="wallTime">— ${(lastRequestMeta.time / 1000).toFixed(2)}s</span>`;
 
       resultsEl.parentNode.insertBefore(metaEl, resultsEl);
-      
+
       resultsEl.innerHTML = `<div class="error-zone">
     <img src="/assets/svgs/woozy.svg">
     <p>no results found</p>
@@ -1122,6 +1298,19 @@ const query = async (text, loadMore = false) => {
 
     let mediaItemsRendered = 0;
     const hadMediaItemsBefore = resultsEl.querySelectorAll(".media-item:not(.skeleton)").length > 0;
+
+    // Ensure media gallery has 3 column containers
+    if (currentSearchType === "media") {
+      if (!resultsEl.querySelector(".media-column")) {
+        resultsEl.innerHTML = "";
+        for (let i = 0; i < 3; i++) {
+          const col = document.createElement("div");
+          col.className = "media-column";
+          col.dataset.colIndex = i;
+          resultsEl.appendChild(col);
+        }
+      }
+    }
 
     results.forEach((result) => {
       if (currentSearchType === "tweets") {
@@ -1170,8 +1359,6 @@ const query = async (text, loadMore = false) => {
               } else {
                 return;
               }
-
-              mediaItemsRendered++;
 
               img.loading = "lazy";
               img.alt = "Tweet image";
@@ -1223,7 +1410,15 @@ const query = async (text, loadMore = false) => {
               mediaItem.appendChild(img);
               mediaItem.appendChild(overlay);
 
-              resultsEl.appendChild(mediaItem);
+              // Append to shortest column for horizontal-first masonry
+              const columns = resultsEl.querySelectorAll(".media-column");
+              let shortestCol = columns[0];
+              for (const col of columns) {
+                if (col.offsetHeight < shortestCol.offsetHeight) {
+                  shortestCol = col;
+                }
+              }
+              shortestCol.appendChild(mediaItem);
               mediaItemsRendered++;
             }
           });
@@ -1372,6 +1567,10 @@ const query = async (text, loadMore = false) => {
       </div>
       `;
 
+        if (!result.created_at && !result.tweets && !result.following && !result.followers) {
+          stats.style.display = "none";
+        }
+
         if (result.bio) info.appendChild(bioDiv);
 
         if (result.profile_interstitial) {
@@ -1458,9 +1657,12 @@ const query = async (text, loadMore = false) => {
 
       if (currentSearchType === "media") {
         loadMoreDiv.innerHTML = "";
+        loadMoreDiv.style.display = "flex";
+        loadMoreDiv.style.gap = "4px";
         for (let i = 0; i < 3; i++) {
           const skeleton = document.createElement("div");
           skeleton.className = "media-item skeleton";
+          skeleton.style.flex = "1";
           loadMoreDiv.appendChild(skeleton);
         }
       } else {
@@ -1507,7 +1709,12 @@ const query = async (text, loadMore = false) => {
           loadMoreDiv.appendChild(skeleton);
         }
       }
-      resultsEl.appendChild(loadMoreDiv);
+      if (currentSearchType === "media") {
+        // Place load-more after the gallery so it's outside the flex columns
+        resultsEl.parentNode.insertBefore(loadMoreDiv, resultsEl.nextSibling);
+      } else {
+        resultsEl.appendChild(loadMoreDiv);
+      }
 
       let hasTriggered = false;
       activeObserver = new IntersectionObserver(
@@ -1550,7 +1757,7 @@ const query = async (text, loadMore = false) => {
     }</p>
     <small>${e.message.includes("filter") ? "check your filter values and try again" : "an error occurred. please try again later"}</small></div>`;
       clearInterval(skeletonMetaI);
-      skeletonMeta.remove();
+      if (skeletonMeta) skeletonMeta.remove();
 
       if (resultsEl.querySelector(".error-zone p").innerText.length > 230) {
         resultsEl.querySelector(".error-zone p").style.fontSize = "16px";
@@ -1654,7 +1861,7 @@ if (location.search.startsWith("?pt=")) {
     const isValid = await (
       await fetch(`${API_URL}/permalink/verify?jwt=${jwt}`, {
         headers: {
-          "X-Client": "WebPermalinks",
+          "X-Twittercat-Client": "wtCji76iWhcEZMsA5awatQsGBJVgXsGncadhyUcWKoKVjSkH8Z3skvru7iVLU6k2",
         },
       })
     ).json();
@@ -1729,8 +1936,8 @@ setInterval(() => {
 }, 100);
 
 fetch("https://soggy.cat/static/ssoggycat/main/images/soggycat.webp")
-  .then(resp => resp.blob())
-  .then(blob => {
+  .then((resp) => resp.blob())
+  .then((blob) => {
     const reader = new FileReader();
     reader.onload = () => {
       const webpBase64 = reader.result.split(",")[1];
@@ -1766,14 +1973,17 @@ fetch("https://soggy.cat/static/ssoggycat/main/images/soggycat.webp")
           </svg>
         `;
         const svgDataUrl = `data:image/svg+xml;base64,${btoa(svg)}`;
-        console.log('%c ', `
+        console.log(
+          "%c ",
+          `
           background-image: url(${svgDataUrl});
           padding-top: ${svgHeight}px;
           padding-left: ${width}px;
           background-size: contain;
           background-position: center center;
           background-repeat: no-repeat;
-        `);
+        `,
+        );
       };
       img.src = reader.result;
     };

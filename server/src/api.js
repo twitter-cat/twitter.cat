@@ -3,7 +3,7 @@ import { Elysia, t } from "elysia";
 import { rateLimit } from "elysia-rate-limit";
 import * as jose from "jose";
 import { validateSession } from "./cap.js";
-import { searchTweets, searchProfiles } from "./manticore.js";
+import { searchProfiles, searchTweets } from "./manticore.js";
 
 const postgresReadOnly = new SQL(
   `postgres://${process.env.POSTGRES_USER_READONLY}:${process.env.POSTGRES_PASSWORD_READONLY}@${process.env.POSTGRES_HOST}:5432/twitter`,
@@ -53,7 +53,7 @@ const executeTweetSearchQuery = async (q, filterString, offset, sortOption) => {
 
   const authorIds = Array.from(new Set(result.hits.map((t) => t.author_id).filter(Boolean)));
 
-  let authorMap = new Map();
+  const authorMap = new Map();
   if (authorIds.length > 0) {
     const authors = await postgresReadOnly`
       SELECT id, username, name, avatar, verified, protected, square_avatar
@@ -118,6 +118,41 @@ const executeTweetSearchQuery = async (q, filterString, offset, sortOption) => {
   };
 };
 
+async function sha256(message) {
+  const data = new TextEncoder().encode(message);
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function validateIntegrity(integrity, q, type, cursor, filter, sort, userAgent) {
+  if (!Array.isArray(integrity) || integrity.length !== 4) return false;
+
+  const [nonce, ts, hash, chain] = integrity;
+  if (
+    typeof nonce !== "string" ||
+    typeof ts !== "number" ||
+    typeof hash !== "string" ||
+    typeof chain !== "string"
+  )
+    return false;
+
+  const hex64 = /^[a-f0-9]{64}$/;
+  if (!hex64.test(nonce) || !hex64.test(hash) || !hex64.test(chain)) return false;
+
+  const now = Date.now();
+  if (ts > now + 30_000 || ts < now - 5 * 60 * 1000) return false;
+
+  const expectedHash = await sha256(
+    `${q}\x00${type}\x00${cursor}\x00${filter}\x00${sort}\x00${nonce}\x00${ts}\x00${userAgent}`,
+  );
+  if (hash !== expectedHash) return false;
+
+  const expectedChain = await sha256(JSON.stringify([nonce, ts, hash]));
+  if (chain !== expectedChain) return false;
+
+  return true;
+}
+
 export default new Elysia()
   .use(
     rateLimit({
@@ -132,8 +167,9 @@ export default new Elysia()
     async ({ body, request }) => {
       try {
         const reqStart = Date.now();
-        const { type, q, cursor, filter, sort } = body;
+        const { type, q, cursor, filter, sort, integrity } = body;
         const sessionToken = request.headers.get("authorization")?.replace?.("Bearer ", "");
+        const userAgent = request.headers.get("user-agent") || "";
 
         if (!sessionToken) {
           return { error: "missing session" };
@@ -172,6 +208,10 @@ export default new Elysia()
             return { error: "session_exhausted" };
           }
           return { error: "invalid session" };
+        }
+
+        if (!(await validateIntegrity(integrity, q, type, cursor, filter, sort, userAgent))) {
+          return { error: "integrity check failed" };
         }
 
         const validSorts = ["relevance", "likes", "newest", "oldest"];
@@ -328,6 +368,7 @@ export default new Elysia()
           ]),
         ),
         sort: t.Optional(t.Union([t.String(), t.Null()])),
+        integrity: t.Optional(t.Any()),
       }),
     },
   )

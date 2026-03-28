@@ -36,3 +36,11 @@ this should be deployed to your preferred cdn.
 in order for you to have any tweets to search, you'll need to manage crawlers that ingest tweet data to the postgres db, along with a sync script to push the data to manticore.
 
 these crawlers are not open-source. the production twitter.cat instance uses many crawlers running in parallel on different machines.
+
+### biases
+
+the current crawlers have the following biases:
+
+* none (most of the index)
+* community noted tweets (small amount of the index)
+* popular tweets (small amount of the index)
