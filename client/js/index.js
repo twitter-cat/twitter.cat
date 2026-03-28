@@ -1334,15 +1334,15 @@ const query = async (text, loadMore = false) => {
         stats.className = "stats";
         stats.innerHTML = `
       <div class="stat">
-        <div class="stat-number">${formatNumber(result.followers)}</div>
+        <div class="stat-number">${formatNumber(result.followers) || "0"}</div>
         <div class="stat-label">followers</div>
       </div>
       <div class="stat">
-        <div class="stat-number">${formatNumber(result.following)}</div>
+        <div class="stat-number">${formatNumber(result.following) || "0"}</div>
         <div class="stat-label">following</div>
       </div>
       <div class="stat">
-        <div class="stat-number">${formatNumber(result.tweets)}</div>
+        <div class="stat-number">${formatNumber(result.tweets) || "0"}</div>
         <div class="stat-label">tweets</div>
       </div>
       `;
