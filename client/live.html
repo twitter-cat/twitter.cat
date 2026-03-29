@@ -611,6 +611,10 @@
       const hours = Math.floor(minutes / 60);
       const days = Math.floor(hours / 24);
 
+      if (seconds < 0) {
+        return "1s";
+      }
+
       if (seconds < 60) {
         return `${seconds}s`;
       } else if (minutes < 60) {
@@ -1042,7 +1046,7 @@
                     const c = document.createElement("canvas");
                     c.width = 100;
                     c.height = 100;
-      
+
                     const ctx = c.getContext("2d");
                     const id = crypto.randomUUID();
                     let h = 0;
@@ -1054,7 +1058,7 @@
                     ctx.font = "9px monospace";
                     ctx.fillStyle = "#000";
                     ctx.fillText(id.slice(0, 10), 2, 18);
-      
+
                     ctx.font = "7px Arial";
                     ctx.fillStyle = "#222";
                     ctx.fillText(id.slice(10, 20), 2, 32);
