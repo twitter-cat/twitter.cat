@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Snowflake decoder - twitter.cat</title>
+    
+    <link rel="icon" type="image/svg+xml" href="/assets/svgs/face.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      header {
+        height: 64px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+
+        padding-left: 1rem;
+        padding-right: 1rem;
+        display: flex;
+        align-items: center;
+
+        .logo {
+          display: block;
+          width: fit-content;
+          text-decoration: none;
+          transition:
+            opacity 0.2s,
+            transform 0.1s;
+        }
+
+        .logo:hover {
+          opacity: 0.8;
+        }
+
+        .logo:active {
+          transform: scale(0.95);
+        }
+
+        .logo img {
+          width: 34px;
+        }
+      }
+
+      html {
+        scrollbar-width: thin;
+        scrollbar-color: hsla(255 0 255 / 15%) #14171a;
+        color-scheme: dark;
+      }
+
+      body {
+        background-color: #14171a;
+        color: #e7e9ea;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 15px;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0 1rem;
+        overflow: hidden;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 640px;
+        margin-top: min(20vh, 160px);
+        transition: margin-top 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .container.has-result {
+        margin-top: min(10vh, 80px);
+      }
+
+      .title {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #9c9da0;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 1rem;
+        user-select: none;
+      }
+
+      .title span {
+        color: #1ea1f1;
+      }
+
+      .input-wrap {
+        position: relative;
+        margin-bottom: 2rem;
+      }
+
+      .input-wrap input {
+        width: 100%;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid #2a2e31;
+        outline: none;
+        color: #e7e9ea;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: clamp(1.8rem, 5vw, 2.8rem);
+        font-weight: 700;
+        padding: 0.5rem 0;
+        transition: border-color 0.2s;
+        caret-color: #1ea1f1;
+      }
+
+      .input-wrap input::placeholder {
+        color: #2a2e31;
+        font-weight: 500;
+      }
+
+      .input-wrap input:focus {
+        border-bottom-color: #1ea1f1;
+      }
+
+      .input-wrap .clear-btn {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #9c9da0;
+        cursor: pointer;
+        font-size: 1.2rem;
+        padding: 0.5rem;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.15s,
+          color 0.15s;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .input-wrap .clear-btn.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .input-wrap .clear-btn:hover {
+        color: #e7e9ea;
+      }
+
+      .error {
+        color: #9c9da0;
+        font-size: 0.85rem;
+        margin-top: -1.25rem;
+        margin-bottom: 1.5rem;
+        user-select: none;
+        opacity: 0;
+        filter: blur(1px);
+        transition:
+          opacity 0.15s,
+          filter 0.15s;
+      }
+
+      .error.visible {
+        opacity: 1;
+        filter: blur(0px);
+      }
+
+      .results {
+        display: grid;
+        gap: 0;
+        opacity: 0;
+        transform: translateY(8px);
+        filter: blur(1px);
+        transition:
+          opacity 0.3s,
+          filter 0.15s,
+          transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        pointer-events: none;
+      }
+
+      .results.visible {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+        filter: blur(0px);
+      }
+
+      .result-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding: 0.85rem 0;
+        border-bottom: 1px solid #1e2124;
+      }
+
+      .result-row:last-child {
+        border-bottom: none;
+      }
+
+      .result-label {
+        color: #9c9da0;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        user-select: none;
+        flex-shrink: 0;
+      }
+
+      .result-value {
+        color: #e7e9ea;
+        font-size: 1rem;
+        font-weight: 600;
+        text-align: right;
+        word-break: break-all;
+      }
+
+      .result-value.date {
+        color: #1ea1f1;
+        font-size: 1.05rem;
+      }
+
+      .result-value.mono-sm {
+        font-size: 0.9rem;
+        color: #c4c7ca;
+      }
+
+      .tz-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        margin-top: 0.15rem;
+      }
+
+      .tz-select {
+        background: transparent;
+        border: none;
+        border-radius: 4px;
+        color: #9c9da0;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.75rem;
+        padding: 0.3rem 0.4rem;
+        outline: none;
+        cursor: pointer;
+        transition:
+          border-color 0.15s,
+          color 0.15s;
+        max-width: 200px;
+        text-align: right;
+        padding-bottom: 0px;
+        padding-top: 0px;
+        margin-top: 2px;
+      }
+
+      .tz-select:hover,
+      .tz-select:focus {
+        border-color: #1ea1f1;
+        color: #e7e9ea;
+      }
+
+      .bits {
+        margin-top: 2rem;
+      }
+
+      .bits-label {
+        color: #9c9da0;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.75rem;
+        user-select: none;
+      }
+
+      .bits-visual {
+        display: flex;
+        gap: 3px;
+        flex-wrap: wrap;
+        font-size: 0;
+        line-height: 0;
+      }
+
+      .bit-group {
+        display: flex;
+        gap: 0;
+        position: relative;
+      }
+
+      .bit-group + .bit-group {
+        margin-left: 6px;
+      }
+
+      .bit {
+        width: 8px;
+        height: 18px;
+        display: inline-block;
+        border-radius: 1px;
+        transition: background-color 0.15s;
+      }
+
+      .bit.ts {
+        background-color: #1ea1f1;
+      }
+      .bit.dc {
+        background-color: #f4212e;
+      }
+      .bit.wk {
+        background-color: #00ba7c;
+      }
+      .bit.seq {
+        background-color: #ffd400;
+      }
+      .bit.off {
+        opacity: 0.15;
+      }
+
+      .bit-legend {
+        display: flex;
+        gap: 1.2rem;
+        margin-top: 0.75rem;
+        flex-wrap: wrap;
+      }
+
+      .bit-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.7rem;
+        color: #9c9da0;
+        user-select: none;
+      }
+
+      .bit-legend-item .swatch {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+
+      @media (max-width: 480px) {
+        .result-row {
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+        .result-value {
+          text-align: left;
+        }
+        .tz-row {
+          justify-content: flex-start;
+        }
+        .bit {
+          width: 6px;
+          height: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="/" class="logo" draggable="false">
+        <img src="/assets/svgs/kitty.svg" draggable="false" />
+      </a>
+    </header>
+
+    <div class="container" id="container">
+      <div class="title">snowflake <span>decoder</span></div>
+      <div class="input-wrap">
+        <input
+          type="text"
+          id="snowflake-input"
+          placeholder="paste a snowflake"
+          autocomplete="off"
+          spellcheck="false"
+          autofocus
+        />
+        <button class="clear-btn" id="clear-btn">&times;</button>
+      </div>
+      <div class="error" id="error">not a valid snowflake</div>
+
+      <div class="results" id="results">
+        <div class="result-row">
+          <span class="result-label">Date</span>
+          <div>
+            <div class="result-value date" id="r-date"></div>
+            <div class="tz-row">
+              <select class="tz-select" id="tz-select"></select>
+            </div>
+          </div>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Unix (ms)</span>
+          <span class="result-value mono-sm" id="r-unix"></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Datacenter</span>
+          <span class="result-value mono-sm" id="r-dc"></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Worker</span>
+          <span class="result-value mono-sm" id="r-worker"></span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Sequence</span>
+          <span class="result-value mono-sm" id="r-seq"></span>
+        </div>
+
+        <div class="bits">
+          <div class="bits-label">64-bit layout</div>
+          <div class="bits-visual" id="bits-visual"></div>
+          <div class="bit-legend">
+            <div class="bit-legend-item">
+              <div class="swatch" style="background: #1ea1f1"></div>
+              timestamp (41)
+            </div>
+            <div class="bit-legend-item">
+              <div class="swatch" style="background: #f4212e"></div>
+              datacenter (5)
+            </div>
+            <div class="bit-legend-item">
+              <div class="swatch" style="background: #00ba7c"></div>
+              worker (5)
+            </div>
+            <div class="bit-legend-item">
+              <div class="swatch" style="background: #ffd400"></div>
+              sequence (12)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const TWITTER_EPOCH = 1288834974657n;
+
+      const COMMON_TZ = [
+        "UTC",
+        "America/New_York",
+        "America/Chicago",
+        "America/Denver",
+        "America/Los_Angeles",
+        "America/Sao_Paulo",
+        "Europe/London",
+        "Europe/Lisbon",
+        "Europe/Paris",
+        "Europe/Berlin",
+        "Europe/Moscow",
+        "Asia/Dubai",
+        "Asia/Kolkata",
+        "Asia/Shanghai",
+        "Asia/Tokyo",
+        "Asia/Seoul",
+        "Australia/Sydney",
+        "Pacific/Auckland",
+      ];
+
+      const tzSelect = document.getElementById("tz-select");
+      const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      // build tz list: UTC first, then local if not UTC, then rest
+      const tzList = ["UTC"];
+      if (localTz !== "UTC" && !tzList.includes(localTz)) tzList.push(localTz);
+      for (const tz of COMMON_TZ) {
+        if (!tzList.includes(tz)) tzList.push(tz);
+      }
+
+      for (const tz of tzList) {
+        const opt = document.createElement("option");
+        opt.value = tz;
+        opt.textContent = tz.replace(/_/g, " ");
+        tzSelect.appendChild(opt);
+      }
+
+      const input = document.getElementById("snowflake-input");
+      const clearBtn = document.getElementById("clear-btn");
+      const errorEl = document.getElementById("error");
+      const resultsEl = document.getElementById("results");
+      const containerEl = document.getElementById("container");
+
+      let currentData = null;
+
+      function decodeSnowflake(id) {
+        const snowflake = BigInt(id);
+        const timestamp = Number((snowflake >> 22n) + TWITTER_EPOCH);
+        const datacenterId = Number((snowflake & 0x3e0000n) >> 17n);
+        const workerId = Number((snowflake & 0x1f000n) >> 12n);
+        const sequence = Number(snowflake & 0xfffn);
+        return { timestamp, datacenterId, workerId, sequence, snowflake };
+      }
+
+      function formatDate(ts, tz) {
+        const d = new Date(ts);
+        return d.toLocaleString("en-GB", {
+          timeZone: tz,
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          fractionalSecondDigits: 3,
+          hour12: false,
+        });
+      }
+
+      function renderBits(snowflake) {
+        const container = document.getElementById("bits-visual");
+        container.innerHTML = "";
+
+        const bin = snowflake.toString(2).padStart(64, "0");
+
+        // unused bit (sign): bit 0
+        // timestamp: bits 1-41
+        // datacenter: bits 42-46
+        // worker: bits 47-51
+        // sequence: bits 52-63
+
+        const segments = [
+          { start: 0, end: 1, cls: "ts", label: "unused" },
+          { start: 1, end: 42, cls: "ts" },
+          { start: 42, end: 47, cls: "dc" },
+          { start: 47, end: 52, cls: "wk" },
+          { start: 52, end: 64, cls: "seq" },
+        ];
+
+        for (const seg of segments) {
+          const group = document.createElement("div");
+          group.className = "bit-group";
+          for (let i = seg.start; i < seg.end; i++) {
+            const el = document.createElement("div");
+            el.className = `bit ${seg.cls}${bin[i] === "0" ? " off" : ""}`;
+            group.appendChild(el);
+          }
+          container.appendChild(group);
+        }
+      }
+
+      function render() {
+        if (!currentData) return;
+        const tz = tzSelect.value;
+        document.getElementById("r-date").textContent = formatDate(currentData.timestamp, tz);
+        document.getElementById("r-unix").textContent = currentData.timestamp;
+        document.getElementById("r-dc").textContent = currentData.datacenterId;
+        document.getElementById("r-worker").textContent = currentData.workerId;
+        document.getElementById("r-seq").textContent = currentData.sequence;
+        renderBits(currentData.snowflake);
+      }
+
+      function handleInput() {
+        const val = input.value.trim();
+        clearBtn.classList.toggle("visible", val.length > 0);
+
+        if (!val) {
+          errorEl.classList.remove("visible");
+          resultsEl.classList.remove("visible");
+          containerEl.classList.remove("has-result");
+          currentData = null;
+          return;
+        }
+
+        if (!/^\d{4,20}$/.test(val)) {
+          errorEl.classList.add("visible");
+          resultsEl.classList.remove("visible");
+          containerEl.classList.remove("has-result");
+          currentData = null;
+          return;
+        }
+
+        try {
+          const data = decodeSnowflake(val);
+          // sanity: timestamp should be after twitter epoch and before ~2100
+          if (data.timestamp < 1288834974657 || data.timestamp > 4102444800000) {
+            throw new Error("out of range");
+          }
+          currentData = data;
+          errorEl.classList.remove("visible");
+          resultsEl.classList.add("visible");
+          containerEl.classList.add("has-result");
+          render();
+        } catch {
+          errorEl.classList.add("visible");
+          resultsEl.classList.remove("visible");
+          containerEl.classList.remove("has-result");
+          currentData = null;
+        }
+      }
+
+      input.addEventListener("input", handleInput);
+      tzSelect.addEventListener("change", render);
+      clearBtn.addEventListener("click", () => {
+        input.value = "";
+        handleInput();
+        input.focus();
+      });
+
+      // allow pasting full tweet URLs and extract the ID
+      input.addEventListener("paste", (e) => {
+        setTimeout(() => {
+          const val = input.value.trim();
+          const match = val.match(/\/status\/(\d+)/);
+          if (match) {
+            input.value = match[1];
+            handleInput();
+          }
+        }, 0);
+      });
+    </script>
+  </body>
+</html>

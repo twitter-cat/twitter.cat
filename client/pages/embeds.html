@@ -1,0 +1,1079 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>embed generator - twitter.cat</title>
+
+    <link rel="icon" type="image/svg+xml" href="/assets/svgs/face.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" id="hljs-theme" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/css.min.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      header {
+        height: 64px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        display: flex;
+        align-items: center;
+      }
+
+      header .logo {
+        display: block;
+        width: fit-content;
+        text-decoration: none;
+        transition: opacity 0.2s, transform 0.1s;
+      }
+
+      header .logo:hover { opacity: 0.8; }
+      header .logo:active { transform: scale(0.95); }
+      header .logo img { width: 34px; }
+
+      html {
+        scrollbar-width: thin;
+        scrollbar-color: hsla(255 0 255 / 15%) #14171a;
+        color-scheme: dark;
+      }
+
+      body {
+        background-color: #14171a;
+        color: #e7e9ea;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 15px;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0 1rem;
+        padding-top: 64px;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 640px;
+        margin-top: min(12vh, 100px);
+        transition: margin-top 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .container.has-result { margin-top: 2rem; }
+
+      .title {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #9c9da0;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 1rem;
+        user-select: none;
+      }
+
+      .title span { color: #1ea1f1; }
+
+      .input-wrap {
+        position: relative;
+        margin-bottom: 0.75rem;
+      }
+
+      .input-wrap input {
+        width: 100%;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid #2a2e31;
+        outline: none;
+        color: #e7e9ea;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: clamp(1.4rem, 4vw, 2.2rem);
+        font-weight: 700;
+        padding: 0.5rem 0;
+        padding-right: 2.5rem;
+        transition: border-color 0.2s;
+        caret-color: #1ea1f1;
+      }
+
+      .input-wrap input::placeholder { color: #2a2e31; font-weight: 500; }
+      .input-wrap input:focus { border-bottom-color: #1ea1f1; }
+
+      .input-wrap .clear-btn {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #9c9da0;
+        cursor: pointer;
+        font-size: 1.2rem;
+        padding: 0.5rem;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s, color 0.15s;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .input-wrap .clear-btn.visible { opacity: 1; pointer-events: auto; }
+      .input-wrap .clear-btn:hover { color: #e7e9ea; }
+
+      .subtitle {
+        padding-top: 1em;
+        font-size: 0.78rem;
+        color: #555960;
+        line-height: 1.5;
+        margin-bottom: 1.75rem;
+        max-height: 100px;
+        transition: opacity 0.3s, padding-top .3s, max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), margin-bottom 0.3s;
+        overflow: hidden;
+      }
+
+      .subtitle.hidden {
+        opacity: 0;
+        max-height: 0;
+        margin-bottom: 0;
+        padding-top: 0px;
+      }
+
+      .subtitle a {
+        color: #71767b;
+        text-decoration: underline;
+        text-decoration-color: #3a3e41;
+        text-underline-offset: 2px;
+      }
+
+      .subtitle a:hover { color: #9c9da0; }
+
+      .status-msg {
+        font-size: 0.85rem;
+        margin-bottom: 1.5rem;
+        user-select: none;
+        opacity: 0;
+        filter: blur(1px);
+        transition: opacity 0.15s, filter 0.15s;
+        max-height: 0;
+        overflow: hidden;
+      }
+
+      .status-msg.visible {
+        opacity: 1;
+        filter: blur(0px);
+        max-height: 40px;
+      }
+
+      .status-msg.error { color: #f4212e; }
+      .status-msg.loading { color: #9c9da0; }
+
+      /* output */
+      .output-area {
+        opacity: 0;
+        transform: translateY(12px);
+        filter: blur(2px);
+        transition: opacity 0.35s, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), filter 0.25s;
+        pointer-events: none;
+      }
+
+      .output-area.visible {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+        filter: blur(0px);
+      }
+
+      .section-label {
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: #9c9da0;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.75rem;
+        user-select: none;
+      }
+
+      .preview-frame {
+        margin-bottom: 1.75rem;
+        overflow: hidden;
+      }
+
+      .preview-frame .te {
+        max-width: 550px;
+      }
+
+      .code-section { margin-bottom: 2rem; }
+
+      .code-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+      }
+
+      .code-tabs { display: flex; gap: 0; }
+
+      .code-tab {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.7rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #9c9da0;
+        background: none;
+        border: 1px solid #2a2e31;
+        padding: 0.4rem 0.75rem;
+        cursor: pointer;
+        transition: color 0.15s, background 0.15s, border-color 0.15s;
+      }
+
+      .code-tab:first-child { border-radius: 4px 0 0 4px; }
+      .code-tab:last-child { border-radius: 0 4px 4px 0; }
+      .code-tab + .code-tab { border-left: none; }
+      .code-tab.active { color: #e7e9ea; background: #1ea1f1; border-color: #1ea1f1; }
+      .code-tab:not(.active):hover { color: #e7e9ea; border-color: #3a3e41; }
+
+      .copy-btn {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #9c9da0;
+        background: none;
+        border: 1px solid #2a2e31;
+        border-radius: 4px;
+        padding: 0.4rem 0.75rem;
+        cursor: pointer;
+        transition: color 0.15s, border-color 0.15s, background 0.15s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .copy-btn:hover { color: #e7e9ea; border-color: #3a3e41; }
+      .copy-btn.copied { color: #00ba7c; border-color: #00ba7c; }
+
+      .code-block {
+        background: #0d1012;
+        border: 1px solid #1e2124;
+        border-radius: 8px;
+        padding: 1rem;
+        overflow-x: auto;
+        max-height: 400px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: hsla(255 0 255 / 10%) transparent;
+      }
+
+      .code-block pre {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.8rem;
+        line-height: 1.6;
+        color: #c4c7ca;
+        white-space: pre;
+        margin: 0;
+      }
+
+      .code-block pre code {
+        font-family: inherit;
+        font-size: inherit;
+        background: none !important;
+        padding: 0 !important;
+      }
+
+      .code-block .hljs { background: transparent !important; padding: 0 !important; }
+
+      /* options */
+      .options-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .theme-switcher { display: flex; gap: 0; }
+
+      .theme-btn {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.7rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #9c9da0;
+        background: none;
+        border: 1px solid #2a2e31;
+        padding: 0.35rem 0.65rem;
+        cursor: pointer;
+        transition: color 0.15s, background 0.15s, border-color 0.15s;
+      }
+
+      .theme-btn:first-child { border-radius: 4px 0 0 4px; }
+      .theme-btn:last-child { border-radius: 0 4px 4px 0; }
+      .theme-btn + .theme-btn { border-left: none; }
+      .theme-btn.active { color: #e7e9ea; background: #2a2e31; border-color: #3a3e41; }
+      .theme-btn:not(.active):hover { color: #e7e9ea; }
+
+      .option-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        user-select: none;
+        font-size: 0.8rem;
+        color: #9c9da0;
+        transition: color 0.15s;
+      }
+
+      .option-toggle:hover { color: #e7e9ea; }
+
+      .option-toggle input {
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border: 1.5px solid #9c9da0;
+        border-radius: 3px;
+        cursor: pointer;
+        position: relative;
+        flex-shrink: 0;
+        transition: background 0.15s, border-color 0.15s;
+      }
+
+      .option-toggle input:checked { background: #1ea1f1; border-color: #1ea1f1; }
+
+      .option-toggle input:checked::after {
+        content: "";
+        position: absolute;
+        top: 0px;
+        left: 3px;
+        width: 4px;
+        height: 7px;
+        border: solid #fff;
+        border-width: 0 1.5px 1.5px 0;
+        transform: rotate(45deg);
+      }
+
+      .loading-spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #9c9da0;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        vertical-align: middle;
+        margin-right: 6px;
+      }
+
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      @media (max-width: 480px) {
+        .code-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="/" class="logo" draggable="false">
+        <img src="/assets/svgs/kitty.svg" draggable="false" />
+      </a>
+    </header>
+
+    <div class="container" id="container">
+      <div class="title">embed <span>generator</span></div>
+      <div class="input-wrap">
+        <input
+          type="text"
+          id="tweet-input"
+          placeholder="tweet id or url"
+          autocomplete="off"
+          spellcheck="false"
+          autofocus
+        />
+        <button class="clear-btn" id="clear-btn">&times;</button>
+      </div>
+      <div class="subtitle" id="subtitle">
+        static, self-contained tweet embeds. no tracking scripts, no iframes,
+        no layout shift. just HTML + CSS you own, unlike
+        <a href="https://publish.x.com" target="_blank" rel="noopener">publish.x.com</a>
+        which injects ~1MB of JavaScript and phones home on every page load.
+      </div>
+      <div class="status-msg" id="status-msg"></div>
+
+      <div class="output-area" id="output-area">
+        <div class="options-row">
+          <div class="theme-switcher">
+            <button class="theme-btn active" data-theme="dark">Dark</button>
+            <button class="theme-btn" data-theme="light">Light</button>
+          </div>
+          <label class="option-toggle">
+            <input type="checkbox" id="opt-media" checked />
+            Show media
+          </label>
+          <label class="option-toggle">
+            <input type="checkbox" id="opt-stats" checked />
+            Show stats
+          </label>
+        </div>
+
+        <div class="section-label">Preview</div>
+        <div class="preview-frame" id="preview-frame"></div>
+
+        <div class="code-section">
+          <div class="code-header">
+            <div class="code-tabs">
+              <button class="code-tab" data-tab="html">HTML</button>
+              <button class="code-tab" data-tab="css">CSS</button>
+              <button class="code-tab active" data-tab="combined">All</button>
+            </div>
+            <button class="copy-btn" id="copy-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+              </svg>
+              Copy
+            </button>
+          </div>
+          <div class="code-block">
+            <pre><code id="code-output"></code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let tweetData = null;
+      let currentTheme = "dark";
+      let currentTab = "combined";
+      let fetchController = null;
+
+      const input = document.getElementById("tweet-input");
+      const clearBtn = document.getElementById("clear-btn");
+      const statusMsg = document.getElementById("status-msg");
+      const outputArea = document.getElementById("output-area");
+      const containerEl = document.getElementById("container");
+      const previewFrame = document.getElementById("preview-frame");
+      const codeOutput = document.getElementById("code-output");
+      const copyBtn = document.getElementById("copy-btn");
+      const subtitleEl = document.getElementById("subtitle");
+
+      function getToken(id) {
+        return ((Number(id) / 1e15) * Math.PI)
+          .toString(6 ** 2)
+          .replace(/(0+|\.)/g, "");
+      }
+
+      function extractTweetId(val) {
+        val = val.trim();
+        if (/^\d{4,20}$/.test(val)) return val;
+        const m = val.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
+        return m ? m[1] : null;
+      }
+
+      function setStatus(text, type) {
+        statusMsg.className = "status-msg visible " + type;
+        if (type === "loading") {
+          statusMsg.innerHTML = '<span class="loading-spinner"></span> ' + text;
+        } else {
+          statusMsg.textContent = text;
+        }
+      }
+
+      function clearStatus() {
+        statusMsg.className = "status-msg";
+      }
+
+      function esc(str) {
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      }
+
+      function fmtNum(n) {
+        if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
+        if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
+        return String(n);
+      }
+
+      function linkifyText(text, entities, displayRange) {
+        if (!entities) return esc(text).replace(/\n/g, "<br>");
+
+        const codepoints = [...text];
+        let startOffset = 0;
+        if (displayRange && displayRange[0] > 0) {
+          startOffset = displayRange[0];
+        }
+
+        // collect entity replacements
+        const reps = [];
+
+        if (entities.urls) {
+          for (const u of entities.urls) {
+            reps.push({
+              s: u.indices[0],
+              e: u.indices[1],
+              h: `<a href="${esc(u.expanded_url || u.url)}" target="_blank" rel="noopener">${esc(u.display_url || u.url)}</a>`,
+            });
+          }
+        }
+        if (entities.user_mentions) {
+          for (const m of entities.user_mentions) {
+            if (m.indices[1] <= startOffset) continue;
+            reps.push({
+              s: m.indices[0],
+              e: m.indices[1],
+              h: `<a href="https://x.com/${esc(m.screen_name)}" target="_blank" rel="noopener">@${esc(m.screen_name)}</a>`,
+            });
+          }
+        }
+        if (entities.hashtags) {
+          for (const t of entities.hashtags) {
+            reps.push({
+              s: t.indices[0],
+              e: t.indices[1],
+              h: `<a href="https://x.com/hashtag/${esc(t.text)}" target="_blank" rel="noopener">#${esc(t.text)}</a>`,
+            });
+          }
+        }
+        // media entities - remove them from text
+        if (entities.media) {
+          for (const m of entities.media) {
+            reps.push({
+              s: m.indices[0],
+              e: m.indices[1],
+              h: "",
+            });
+          }
+        }
+
+        // sort descending by start index
+        reps.sort((a, b) => b.s - a.s);
+
+        const endOffset = codepoints.length;
+        const slicedCodepoints = codepoints.slice(startOffset, endOffset);
+
+        // adjust rep indices relative to startOffset
+        const adjustedReps = reps
+          .filter(r => r.s >= startOffset && r.e <= endOffset)
+          .map(r => ({ ...r, s: r.s - startOffset, e: r.e - startOffset }));
+
+        const segments = [];
+        let cursor = slicedCodepoints.length;
+
+        for (const r of adjustedReps) {
+          if (r.e < cursor) {
+            segments.unshift({ t: esc(slicedCodepoints.slice(r.e, cursor).join("")), html: false });
+          }
+          segments.unshift({ t: r.h, html: true });
+          cursor = r.s;
+        }
+        if (cursor > 0) {
+          segments.unshift({ t: esc(slicedCodepoints.slice(0, cursor).join("")), html: false });
+        }
+
+        let result = segments.map(s => s.t).join("").replace(/\n/g, "<br>");
+        result = result.replace(/(<br>\s*)+$/, "");
+        return result;
+      }
+
+      function fmtDate(dateStr) {
+        const d = new Date(dateStr);
+        const time = d.toLocaleString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+        const date = d.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric" });
+        return time + " \u00b7 " + date;
+      }
+
+      function verifiedSvg(user, fill) {
+        if (!user?.is_blue_verified && !user?.verified) return "";
+        const sz = 16;
+        return _badgeSvg(user, fill, sz);
+      }
+
+      function smallVerifiedSvg(user, fill) {
+        if (!user?.is_blue_verified && !user?.verified) return "";
+        const sz = 13;
+        return _badgeSvg(user, fill, sz);
+      }
+
+      function _badgeSvg(user, fill, sz) {
+        // gold gradient checkmark for Business
+        if (user.verified_type === "Business") {
+          const uid = "g" + Math.random().toString(36).slice(2, 6);
+          return `<svg viewBox="0 0 22 22" width="${sz}" height="${sz}" style="flex-shrink:0"><defs><linearGradient id="${uid}-a" gradientUnits="userSpaceOnUse" x1="4.411" x2="18.083" y1="2.495" y2="21.508"><stop offset="0" stop-color="#f4e72a"/><stop offset=".539" stop-color="#cd8105"/><stop offset=".68" stop-color="#cb7b00"/><stop offset="1" stop-color="#f4ec26"/></linearGradient><linearGradient id="${uid}-b" gradientUnits="userSpaceOnUse" x1="5.355" x2="16.361" y1="3.395" y2="19.133"><stop offset="0" stop-color="#f9e87f"/><stop offset=".406" stop-color="#e2b719"/><stop offset=".989" stop-color="#e2b719"/></linearGradient></defs><g clip-rule="evenodd" fill-rule="evenodd"><path d="M13.324 3.848L11 1.6 8.676 3.848l-3.201-.453-.559 3.184L2.06 8.095 3.48 11l-1.42 2.904 2.856 1.516.559 3.184 3.201-.452L11 20.4l2.324-2.248 3.201.452.559-3.184 2.856-1.516L18.52 11l1.42-2.905-2.856-1.516-.559-3.184zm-7.09 7.575l3.428 3.428 5.683-6.206-1.347-1.247-4.4 4.795-2.072-2.072z" fill="url(#${uid}-a)"/><path d="M13.101 4.533L11 2.5 8.899 4.533l-2.895-.41-.505 2.88-2.583 1.37L4.2 11l-1.284 2.627 2.583 1.37.505 2.88 2.895-.41L11 19.5l2.101-2.033 2.895.41.505-2.88 2.583-1.37L17.8 11l1.284-2.627-2.583-1.37-.505-2.88zm-6.868 6.89l3.429 3.428 5.683-6.206-1.347-1.247-4.4 4.795-2.072-2.072z" fill="url(#${uid}-b)"/><path d="M6.233 11.423l3.429 3.428 5.65-6.17.038-.033-.005 1.398-5.683 6.206-3.429-3.429-.003-1.405.005.003z" fill="#d18800"/></g></svg>`;
+        }
+        // gray checkmark for Government
+        if (user.verified_type === "Government") {
+          return `<svg viewBox="0 0 22 22" width="${sz}" height="${sz}" style="flex-shrink:0"><path fill="#829aab" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.143.271.586.702 1.084 1.24 1.438.54.354 1.167.551 1.813.568.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.225 1.261.272 1.893.143.636-.131 1.222-.437 1.69-.884.445-.47.749-1.055.878-1.688.131-.633.08-1.29-.139-1.896.587-.275 1.084-.706 1.438-1.246.355-.54.553-1.17.57-1.817zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg>`;
+        }
+        // blue checkmark
+        return `<svg viewBox="0 0 22 22" width="${sz}" height="${sz}" style="flex-shrink:0"><path fill="${fill || "#1d9bf0"}" d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.69-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.636.433 1.221.878 1.69.47.446 1.055.752 1.69.883.635.13 1.294.083 1.902-.143.271.586.702 1.084 1.24 1.438.54.354 1.167.551 1.813.568.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.225 1.261.272 1.893.143.636-.131 1.222-.437 1.69-.884.445-.47.749-1.055.878-1.688.131-.633.08-1.29-.139-1.896.587-.275 1.084-.706 1.438-1.246.355-.54.553-1.17.57-1.817zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/></svg>`;
+      }
+
+      function avatarRadius(user) {
+        return user.profile_image_shape === "Square" ? "4px" : "50%";
+      }
+
+      function xLogoSvg(color) {
+        return `<svg viewBox="0 0 24 24" width="20" height="20" fill="${color}"><path d="m21.742 21.75-7.563-11.179 7.056-8.321h-2.456l-5.691 6.714-4.54-6.714h-6.189l7.29 10.776-7.399 8.724h2.456l6.035-7.118 4.818 7.118h6.191zm-14.003-17.932 11.071 16.364h-2.447l-11.073-16.364h2.447z"/></svg>`;
+      }
+
+      function pickVideoUrl(videoInfo) {
+        if (!videoInfo || !videoInfo.variants) return null;
+        const mp4s = videoInfo.variants
+          .filter(v => v.content_type === "video/mp4" && v.bitrate != null)
+          .sort((a, b) => b.bitrate - a.bitrate);
+        return mp4s.length > 0 ? mp4s[0].url : null;
+      }
+
+      function buildMediaHTML(mediaDetails, tweetUrl) {
+        if (!mediaDetails || mediaDetails.length === 0) return "";
+
+        const photos = mediaDetails.filter(m => m.type === "photo");
+        const videos = mediaDetails.filter(m => m.type === "video" || m.type === "animated_gif");
+
+        if (videos.length > 0) {
+          const v = videos[0];
+          const videoUrl = pickVideoUrl(v.video_info);
+          const poster = v.media_url_https;
+          const isGif = v.type === "animated_gif";
+
+          if (videoUrl) {
+            const attrs = isGif
+              ? "autoplay loop muted playsinline"
+              : "controls playsinline preload=\"metadata\"";
+            return `<div class="te-md">\n    <video ${attrs} poster="${esc(poster)}" src="${esc(videoUrl)}" style="width:100%;display:block;background:#000"></video>\n  </div>`;
+          } else {
+            return `<div class="te-md"><a href="${esc(tweetUrl)}" target="_blank" rel="noopener"><img src="${esc(poster)}" alt="" loading="lazy" /></a></div>`;
+          }
+        } else if (photos.length === 1) {
+          return `<div class="te-md"><img src="${esc(photos[0].media_url_https)}" alt="" loading="lazy" /></div>`;
+        } else if (photos.length > 1) {
+          const cols = photos.length <= 2 ? "50%" : "calc(50% - 1px)";
+          const imgs = photos.slice(0, 4).map(p =>
+            `<img src="${esc(p.media_url_https)}" alt="" loading="lazy" style="width:${cols};object-fit:cover;aspect-ratio:1" />`
+          ).join("\n      ");
+          return `<div class="te-md" style="display:flex;flex-wrap:wrap;gap:2px">\n      ${imgs}\n  </div>`;
+        }
+        return "";
+      }
+
+      function buildQuotedTweetHTML(qt, theme, showMedia) {
+        if (!qt || !qt.user) return "";
+
+        const dk = theme === "dark";
+        const lnk = "#1d9bf0";
+
+        const name = esc(qt.user.name);
+        const handle = esc(qt.user.screen_name);
+        const avatar = (qt.user.profile_image_url_https || "").replace("_normal", "_x96");
+        const qtUrl = `https://x.com/${qt.user.screen_name}/status/${qt.id_str}`;
+        const badge = smallVerifiedSvg(qt.user, lnk);
+        const qtAvRadius = avatarRadius(qt.user);
+
+        let body = linkifyText(qt.text, qt.entities, qt.display_text_range);
+        body = body.replace(/(<br>\s*)+$/, "");
+
+        const bodyHtml = body.trim() ? `\n    <div class="te-qt-bd">${body}</div>` : "";
+
+        let mediaHtml = "";
+        if (showMedia && qt.mediaDetails && qt.mediaDetails.length > 0) {
+          const photos = qt.mediaDetails.filter(m => m.type === "photo");
+          if (photos.length === 1) {
+            mediaHtml = `\n    <div class="te-qt-md"><img src="${esc(photos[0].media_url_https)}" alt="" loading="lazy" /></div>`;
+          } else if (photos.length > 1) {
+            const cols = "calc(50% - 1px)";
+            const imgs = photos.slice(0, 4).map(p =>
+              `<img src="${esc(p.media_url_https)}" alt="" loading="lazy" style="width:${cols};object-fit:cover;aspect-ratio:1" />`
+            ).join("\n        ");
+            mediaHtml = `\n    <div class="te-qt-md" style="display:flex;flex-wrap:wrap;gap:2px">\n        ${imgs}\n    </div>`;
+          }
+        }
+
+        return `<a href="${esc(qtUrl)}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;display:block">
+  <div class="te-qt">
+    <div class="te-qt-hd">
+      <img class="te-qt-av" src="${esc(avatar)}" alt="" style="border-radius:${qtAvRadius}" />
+      <span class="te-qt-nm">${name} ${badge}</span>
+      <span class="te-qt-hn">@${handle}</span>
+    </div>${bodyHtml}${mediaHtml}
+  </div>
+  </a>`;
+      }
+
+      function buildParentTweetHTML(parent, theme) {
+        if (!parent || !parent.user) return "";
+
+        const dk = theme === "dark";
+        const fg = dk ? "#e7e9ea" : "#0f1419";
+        const sec = dk ? "#71767b" : "#536471";
+        const brd = dk ? "#2f3336" : "#cfd9de";
+        const threadLine = dk ? "#333639" : "#cfd9de";
+        const lnk = "#1d9bf0";
+
+        const name = esc(parent.user.name);
+        const handle = esc(parent.user.screen_name);
+        const avatar = (parent.user.profile_image_url_https || "").replace("_normal", "_x96");
+        const parentUrl = `https://x.com/${parent.user.screen_name}/status/${parent.id_str}`;
+        const badge = smallVerifiedSvg(parent.user, lnk);
+        const pAvRadius = avatarRadius(parent.user);
+
+        let body = linkifyText(parent.text, parent.entities, parent.display_text_range);
+        body = body.replace(/(<br>\s*)+$/, "");
+
+        return `<div class="te-parent">
+    <div class="te-parent-content">
+      <div class="te-parent-avwrap">
+        <a href="https://x.com/${handle}" target="_blank" rel="noopener"><img class="te-parent-av" src="${esc(avatar)}" alt="" style="border-radius:${pAvRadius}" /></a>
+        <div class="te-parent-line"></div>
+      </div>
+      <div class="te-parent-main">
+        <div class="te-parent-hd">
+          <span class="te-parent-nm"><a href="https://x.com/${handle}" target="_blank" rel="noopener">${name}</a> ${badge}</span>
+          <span class="te-parent-hn"><a href="https://x.com/${handle}" target="_blank" rel="noopener">@${handle}</a></span>
+        </div>
+        <div class="te-parent-bd"><a href="${esc(parentUrl)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${body}</a></div>
+      </div>
+    </div>
+  </div>`;
+      }
+
+      function buildEmbedHTML(tweet, theme, showMedia, showStats) {
+        const dk = theme === "dark";
+        const fg = dk ? "#e7e9ea" : "#0f1419";
+        const sec = dk ? "#71767b" : "#536471";
+        const brd = dk ? "#2f3336" : "#cfd9de";
+        const lnk = "#1d9bf0";
+        const logo = dk ? "#e7e9ea" : "#0f1419";
+
+        const name = esc(tweet.user.name);
+        const handle = esc(tweet.user.screen_name);
+        const avatar = (tweet.user.profile_image_url_https || "").replace("_normal", "_x96");
+        const tweetUrl = `https://x.com/${tweet.user.screen_name}/status/${tweet.id_str}`;
+
+        let body = linkifyText(tweet.text, tweet.entities, tweet.display_text_range);
+        body = body.replace(/(<br>\s*)+$/, "");
+
+        // parent tweet for replies
+        let parentHtml = "";
+        if (tweet.parent && tweet.parent.user) {
+          parentHtml = buildParentTweetHTML(tweet.parent, theme);
+        }
+
+        let mediaHtml = "";
+        if (showMedia) {
+          mediaHtml = buildMediaHTML(tweet.mediaDetails, tweetUrl);
+        }
+
+        // quoted tweet
+        let quoteHtml = "";
+        if (tweet.quoted_tweet) {
+          quoteHtml = buildQuotedTweetHTML(tweet.quoted_tweet, theme, showMedia);
+        }
+
+        const dateStr = fmtDate(tweet.created_at);
+
+        let statsHtml = "";
+        if (showStats) {
+          const parts = [];
+          if (tweet.conversation_count != null && tweet.conversation_count > 0)
+            parts.push(`<span class="st"><b>${fmtNum(tweet.conversation_count)}</b> Replies</span>`);
+          if (tweet.retweet_count != null && tweet.retweet_count > 0)
+            parts.push(`<span class="st"><b>${fmtNum(tweet.retweet_count)}</b> Reposts</span>`);
+          if (tweet.favorite_count != null && tweet.favorite_count > 0)
+            parts.push(`<span class="st"><b>${fmtNum(tweet.favorite_count)}</b> Likes</span>`);
+          if (parts.length) statsHtml = `\n  <div class="te-st">${parts.join("")}</div>`;
+        }
+
+        const badge = verifiedSvg(tweet.user, lnk);
+        const avRadius = avatarRadius(tweet.user);
+
+        const catSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="18" height="18" style="opacity:0.35"><path fill="${sec}" d="M10.478 22.439s.702 2.281-.337 7.993c-.186 1.025-.46 2.072-.599 2.93-1.757 0-1.851 2.002-1.478 2.002h2.094c1.337 0 2.971-3.334 3.854-7.961s-3.534-4.964-3.534-4.964m13.042 3.702s2.272 1.22 2.188 4.081c-.033 1.131-.249 2.091-.355 3.024-1.832 0-1.839 1.985-1.305 1.985h1.856c.923 0 3.001-3.158 3.379-7.281s-5.763-1.809-5.763-1.809"/><path fill="${sec}" d="M36 8.447C36 3.525 31.859 1 27 1a1 1 0 1 0 0 2c1.804 0 6.717.934 6.717 5.447 0 2.881-1.567 5.462-3.77 5.982-.164-.073-.345-.104-.509-.192-7.239-3.917-13.457.902-15.226-.29-1.752-1.182-.539-3.255-2.824-5.243-.33-1.841-1.073-4.477-1.794-4.477-.549 0-1.265 1.825-1.74 3.656-.591-1.381-1.363-2.756-1.86-2.756-.64 0-1.278 2.273-1.594 4.235-1.68 1.147-2.906 2.809-2.906 4.765 0 2.7 4.05 3.357 5.4 3.411s3.023 3.562 3.585 5.072c1.242 4.367 2.051 8.699 2.698 11.183-1.649 0-1.804 2.111-1.348 2.111.713 0 1.953-.003 2.225 0 1.381.014 2.026-4.706 2.026-8.849 0-.212-.011-.627-.011-.627s1.93.505 6.038-.208c2.444-.424 5.03.849 5.746 3.163.527 1.704 1.399 3.305 1.868 4.484-1.589 0-1.545 2.037-1.084 2.037.787 0 1.801.014 2.183 0 1.468-.055.643-7.574 1.03-10.097s1.267-5.578-.229-8.797C34.857 15.236 36 11.505 36 8.447"/><path fill="${sec}" d="M2.984 12.86c-.677.423-.677 1.777-1.015 1.777S.954 13.841.954 12.86c-.001-.981 2.862-.52 2.03 0"/></svg>`;
+
+        return `<div class="te">
+  ${parentHtml}<div class="te-hd">
+    <a href="https://x.com/${handle}" target="_blank" rel="noopener"><img class="te-av" src="${esc(avatar)}" alt="" style="border-radius:${avRadius}" /></a>
+    <div class="te-au">
+      <span class="te-nm"><a href="https://x.com/${handle}" target="_blank" rel="noopener">${name}</a> ${badge}</span>
+      <span class="te-hn"><a href="https://x.com/${handle}" target="_blank" rel="noopener">@${handle}</a></span>
+    </div>
+    <a href="${esc(tweetUrl)}" target="_blank" rel="noopener" style="color:inherit;margin-left:auto">${xLogoSvg(logo)}</a>
+  </div>
+  <div class="te-bd">${body}</div>
+  ${mediaHtml ? mediaHtml + "\n  " : ""}${quoteHtml ? quoteHtml + "\n  " : ""}<div class="te-mt"><a href="${esc(tweetUrl)}" target="_blank" rel="noopener">${dateStr}</a></div>${statsHtml}
+  <div class="te-wm"><a href="https://twitter.cat" target="_blank">${catSvg}</a></div>
+</div>`;
+      }
+
+      function buildEmbedCSS(theme) {
+        const dk = theme === "dark";
+        const bg = dk ? "#000" : "#fff";
+        const fg = dk ? "#e7e9ea" : "#0f1419";
+        const sec = dk ? "#71767b" : "#536471";
+        const brd = dk ? "#2f3336" : "#cfd9de";
+
+        return `.te {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: ${bg};
+  color: ${fg};
+  max-width: 550px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid ${brd};
+  position: relative;
+}
+.te .te-hd { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.te .te-av { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.te .te-au { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.te .te-nm { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 4px; }
+.te .te-nm a { color: inherit; text-decoration: none; }
+.te .te-hn { font-size: 14px; color: ${sec}; }
+.te .te-hn a { color: inherit; text-decoration: none; }
+.te .te-parent { margin-bottom: 4px; }
+.te .te-parent-content { display: flex; gap: 10px; }
+.te .te-parent-avwrap { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+.te .te-parent-av { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+.te .te-parent-line { width: 2px; flex: 1; min-height: 8px; background: ${brd}; margin-top: 4px; }
+.te .te-parent-main { min-width: 0; flex: 1; padding-bottom: 8px; }
+.te .te-parent-hd { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; flex-wrap: wrap; }
+.te .te-parent-nm { font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 3px; }
+.te .te-parent-nm a { color: inherit; text-decoration: none; }
+.te .te-parent-hn { font-size: 13px; color: ${sec}; }
+.te .te-parent-hn a { color: inherit; text-decoration: none; }
+.te .te-parent-bd { font-size: 14px; line-height: 1.4; color: ${sec}; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.te .te-bd { font-size: 15px; line-height: 1.45; white-space: pre-wrap; word-wrap: break-word; margin-bottom: 10px; }
+.te .te-bd a { color: #1d9bf0; text-decoration: none; }
+.te .te-md { border-radius: 12px; overflow: hidden; margin-bottom: 10px; border: 1px solid ${brd}; }
+.te .te-md img, .te .te-md video { width: 100%; display: block; }
+.te .te-md video { background: #000; }
+.te .te-qt { border: 1px solid ${brd}; border-radius: 12px; padding: 12px; margin-bottom: 10px; transition: background 0.15s; }
+.te .te-qt:hover { background: ${dk ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)"}; }
+.te .te-qt .te-qt-hd { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.te .te-qt .te-qt-av { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+.te .te-qt .te-qt-nm { font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 3px; }
+.te .te-qt .te-qt-nm a { color: inherit; text-decoration: none; }
+.te .te-qt .te-qt-hn { font-size: 13px; color: ${sec}; }
+.te .te-qt .te-qt-hn a { color: inherit; text-decoration: none; }
+.te .te-qt .te-qt-bd { font-size: 14px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
+.te .te-qt .te-qt-bd a { color: #1d9bf0; text-decoration: none; }
+.te .te-qt .te-qt-md { border-radius: 8px; overflow: hidden; margin-top: 8px; border: 1px solid ${brd}; }
+.te .te-qt .te-qt-md img { width: 100%; display: block; }
+.te .te-mt { font-size: 14px; color: ${sec}; padding-top: 10px; border-top: 1px solid ${brd}; }
+.te .te-mt a { color: inherit; text-decoration: none; }
+.te .te-st { display: flex; gap: 16px; padding-top: 10px; border-top: 1px solid ${brd}; margin-top: 10px; }
+.te .te-st .st { font-size: 14px; color: ${sec}; }
+.te .te-st .st b { color: ${fg}; font-weight: 700; }
+.te .te-wm { text-align: right; margin-top: 8px; }
+.te .te-wm a { color: #71767b; text-decoration: none; transition: filter 0.15s; display: block; position: absolute; right: 16px; bottom: 16px; }
+.te .te-wm a:hover { filter: brightness(1.5) }`;
+      }
+
+      function highlightCode(code, lang) {
+        try {
+          return hljs.highlight(code, { language: lang }).value;
+        } catch (e) {
+          return esc(code);
+        }
+      }
+
+      function render() {
+        if (!tweetData) return;
+        const showMedia = document.getElementById("opt-media").checked;
+        const showStats = document.getElementById("opt-stats").checked;
+
+        const html = buildEmbedHTML(tweetData, currentTheme, showMedia, showStats);
+        const css = buildEmbedCSS(currentTheme);
+
+        const dk = currentTheme === "dark";
+        previewFrame.style.background = dk ? "#000" : "#fff";
+        previewFrame.style.borderColor = dk ? "#2a2e31" : "#cfd9de";
+        previewFrame.style.width = "fit-content";
+        previewFrame.style.borderRadius = "12px";
+        previewFrame.innerHTML = `<style>${css}</style>${html}`;
+
+        let codeText, codeLang;
+        if (currentTab === "html") { codeText = html; codeLang = "xml"; }
+        else if (currentTab === "css") { codeText = css; codeLang = "css"; }
+        else { codeText = `<style>\n${css}\n</style>\n\n${html}`; codeLang = "xml"; }
+
+        codeOutput.innerHTML = highlightCode(codeText, codeLang);
+      }
+
+      function getCopyText() {
+        if (!tweetData) return "";
+        const showMedia = document.getElementById("opt-media").checked;
+        const showStats = document.getElementById("opt-stats").checked;
+        const html = buildEmbedHTML(tweetData, currentTheme, showMedia, showStats);
+        const css = buildEmbedCSS(currentTheme);
+        if (currentTab === "html") return html;
+        if (currentTab === "css") return css;
+        return `<style>\n${css}\n</style>\n\n${html}`;
+      }
+
+      async function fetchTweet(id) {
+        if (fetchController) fetchController.abort();
+        fetchController = new AbortController();
+
+        setStatus("fetching tweet...", "loading");
+
+        try {
+          const token = getToken(id);
+          const syndicationUrl = `https://cdn.syndication.twimg.com/tweet-result?id=${id}&token=${token}`;
+          const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(syndicationUrl)}`;
+
+          const res = await fetch(proxyUrl, {
+            signal: fetchController.signal,
+          });
+
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+          const text = await res.text();
+          if (!text || text.length < 10) throw new Error("empty response");
+
+          let data;
+          try { data = JSON.parse(text); } catch { throw new Error("invalid json"); }
+
+          if (data.__typename === "TweetTombstone" || data.tombstone) {
+            throw new Error("tombstone");
+          }
+
+          if (!data.user || !data.text) throw new Error("invalid response");
+
+          tweetData = data;
+          clearStatus();
+          subtitleEl.classList.add("hidden");
+          outputArea.classList.add("visible");
+          containerEl.classList.add("has-result");
+          render();
+        } catch (err) {
+          if (err.name === "AbortError") return;
+          tweetData = null;
+          outputArea.classList.remove("visible");
+          containerEl.classList.remove("has-result");
+
+          if (err.message === "tombstone") {
+            setStatus("tweet was deleted or is unavailable", "error");
+          } else if (err.message.includes("404")) {
+            setStatus("tweet not found", "error");
+          } else {
+            setStatus("failed to fetch tweet - try again", "error");
+          }
+        }
+      }
+
+      function handleInput() {
+        const val = input.value.trim();
+        clearBtn.classList.toggle("visible", val.length > 0);
+
+        if (!val) {
+          clearStatus();
+          subtitleEl.classList.remove("hidden");
+          outputArea.classList.remove("visible");
+          containerEl.classList.remove("has-result");
+          tweetData = null;
+          return;
+        }
+
+        const id = extractTweetId(val);
+        if (!id) {
+          setStatus("not a valid tweet id or url", "error");
+          outputArea.classList.remove("visible");
+          containerEl.classList.remove("has-result");
+          tweetData = null;
+          return;
+        }
+
+        fetchTweet(id)
+      }
+
+      input.addEventListener("input", handleInput);
+
+      input.addEventListener("paste", () => {
+        setTimeout(() => {
+          const val = input.value.trim();
+          const id = extractTweetId(val);
+          if (id && id !== val) input.value = id;
+          handleInput();
+        }, 0);
+      });
+
+      clearBtn.addEventListener("click", () => {
+        input.value = "";
+        handleInput();
+        input.focus();
+      });
+
+      document.querySelectorAll(".theme-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".theme-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentTheme = btn.dataset.theme;
+          render();
+        });
+      });
+
+      document.querySelectorAll(".code-tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".code-tab").forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+          currentTab = tab.dataset.tab;
+          
+          
+          const showMedia = document.getElementById("opt-media").checked;
+          const showStats = document.getElementById("opt-stats").checked;
+  
+          const html = buildEmbedHTML(tweetData, currentTheme, showMedia, showStats);
+          const css = buildEmbedCSS(currentTheme);
+  
+          let codeText, codeLang;
+          if (currentTab === "html") { codeText = html; codeLang = "xml"; }
+          else if (currentTab === "css") { codeText = css; codeLang = "css"; }
+          else { codeText = `<style>\n${css}\n</style>\n\n${html}`; codeLang = "xml"; }
+  
+          codeOutput.innerHTML = highlightCode(codeText, codeLang);
+        });
+      });
+
+      document.getElementById("opt-media").addEventListener("change", render);
+      document.getElementById("opt-stats").addEventListener("change", render);
+
+      copyBtn.addEventListener("click", async () => {
+        const text = getCopyText();
+        if (!text) return;
+
+        const svgCopy = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path></svg>`;
+        const svgCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.cssText = "position:fixed;left:-9999px";
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+        }
+
+        copyBtn.classList.add("copied");
+        copyBtn.innerHTML = `${svgCheck} Copied`;
+        setTimeout(() => {
+          copyBtn.classList.remove("copied");
+          copyBtn.innerHTML = `${svgCopy} Copy`;
+        }, 2000);
+      });
+    </script>
+  </body>
+</html>
