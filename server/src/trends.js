@@ -13,17 +13,7 @@ const queryOn = (conn, sql, ...params) =>
     conn.all(sql, ...params, (err, rows) => (err ? rej(err) : res(rows)));
   });
 
-const runOn = (conn, sql) =>
-  new Promise((res, rej) => {
-    conn.run(sql, (err) => (err ? rej(err) : res()));
-  });
-
 const query = (sql, ...params) => queryOn(pool[0], sql, ...params);
-
-for (const conn of pool) {
-  await runOn(conn, "INSTALL fts");
-  await runOn(conn, "LOAD fts");
-}
 
 function getGranularity(fromDate, toDate) {
   const days = (new Date(toDate) - new Date(fromDate)) / 86400000;
@@ -89,7 +79,7 @@ export default new Elysia({ prefix: "/trends" })
       const to = q.to || now;
       const lang = q.lang || "";
       const granularity = getGranularity(from, to);
-      const langClause = lang ? `AND ts.lang = '${lang.replace(/'/g, "''")}'` : "";
+      const langClause = lang ? `AND lang = '${lang.replace(/'/g, "''")}'` : "";
 
       const stream = new ReadableStream({
         async start(controller) {
@@ -115,12 +105,10 @@ export default new Elysia({ prefix: "/trends" })
             const termPromises = terms.map((term, ti) =>
               queryOn(
                 pool[ti % POOL_SIZE],
-                `SELECT date_trunc('${granularity}', ts.created_at)::DATE::VARCHAR as period, count(*)::INT as cnt
-                 FROM tweet_sample ts
-                 JOIN (SELECT *, fts_main_tweet_sample.match_bm25(id, ?) AS score FROM tweet_sample) fts
-                   ON ts.id = fts.id
-                 WHERE fts.score IS NOT NULL
-                   AND ts.created_at >= ?::timestamp AND ts.created_at < ?::timestamp
+                `SELECT date_trunc('${granularity}', created_at)::DATE::VARCHAR as period, count(*)::INT as cnt
+                 FROM tweet_sample
+                 WHERE contains(body_lower, lower(?))
+                   AND created_at >= ?::timestamp AND created_at < ?::timestamp
                    ${langClause}
                  GROUP BY 1 ORDER BY 1`,
                 term, from, to,
@@ -192,13 +180,11 @@ export default new Elysia({ prefix: "/trends" })
         terms.map((term, ti) =>
           queryOn(
             pool[ti % POOL_SIZE],
-            `SELECT ts.lang, count(*)::INT as cnt
-             FROM tweet_sample ts
-             JOIN (SELECT *, fts_main_tweet_sample.match_bm25(id, ?) AS score FROM tweet_sample) fts
-               ON ts.id = fts.id
-             WHERE fts.score IS NOT NULL
-               AND ts.created_at >= ?::timestamp AND ts.created_at < ?::timestamp
-               AND ts.lang IS NOT NULL AND ts.lang != '' AND ts.lang != 'und' AND ts.lang != 'zxx' AND ts.lang != 'qme'
+            `SELECT lang, count(*)::INT as cnt
+             FROM tweet_sample
+             WHERE contains(body_lower, lower(?))
+               AND created_at >= ?::timestamp AND created_at < ?::timestamp
+               AND lang IS NOT NULL AND lang != '' AND lang != 'und' AND lang != 'zxx' AND lang != 'qme'
              GROUP BY 1 ORDER BY 2 DESC LIMIT 10`,
             term, from, to,
           ),
