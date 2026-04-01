@@ -1,0 +1,1127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>trends / twitter.cat</title>
+    <link rel="icon" type="image/x-icon" href="/assets/svgs/face.svg" />
+    <meta itemprop="name" content="twitter (dot) cat" />
+    <meta name="description" content="explore what the world is tweeting" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="trends / twitter.cat" />
+    <meta name="twitter:site" content="@cvsilly_" />
+    <meta name="twitter:description" content="explore what the world is tweeting" />
+    <meta name="twitter:image" content="https://twitter.cat/assets/images/bouncing.gif" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.41" async></script>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html {
+        scrollbar-width: thin;
+        scrollbar-color: hsla(255 0 255 / 15%) #14171a;
+        overflow-x: hidden;
+        color-scheme: dark;
+      }
+      body {
+        padding-top: 64px;
+        margin: 0;
+        background-color: #14171a;
+        color: white;
+        font-family: "chirp", sans-serif;
+        font-size: 15px;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        display: flex;
+        flex-direction: column;
+        color-scheme: dark;
+        max-width: 100vw;
+        overflow-x: hidden;
+      }
+      header {
+        height: 64px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(180deg, rgba(20,23,26,1) 0%, rgba(20,23,26,0) 100%);
+        padding-left: 1rem;
+        padding-right: 1rem;
+        display: flex;
+        align-items: center;
+        z-index: 50;
+      }
+      header .logo {
+        display: block;
+        width: fit-content;
+        text-decoration: none;
+        transition: opacity 0.2s, transform 0.1s;
+      }
+      header .logo:hover { opacity: 0.8; }
+      header .logo:active { transform: scale(0.95); }
+      header .logo img { width: 34px; }
+      main {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 24px 28px 48px;
+        width: 100%;
+        transition: padding-top 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      main.initial { padding-top: 18vh; }
+      h1 {
+        font-weight: 500;
+        font-size: 19px;
+        line-height: 1.3;
+        color: #ffffff;
+        margin-bottom: 18px;
+        transition: margin-top 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      main.initial h1 { margin-top: 24px; }
+      .results-area {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+        opacity: 0;
+      }
+      .results-area.visible { grid-template-rows: 1fr; opacity: 1; }
+      .results-inner { overflow: hidden; }
+      .terms-box {
+        display: flex;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(62, 65, 68, 0.82);
+        border-bottom-left-radius: 0px;
+        border-bottom-right-radius: 0px;
+      }
+      .terms-list { flex: 1; min-width: 0; }
+      .term-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 16px;
+        height: 52px;
+        border-bottom: 1px solid rgba(62, 65, 68, 0.4);
+        background: #14171a;
+      }
+      .term-row:last-child { border-bottom: none; }
+      .term-row .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+      .term-row input {
+        flex: 1;
+        background: none;
+        border: none;
+        outline: none;
+        height: 100%;
+        color: #ffffff;
+        font: inherit;
+        font-size: 15px;
+        padding: 0;
+        caret-color: #1da1f2;
+        min-width: 0;
+      }
+      .term-row input::placeholder { color: #536471; }
+      .term-row .term-x {
+        display: none;
+        background: none;
+        border: none;
+        color: #536471;
+        cursor: pointer;
+        padding: 8px;
+        margin: -8px;
+        margin-right: -4px;
+        line-height: 0;
+        transition: color 0.12s, background 0.12s;
+        flex-shrink: 0;
+        border-radius: 50%;
+      }
+      .term-row .term-x:hover { color: #ffffff; background: rgba(255,255,255,0.1); }
+      .term-row .term-x svg { width: 16px; height: 16px; }
+      .term-row[data-removable] .term-x { display: flex; align-items: center; justify-content: center; }
+      .add-term-area {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-left: 1px solid rgba(62, 65, 68, 0.82);
+        cursor: pointer;
+        transition: background 0.12s;
+        user-select: none;
+        gap: 8px;
+        color: #71767a;
+        font-size: 14px;
+        padding: 0px;
+        width: 120px;
+      }
+      .add-term-area:hover { background: rgba(29, 161, 242, 0.1); color: #1da1f2; }
+      .add-term-area svg { width: 18px; height: 18px; }
+      .explore-btn {
+        background: #1da1f2;
+        border: none;
+        border-radius: 0px;
+        border-bottom-right-radius: 11px;
+        color: #ffffff;
+        font: inherit;
+        font-weight: 400;
+        padding: 0 24px;
+        height: 40px;
+        cursor: pointer;
+        transition: background 0.15s, transform 0.1s;
+        flex-shrink: 0;
+        width: 120px;
+      }
+      .explore-btn:hover { background: #1a8cd8; }
+      .explore-btn:active { transform: scale(0.97); }
+      .filters-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        border: 1px solid rgba(62, 65, 68, 0.82);
+        border-radius: 12px;
+        border-top-left-radius: 0px;
+        border-top-right-radius: 0px;
+        border-top: none;
+        background: #202327;
+      }
+      .dd-wrap { position: relative; display: inline-block; }
+      .dd-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #202327;
+        color: #e7e9ea;
+        font: inherit;
+        font-size: 13px;
+        padding: 8px 14px;
+        cursor: pointer;
+        transition: background 0.12s;
+        user-select: none;
+        white-space: nowrap;
+        border: none;
+        height: 100%;
+      }
+      .dd-trigger:hover { background: #2c2f33; }
+      .dd-trigger svg { width: 12px; height: 12px; color: #536471; transition: transform 0.15s; flex-shrink: 0; }
+      .dd-trigger.open svg { transform: rotate(180deg); }
+      .dd-panel {
+        display: none;
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        min-width: 220px;
+        max-height: 340px;
+        background: #202327;
+        border-radius: 12px;
+        overflow: hidden;
+        z-index: 100;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+        flex-direction: column;
+      }
+      .dd-panel.open { display: flex; }
+      .dd-search-wrap { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; }
+      .dd-search {
+        width: 100%;
+        background: #14171a;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        color: #e7e9ea;
+        font: inherit;
+        font-size: 13px;
+        padding: 8px 10px;
+        outline: none;
+        transition: border-color 0.15s;
+        caret-color: #1da1f2;
+      }
+      .dd-search:focus { border-color: rgba(29, 161, 242, 0.5); }
+      .dd-search::placeholder { color: #536471; }
+      .dd-list { overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; flex: 1; padding: 4px 0; }
+      .dd-opt {
+        padding: 10px 14px;
+        font-size: 14px;
+        color: #e7e9ea;
+        cursor: pointer;
+        transition: background 0.08s;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .dd-opt:hover { background: rgba(255,255,255,0.06); }
+      .dd-opt.active { color: #1da1f2; }
+      .dd-opt.active::after { content: ""; width: 6px; height: 6px; background: #1da1f2; border-radius: 50%; flex-shrink: 0; }
+      .dd-sep { height: 1px; background: rgba(255,255,255,0.06); margin: 4px 0; }
+      .custom-range-area {
+        display: none;
+        padding: 10px 14px 14px;
+        border-top: 1px solid rgba(255,255,255,0.06);
+        flex-direction: column;
+        gap: 10px;
+      }
+      .custom-range-area.open { display: flex; }
+      .custom-range-area label { font-size: 12px; color: #71767a; }
+      .custom-range-area .cr-row { display: flex; gap: 8px; align-items: center; }
+      .custom-range-area .cr-input {
+        flex: 1;
+        background: #14171a;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 6px;
+        color: #e7e9ea;
+        font: inherit;
+        font-size: 12px;
+        padding: 6px 8px;
+        outline: none;
+        caret-color: #1da1f2;
+      }
+      .custom-range-area .cr-input:focus { border-color: rgba(29, 161, 242, 0.5); }
+      .custom-range-area .cr-apply {
+        background: #1da1f2;
+        border: none;
+        border-radius: 6px;
+        color: #fff;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 500;
+        padding: 7px 14px;
+        cursor: pointer;
+        transition: background 0.12s;
+        align-self: flex-end;
+      }
+      .custom-range-area .cr-apply:hover { background: #1a8cd8; }
+      .chart-box {
+        position: relative;
+        border: 1px solid rgba(62, 65, 68, 0.82);
+        border-radius: 12px;
+        min-height: 300px;
+        overflow: hidden;
+        border-bottom-left-radius: 0px;
+        border-bottom-right-radius: 0px;
+      }
+      .chart-wrap { height: 300px; position: relative; padding: 14px; }
+      #chart { display: none; }
+      .chart-loader {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 5;
+      }
+      .chart-loader.on { display: flex; }
+      .chart-loader svg { width: 32px; height: 32px; color: #71767a; animation: spin 0.8s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .chart-foot {
+        display: flex;
+        margin-bottom: 28px;
+        user-select: none;
+        border: 1px solid rgba(62, 65, 68, 0.82);
+        border-radius: 12px;
+        border-top: none;
+        border-top-left-radius: 0px;
+        border-top-right-radius: 0px;
+        height: 48px;
+        overflow: hidden;
+      }
+      .share-btn {
+        background: none;
+        border: none;
+        color: #72757b;
+        font: inherit;
+        font-size: 13px;
+        cursor: pointer;
+        user-select: none;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        transition: background-color 0.2s, color 0.2s;
+      }
+      .share-btn svg { width: 18px; }
+      .share-btn:hover { background-color: rgba(255,255,255,0.05); color: white; }
+      .embed-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s;
+        pointer-events: none;
+      }
+      .embed-modal-overlay.open { opacity: 1; pointer-events: auto; }
+      .embed-modal {
+        background: #202327;
+        border: 1px solid rgba(62, 65, 68, 0.82);
+        border-radius: 16px;
+        padding: 24px;
+        max-width: 640px;
+        width: 90%;
+        transform: scale(0.95);
+        transition: transform 0.2s;
+      }
+      .embed-modal-overlay.open .embed-modal { transform: scale(1); }
+      .embed-modal h3 { font-size: 16px; font-weight: 500; margin-bottom: 12px; }
+      .embed-modal textarea {
+        width: 100%;
+        background: #14171a;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        color: #e7e9ea;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        padding: 12px;
+        resize: vertical;
+        height: 72px;
+        outline: none;
+        word-break: break-all;
+      }
+      .embed-modal textarea:focus { border-color: rgba(29, 161, 242, 0.5); }
+      .embed-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; }
+      .embed-modal-actions button {
+        background: #1da1f2;
+        border: none;
+        border-radius: 8px;
+        color: #fff;
+        font: inherit;
+        font-size: 13px;
+        padding: 8px 18px;
+        cursor: pointer;
+        transition: background 0.12s;
+      }
+      .embed-modal-actions button:hover { background: #1a8cd8; }
+      .embed-modal-actions button.secondary { background: transparent; border: 1px solid rgba(62, 65, 68, 0.82); color: #e7e9ea; }
+      .embed-modal-actions button.secondary:hover { background: rgba(255,255,255,0.06); }
+      .copied-toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: #1da1f2;
+        color: #fff;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-size: 13px;
+        opacity: 0;
+        transition: opacity 0.2s, transform 0.2s;
+        z-index: 1100;
+        pointer-events: none;
+      }
+      .copied-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+      .section-title { font-size: 16px; font-weight: 400; color: #ffffff; margin-bottom: 12px; letter-spacing: 0.02em; }
+      .langs { display: none; }
+      .langs.on { display: block; }
+      .lang-block { margin-bottom: 16px; }
+      .lang-block:last-child { margin-bottom: 0; }
+      .lang-hdr { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+      .lang-hdr .hdot { width: 6px; height: 6px; border-radius: 50%; }
+      .lang-hdr span { font-size: 13px; font-weight: 500; color: #ffffff; }
+      .lr { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+      .lr:last-child { border-bottom: none; }
+      .lr-code { width: 26px; font-size: 13px; font-weight: 500; color: #ffffff; text-transform: uppercase; flex-shrink: 0; }
+      .lr-track { flex: 1; height: 14px; background: rgba(62, 65, 68, 0.3); border-radius: 3px; overflow: hidden; }
+      .lr-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
+      .lr-pct { width: 44px; text-align: right; font-size: 12px; color: #71767a; flex-shrink: 0; }
+      .sk {
+        display: inline-block;
+        background: linear-gradient(90deg, rgba(62,65,68,0.15) 0%, rgba(62,65,68,0.35) 50%, rgba(62,65,68,0.15) 100%);
+        background-size: 200% 100%;
+        border-radius: 3px;
+        animation: shimmer 1.5s infinite linear;
+      }
+      @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+      .cap-loading-indicator {
+        position: fixed;
+        inset: 0;
+        background: rgba(20,23,26,0.85);
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .cap-loading-indicator > div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        color: #e7e9ea;
+        font-size: 15px;
+      }
+      .cap-loading-indicator .desc { font-size: 13px; color: #71767a; }
+      @media (max-width: 640px) {
+        main { padding: 16px 16px 32px; }
+        main.initial { padding-top: 12vh; }
+        .chart-wrap { height: 220px; }
+        h1 { font-size: 18px; }
+        .terms-box { flex-direction: column; }
+        .add-term-area { border-left: none; border-top: 1px solid rgba(62, 65, 68, 0.4); min-height: 46px; width: 100%; }
+      }
+      @font-face { font-family: "chirp"; src: url("https://twitter.cat/assets/fonts/chirp.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+      @font-face { font-family: "chirp"; src: url("https://twitter.cat/assets/fonts/chirpmedium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+      @font-face { font-family: "chirp"; src: url("https://twitter.cat/assets/fonts/chirpbold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+      @font-face { font-family: "chirp"; src: url("https://twitter.cat/assets/fonts/chirpheavy.woff2") format("woff2"); font-weight: 900; font-display: swap; font-style: normal; }
+      @font-face { font-family: "IBM Plex Mono"; src: url("https://twitter.cat/assets/fonts/ibm-plex-mono.woff2") format("woff2"); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="/" class="logo" draggable="false">
+        <img src="/assets/svgs/face.svg" draggable="false" />
+      </a>
+    </header>
+
+    <main class="initial">
+      <h1>Explore what the world is tweeting right now</h1>
+
+      <div class="terms-box" id="terms-box">
+        <div class="terms-list" id="terms-list">
+          <div class="term-row" data-index="0">
+            <span class="dot" style="background: #1ea1f0"></span>
+            <input type="text" placeholder="Search term" autocomplete="off" spellcheck="false" autofocus />
+            <button class="term-x">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="add-term-area" id="btn-add">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          <span>Compare</span>
+        </div>
+      </div>
+
+      <div class="filters-row">
+        <div class="dd-wrap" id="time-wrap">
+          <button class="dd-trigger" id="time-btn" style="border-right: 1px solid rgba(62, 65, 68, 0.82); border-bottom-left-radius: 11px">
+            Past 2 years
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="dd-panel" id="time-dd">
+            <div class="dd-list" id="time-list"></div>
+            <div class="custom-range-area" id="cr-area">
+              <label>Custom date range</label>
+              <div class="cr-row">
+                <input type="date" class="cr-input" id="cr-from" />
+                <span style="color: #536471; font-size: 12px">to</span>
+                <input type="date" class="cr-input" id="cr-to" />
+              </div>
+              <button class="cr-apply" id="cr-apply">Apply</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="dd-wrap" id="lang-wrap">
+          <button class="dd-trigger" id="lang-btn">
+            All languages
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="dd-panel" id="lang-dd">
+            <div class="dd-search-wrap">
+              <input class="dd-search" id="lang-search" type="text" placeholder="Search languages..." autocomplete="off" spellcheck="false" />
+            </div>
+            <div class="dd-list" id="lang-list"></div>
+          </div>
+        </div>
+
+        <button class="explore-btn" id="btn-go" style="margin-left: auto">Explore</button>
+      </div>
+
+      <div class="results-area" id="results-area">
+        <div class="results-inner">
+          <div class="chart-box">
+            <div class="chart-loader" id="loader">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"/></svg>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="chart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-foot">
+            <button class="share-btn" id="btn-csv" style="border-right: 1px solid rgba(62, 65, 68, 0.82)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"/><path d="M7 11l5 5l5 -5"/><path d="M12 4l0 12"/></svg>
+              Download CSV
+            </button>
+            <button class="share-btn" id="btn-share-img" style="border-right: 1px solid rgba(62, 65, 68, 0.82)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M13 4v4c-6.575 1.028 -9.02 6.788 -10 12c-.037 .206 5.384 -5.962 10 -6v4l8 -7l-8 -7"/></svg>
+              Share image
+            </button>
+            <button class="share-btn" id="btn-embed">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 8l-4 4l4 4"/><path d="M17 8l4 4l-4 4"/><path d="M14 4l-4 16"/></svg>
+              Embed
+            </button>
+          </div>
+
+          <div class="langs" id="langs">
+            <div class="section-title">Top languages</div>
+            <div id="lg"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="embed-modal-overlay" id="embed-overlay">
+        <div class="embed-modal">
+          <h3>Embed this chart</h3>
+          <div id="embed-preview" style="margin-bottom: 14px; border-radius: 10px; overflow: hidden; border: 1px solid rgba(62, 65, 68, 0.82);"></div>
+          <textarea id="embed-code" readonly></textarea>
+          <div class="embed-modal-actions">
+            <button class="secondary" id="embed-close">Close</button>
+            <button id="embed-copy">Copy code</button>
+          </div>
+        </div>
+      </div>
+      <div class="copied-toast" id="copied-toast">Copied to clipboard</div>
+    </main>
+
+    <input type="hidden" id="d-from" />
+    <input type="hidden" id="d-to" />
+
+    <script>
+      const SESSION_STORAGE_KEY = "twittercat_session";
+      const SESSION_REFRESH_BUFFER_MS = 5 * 60 * 1000;
+      const MAX_SEARCHES = 20;
+
+      let sessionPromise = null;
+      let currentSession = null;
+
+      function getStoredSession() {
+        try {
+          const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+          if (!stored) return null;
+          const session = JSON.parse(stored);
+          if (!session.token || !session.expires) return null;
+          if (Date.now() >= session.expires - SESSION_REFRESH_BUFFER_MS) {
+            localStorage.removeItem(SESSION_STORAGE_KEY);
+            return null;
+          }
+          if (typeof session.searchCount !== "number") session.searchCount = 0;
+          if (session.searchCount >= MAX_SEARCHES) {
+            localStorage.removeItem(SESSION_STORAGE_KEY);
+            return null;
+          }
+          return session;
+        } catch {
+          localStorage.removeItem(SESSION_STORAGE_KEY);
+          return null;
+        }
+      }
+
+      function storeSession(session) {
+        localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+        currentSession = session;
+      }
+
+      function incrementSearchCount() {
+        if (currentSession) {
+          currentSession.searchCount = (currentSession.searchCount || 0) + 1;
+          storeSession(currentSession);
+        }
+      }
+
+      function showInterstitial() {
+        let interstitial = document.querySelector(".cap-loading-indicator");
+        if (interstitial) return interstitial;
+        interstitial = document.createElement("div");
+        interstitial.className = "cap-loading-indicator";
+        const container = document.createElement("div");
+        container.innerHTML = '<style>@keyframes spin {to{transform:rotate(360deg)}}</style><svg style="animation:spin .7s linear infinite" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a9 9 0 1 0 9 9" /></svg><span style="font-weight:500">making sure you\'re not a bot!</span><span class="desc">this might take a few seconds</span>';
+        interstitial.appendChild(container);
+        document.body.appendChild(interstitial);
+        return interstitial;
+      }
+
+      function hideInterstitial() {
+        const el = document.querySelector(".cap-loading-indicator");
+        if (el) el.remove();
+      }
+
+      async function createNewSession(apiUrl, showUI = true) {
+        if (showUI) showInterstitial();
+        try {
+          const cap = new window.Cap({ apiEndpoint: "https://cap.tiago.zip/c18a824a18/" });
+          const { token: capToken } = await cap.solve();
+          const response = await fetch(apiUrl + "/cap/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ capToken }),
+          });
+          const result = await response.json();
+          if (!result.success || !result.sessionToken) throw new Error(result.error || "Failed to create session");
+          const session = { token: result.sessionToken, expires: result.expires, searchCount: 0 };
+          storeSession(session);
+          return session;
+        } finally {
+          if (showUI) hideInterstitial();
+        }
+      }
+
+      async function ensureSession(apiUrl) {
+        if (currentSession && Date.now() < currentSession.expires - SESSION_REFRESH_BUFFER_MS) {
+          if ((currentSession.searchCount || 0) >= MAX_SEARCHES) {
+            invalidateSession();
+          } else {
+            return currentSession.token;
+          }
+        }
+        const stored = getStoredSession();
+        if (stored) { currentSession = stored; return stored.token; }
+        if (sessionPromise) {
+          showInterstitial();
+          try { const session = await sessionPromise; if (session) return session.token; } finally { hideInterstitial(); }
+        }
+        sessionPromise = createNewSession(apiUrl, true);
+        try { const session = await sessionPromise; return session.token; } finally { sessionPromise = null; }
+      }
+
+      function startSessionCreation(apiUrl) {
+        const stored = getStoredSession();
+        if (stored) { currentSession = stored; return; }
+        if (!sessionPromise) {
+          sessionPromise = createNewSession(apiUrl, false).catch(() => null).finally(() => { sessionPromise = null; });
+        }
+      }
+
+      function invalidateSession() {
+        currentSession = null;
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+      }
+
+      const COLORS = ["#1EA1F0", "#F4222D", "#FFD400", "#00BA7C", "#794BC4"];
+      const X_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>';
+      let chart = null, sse = null, terms = [], labels = [], lastNormalized = null, hasSearched = false;
+      let selectedLang = "";
+      const $ = (id) => document.getElementById(id);
+
+      const TIME_PRESETS = [
+        { label: "Past 7 days", from: () => ago(7) },
+        { label: "Past 30 days", from: () => ago(30) },
+        { label: "Past 90 days", from: () => ago(90) },
+        { label: "Past year", from: () => ago(365.25) },
+        { label: "Past 2 years", from: () => ago(2 * 365.25) },
+        { label: "Past 5 years", from: () => ago(5 * 365.25) },
+        { label: "All time", from: () => "2006-01-01" },
+      ];
+      const DEFAULT_PRESET = 4;
+      let activePreset = DEFAULT_PRESET;
+
+      function ago(days) { return new Date(Date.now() - days * 86400000).toISOString().slice(0, 10); }
+      function today() { return new Date().toISOString().slice(0, 10); }
+
+      function applyPreset(idx) {
+        activePreset = idx;
+        const p = TIME_PRESETS[idx];
+        $("d-from").value = p.from();
+        $("d-to").value = today();
+        $("time-btn").childNodes[0].textContent = p.label + " ";
+        $("cr-area").classList.remove("open");
+        renderTimeList();
+      }
+
+      function applyCustomRange() {
+        const f = $("cr-from").value, t = $("cr-to").value;
+        if (!f || !t) return;
+        activePreset = -1;
+        $("d-from").value = f;
+        $("d-to").value = t;
+        $("time-btn").childNodes[0].textContent = f + " to " + t + " ";
+        closeDD("time");
+        re();
+      }
+
+      function renderTimeList() {
+        const list = $("time-list");
+        list.innerHTML = "";
+        TIME_PRESETS.forEach((p, i) => {
+          const el = document.createElement("div");
+          el.className = "dd-opt" + (activePreset === i ? " active" : "");
+          el.textContent = p.label;
+          el.addEventListener("click", () => { applyPreset(i); closeDD("time"); re(); });
+          list.appendChild(el);
+        });
+        const sep = document.createElement("div");
+        sep.className = "dd-sep";
+        list.appendChild(sep);
+        const custom = document.createElement("div");
+        custom.className = "dd-opt" + (activePreset === -1 ? " active" : "");
+        custom.textContent = "Custom time range...";
+        custom.addEventListener("click", () => {
+          $("cr-area").classList.toggle("open");
+          if ($("cr-area").classList.contains("open")) {
+            $("cr-from").value = $("d-from").value;
+            $("cr-to").value = $("d-to").value;
+          }
+        });
+        list.appendChild(custom);
+      }
+
+      applyPreset(DEFAULT_PRESET);
+      renderTimeList();
+      $("cr-apply").addEventListener("click", applyCustomRange);
+
+      function openDD(name) {
+        $(name + "-dd").classList.add("open");
+        $(name + "-btn").classList.add("open");
+        if (name === "lang") { $("lang-search").value = ""; renderLangList(""); requestAnimationFrame(() => $("lang-search").focus()); }
+        if (name === "time") renderTimeList();
+      }
+      function closeDD(name) {
+        $(name + "-dd").classList.remove("open");
+        $(name + "-btn").classList.remove("open");
+        if (name === "time") $("cr-area").classList.remove("open");
+      }
+      function toggleDD(name) { $(name + "-dd").classList.contains("open") ? closeDD(name) : openDD(name); }
+
+      $("time-btn").addEventListener("click", (e) => { e.stopPropagation(); toggleDD("time"); });
+      $("lang-btn").addEventListener("click", (e) => { e.stopPropagation(); toggleDD("lang"); });
+      document.addEventListener("click", (e) => {
+        if (!$("time-wrap").contains(e.target)) closeDD("time");
+        if (!$("lang-wrap").contains(e.target)) closeDD("lang");
+      });
+
+      const allLangs = [];
+
+      function renderLangList(filter) {
+        const list = $("lang-list");
+        list.innerHTML = "";
+        const q = (filter || "").toLowerCase();
+        if (!q || "all languages".includes(q)) {
+          const allOpt = document.createElement("div");
+          allOpt.className = "dd-opt" + (selectedLang === "" ? " active" : "");
+          allOpt.textContent = "All languages";
+          allOpt.addEventListener("click", () => selectLang("", "All languages"));
+          list.appendChild(allOpt);
+        }
+        for (const lang of allLangs) {
+          if (q && !lang.toLowerCase().includes(q)) continue;
+          const el = document.createElement("div");
+          el.className = "dd-opt" + (selectedLang === lang ? " active" : "");
+          el.textContent = lang;
+          el.addEventListener("click", () => selectLang(lang, lang));
+          list.appendChild(el);
+        }
+      }
+
+      function selectLang(val, label) {
+        selectedLang = val;
+        $("lang-btn").childNodes[0].textContent = label + " ";
+        closeDD("lang");
+        re();
+      }
+
+      $("lang-search").addEventListener("input", (e) => renderLangList(e.target.value));
+      $("lang-search").addEventListener("click", (e) => e.stopPropagation());
+
+      const termsList = $("terms-list");
+      function termRows() { return [...termsList.querySelectorAll(".term-row")]; }
+      function getTerms() { return termRows().map(r => r.querySelector("input").value.trim()).filter(Boolean); }
+
+      function makeTermRow(idx, val = "") {
+        const el = document.createElement("div");
+        el.className = "term-row";
+        el.dataset.index = idx;
+        if (idx > 0) el.setAttribute("data-removable", "");
+        el.innerHTML = '<span class="dot" style="background:' + COLORS[idx] + '"></span><input type="text" placeholder="Search term" autocomplete="off" spellcheck="false" value="' + val + '" /><button class="term-x">' + X_SVG + '</button>';
+        el.querySelector("input").addEventListener("keydown", (e) => { if (e.key === "Enter") explore(); });
+        el.querySelector(".term-x").addEventListener("click", () => { el.remove(); reindexTerms(); });
+        return el;
+      }
+
+      function reindexTerms() {
+        termRows().forEach((r, i) => {
+          r.dataset.index = i;
+          r.querySelector(".dot").style.background = COLORS[i];
+          if (i === 0) r.removeAttribute("data-removable"); else r.setAttribute("data-removable", "");
+        });
+      }
+
+      termsList.querySelector(".term-row input").addEventListener("keydown", (e) => { if (e.key === "Enter") explore(); });
+      $("btn-add").addEventListener("click", () => {
+        const rows = termRows();
+        if (rows.length >= 5) return;
+        const row = makeTermRow(rows.length);
+        termsList.appendChild(row);
+        row.querySelector("input").focus();
+      });
+
+      function buildChart(lbs, ds) {
+        $("chart").style.display = "block";
+        if (chart) chart.destroy();
+        chart = new Chart($("chart").getContext("2d"), {
+          type: "line",
+          data: {
+            labels: lbs,
+            datasets: ds.map((d, i) => ({
+              label: d.term,
+              data: d.data,
+              borderColor: COLORS[i % COLORS.length],
+              backgroundColor: COLORS[i % COLORS.length] + "10",
+              fill: true,
+              tension: 0.3,
+              pointRadius: 0,
+              pointHoverRadius: 3,
+              borderWidth: 1.5,
+            })),
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 350, easing: "easeOutQuart" },
+            interaction: { mode: "index", intersect: false },
+            scales: {
+              y: { min: 0, max: 105, ticks: { callback: v => v <= 100 ? v : "", stepSize: 25, color: "#536471", font: { size: 11 } }, grid: { color: "rgba(62,65,68,0.25)" }, border: { display: false } },
+              x: { ticks: { maxTicksLimit: 8, color: "#536471", font: { size: 11 } }, grid: { display: false }, border: { display: false } },
+            },
+            plugins: {
+              legend: { display: ds.length > 1, position: "top", align: "start", labels: { usePointStyle: true, pointStyle: "circle", color: "#FFFFFF", font: { size: 12 }, padding: 14, boxWidth: 7, boxHeight: 7 } },
+              tooltip: { mode: "index", intersect: false, backgroundColor: "#202327", borderColor: "rgba(62,65,68,0.82)", borderWidth: 1, titleColor: "#71767A", bodyColor: "#FFFFFF", titleFont: { size: 11 }, bodyFont: { size: 12, weight: 500 }, padding: 8, cornerRadius: 8, displayColors: true, boxWidth: 7, boxHeight: 7, boxPadding: 4, callbacks: { label: ctx => " " + ctx.dataset.label + "  " + ctx.parsed.y.toFixed(2) } },
+            },
+          },
+        });
+      }
+
+      function showLangSkel(ts) {
+        const g = $("lg");
+        g.innerHTML = "";
+        $("langs").classList.add("on");
+        for (let i = 0; i < ts.length; i++) {
+          const b = document.createElement("div");
+          b.className = "lang-block";
+          b.innerHTML = '<div class="lang-hdr"><div class="hdot" style="background:' + COLORS[i] + '"></div><span>' + ts[i] + '</span></div>' +
+            Array.from({ length: 4 }, () => '<div style="display:flex;align-items:center;gap:8px;padding:4px 0"><div class="sk" style="width:26px;height:14px"></div><div class="sk" style="flex:1;height:14px"></div><div class="sk" style="width:44px;height:14px"></div></div>').join("");
+          g.appendChild(b);
+        }
+      }
+
+      function revealResults() {
+        if (hasSearched) return;
+        hasSearched = true;
+        document.querySelector("main").classList.remove("initial");
+        requestAnimationFrame(() => { $("results-area").classList.add("visible"); });
+      }
+
+      let API_URL;
+
+      (async () => {
+        API_URL = window.API_URL || (await import("./js/config.js").then(({ API_URL }) => API_URL));
+        startSessionCreation(API_URL);
+
+        const token = await ensureSession(API_URL);
+        fetch(API_URL + "/trends/languages/all?s=" + encodeURIComponent(token))
+          .then(r => r.json())
+          .then(ls => {
+            if (ls.error) return;
+            for (const { lang } of ls) {
+              if (!lang) continue;
+              allLangs.push(lang);
+            }
+            renderLangList("");
+          })
+          .catch(() => {});
+      })();
+
+      async function explore() {
+        const ts = getTerms();
+        if (!ts.length) return;
+        if (sse) { sse.close(); sse = null; }
+
+        revealResults();
+        $("loader").classList.add("on");
+        $("chart").style.display = "none";
+        if (chart) { chart.destroy(); chart = null; }
+        showLangSkel(ts);
+
+        const sessionToken = await ensureSession(API_URL);
+        incrementSearchCount();
+
+        const p = new URLSearchParams({
+          terms: ts.join(","),
+          from: $("d-from").value,
+          to: $("d-to").value,
+          s: sessionToken,
+        });
+        if (selectedLang) p.set("lang", selectedLang);
+
+        terms = ts;
+
+        const src = new EventSource(API_URL + "/trends/stream?" + p);
+        sse = src;
+
+        src.addEventListener("init", (e) => {
+          const d = JSON.parse(e.data);
+          labels = d.labels;
+        });
+
+        src.addEventListener("done", (e) => {
+          const d = JSON.parse(e.data);
+          lastNormalized = d.normalized;
+          $("loader").classList.remove("on");
+          buildChart(labels, ts.map((t, i) => ({ term: t, data: d.normalized[i] })));
+          src.close();
+          sse = null;
+          fetchLangs(ts, sessionToken);
+        });
+
+        src.addEventListener("error", () => {
+          $("loader").classList.remove("on");
+          src.close();
+          sse = null;
+        });
+        src.onerror = () => {
+          $("loader").classList.remove("on");
+          src.close();
+          sse = null;
+        };
+      }
+
+      async function fetchLangs(ts, sessionToken) {
+        const p = new URLSearchParams({
+          terms: ts.join(","),
+          from: $("d-from").value,
+          to: $("d-to").value,
+          s: sessionToken,
+        });
+        try {
+          const res = await fetch(API_URL + "/trends/languages?" + p);
+          const data = await res.json();
+          const g = $("lg");
+          g.innerHTML = "";
+          $("langs").classList.add("on");
+          for (let ti = 0; ti < data.length; ti++) {
+            const { term, languages } = data[ti];
+            const color = COLORS[ti % COLORS.length];
+            const max = languages.length ? languages[0].pct : 1;
+            const block = document.createElement("div");
+            block.className = "lang-block";
+            block.innerHTML = '<div class="lang-hdr"><div class="hdot" style="background:' + color + '"></div><span>' + term + '</span></div>';
+            for (const r of languages) {
+              const el = document.createElement("div");
+              el.className = "lr";
+              el.innerHTML = '<span class="lr-code">' + r.lang + '</span><div class="lr-track"><div class="lr-fill" style="width:' + (r.pct / max) * 100 + '%;background:' + color + '"></div></div><span class="lr-pct">' + r.pct + '%</span>';
+              block.appendChild(el);
+            }
+            g.appendChild(block);
+          }
+        } catch {}
+      }
+
+      async function renderBrandedCanvas() {
+        if (!chart) return null;
+        const src = chart.toBase64Image("image/png", 2);
+        const ci = new Image();
+        ci.src = src;
+        await new Promise(r => { ci.onload = r; });
+        const px = 24, pt = 24, pb = 80;
+        const w = ci.width + px * 2, h = ci.height + pt + pb;
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        const x = c.getContext("2d");
+        x.fillStyle = "#14171A";
+        x.fillRect(0, 0, w, h);
+        x.drawImage(ci, px, pt);
+        const k = new Image();
+        k.src = "/assets/svgs/face.svg";
+        await new Promise(r => { k.onload = r; });
+        const ks = 44;
+        const tc = document.createElement("canvas");
+        tc.width = ks; tc.height = ks;
+        const tx = tc.getContext("2d");
+        tx.drawImage(k, 0, 0, ks, ks);
+        const id = tx.getImageData(0, 0, ks, ks);
+        const d = id.data;
+        for (let i = 0; i < d.length; i += 4) {
+          if (d[i + 3] > 0) { d[i] = 0x1d; d[i + 1] = 0xa1; d[i + 2] = 0xf2; }
+        }
+        tx.putImageData(id, 0, 0);
+        x.drawImage(tc, w - px - ks, h - pb + 16, ks, ks);
+        return c;
+      }
+
+      async function exportImg() {
+        const c = await renderBrandedCanvas();
+        if (!c) return;
+        c.toBlob(blob => {
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = "trends-" + terms.join("-") + "-" + new Date().toISOString().slice(0, 10) + ".png";
+          a.click();
+          URL.revokeObjectURL(a.href);
+        }, "image/png");
+      }
+
+      function downloadCSV() {
+        if (!chart || !labels.length || !lastNormalized) return;
+        const header = ["Date", ...terms].join(",");
+        const rows = labels.map((lbl, i) => [lbl, ...lastNormalized.map(n => n[i])].join(","));
+        const csv = [header, ...rows].join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "trends-" + terms.join("-") + "-" + new Date().toISOString().slice(0, 10) + ".csv";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+
+      function showToast(msg) {
+        const t = $("copied-toast");
+        t.textContent = msg || "Copied to clipboard";
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 2000);
+      }
+
+      function buildEmbedHTML() {
+        if (!chart || !labels.length || !lastNormalized || !terms.length) return null;
+        const W = 700, chartH = 260, padL = 44, padR = 16, padT = 44, padB = 32;
+        const plotW = W - padL - padR, plotH = chartH - padT - padB;
+        const n = labels.length;
+        const kittySvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="28" height="28"><path fill="#1DA1F2" d="M10.478 22.439s.702 2.281-.337 7.993c-.186 1.025-.46 2.072-.599 2.93-1.757 0-1.851 2.002-1.478 2.002h2.094c1.337 0 2.971-3.334 3.854-7.961s-3.534-4.964-3.534-4.964m13.042 3.702s2.272 1.22 2.188 4.081c-.033 1.131-.249 2.091-.355 3.024-1.832 0-1.839 1.985-1.305 1.985h1.856c.923 0 3.001-3.158 3.379-7.281s-5.763-1.809-5.763-1.809"/><path fill="#1DA1F2" d="M36 8.447C36 3.525 31.859 1 27 1a1 1 0 1 0 0 2c1.804 0 6.717.934 6.717 5.447 0 2.881-1.567 5.462-3.77 5.982-.164-.073-.345-.104-.509-.192-7.239-3.917-13.457.902-15.226-.29-1.752-1.182-.539-3.255-2.824-5.243-.33-1.841-1.073-4.477-1.794-4.477-.549 0-1.265 1.825-1.74 3.656-.591-1.381-1.363-2.756-1.86-2.756-.64 0-1.278 2.273-1.594 4.235-1.68 1.147-2.906 2.809-2.906 4.765 0 2.7 4.05 3.357 5.4 3.411s3.023 3.562 3.585 5.072c1.242 4.367 2.051 8.699 2.698 11.183-1.649 0-1.804 2.111-1.348 2.111.713 0 1.953-.003 2.225 0 1.381.014 2.026-4.706 2.026-8.849 0-.212-.011-.627-.011-.627s1.93.505 6.038-.208c2.444-.424 5.03.849 5.746 3.163.527 1.704 1.399 3.305 1.868 4.484-1.589 0-1.545 2.037-1.084 2.037.787 0 1.801.014 2.183 0 1.468-.055.643-7.574 1.03-10.097s1.267-5.578-.229-8.797C34.857 15.236 36 11.505 36 8.447"/><path fill="#1DA1F2" d="M2.984 12.86c-.677.423-.677 1.777-1.015 1.777S.954 13.841.954 12.86c-.001-.981 2.862-.52 2.03 0"/></svg>';
+        const paths = lastNormalized.map((data, ti) => {
+          const pts = data.map((v, i) => { const x = padL + (i / (n - 1)) * plotW; const y = padT + plotH - (v / 100) * plotH; return x.toFixed(1) + "," + y.toFixed(1); });
+          return '<polyline fill="none" stroke="' + COLORS[ti] + '" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" points="' + pts.join(" ") + '"/>';
+        }).join("");
+        const fills = lastNormalized.map((data, ti) => {
+          const pts = data.map((v, i) => { const x = padL + (i / (n - 1)) * plotW; const y = padT + plotH - (v / 100) * plotH; return x.toFixed(1) + "," + y.toFixed(1); });
+          const bottom = (padL + plotW).toFixed(1) + "," + (padT + plotH).toFixed(1) + " " + padL.toFixed(1) + "," + (padT + plotH).toFixed(1);
+          return '<polygon fill="' + COLORS[ti] + '" fill-opacity="0.06" stroke="none" points="' + pts.join(" ") + " " + bottom + '"/>';
+        }).join("");
+        const gridLines = [0, 25, 50, 75, 100].map(v => {
+          const y = padT + plotH - (v / 100) * plotH;
+          return '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (padL + plotW) + '" y2="' + y.toFixed(1) + '" stroke="rgba(62,65,68,0.3)" stroke-width="1"/><text x="' + (padL - 8) + '" y="' + (y + 4).toFixed(1) + '" fill="#536471" font-size="10" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,sans-serif">' + v + '</text>';
+        }).join("");
+        const maxTicks = 7;
+        const step = Math.max(1, Math.floor(n / maxTicks));
+        const xLabels = labels.filter((_, i) => i % step === 0 || i === n - 1).map(lbl => {
+          const origIdx = labels.indexOf(lbl);
+          const x = padL + (origIdx / (n - 1)) * plotW;
+          const y = padT + plotH + 16;
+          return '<text x="' + x.toFixed(1) + '" y="' + y + '" fill="#536471" font-size="10" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,sans-serif">' + lbl.slice(0, 7) + '</text>';
+        }).join("");
+        const charW = 6.2, gap = 20;
+        const legendWidths = terms.map(t => 10 + t.length * charW + 4);
+        const totalLegW = legendWidths.reduce((s, w) => s + w + gap, -gap);
+        let lx = -totalLegW / 2;
+        const legendGroup = terms.map((t, i) => {
+          const g = '<g transform="translate(' + lx.toFixed(1) + ',0)"><circle cx="0" cy="-3" r="4" fill="' + COLORS[i] + '"/><text x="10" y="0" fill="#fff" font-size="11" font-family="-apple-system,BlinkMacSystemFont,sans-serif">' + t.replace(/</g, "&lt;") + '</text></g>';
+          lx += legendWidths[i] + gap;
+          return g;
+        }).join("");
+        const footerH = 40, totalH = chartH + footerH;
+        return '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ' + W + ' ' + totalH + '" width="100%" style="display:block;"><rect width="' + W + '" height="' + totalH + '" fill="#14171a" rx="8"/>' + gridLines + fills + paths + xLabels + '<g transform="translate(' + W / 2 + ',' + (padT - 16) + ')" text-anchor="start">' + legendGroup + '</g><a href="https://twitter.cat" target="_blank"><g transform="translate(' + (W - padR - 28) + ',' + (chartH + (footerH - 28) / 2 - 6) + ')">' + kittySvg.replace('xmlns="http://www.w3.org/2000/svg" ', "") + '</g></a></svg>';
+      }
+
+      function showEmbedModal() {
+        const code = buildEmbedHTML();
+        if (!code) return;
+        $("embed-code").value = code;
+        $("embed-preview").innerHTML = code;
+        $("embed-overlay").classList.add("open");
+      }
+
+      $("embed-close").addEventListener("click", () => { $("embed-overlay").classList.remove("open"); });
+      $("embed-overlay").addEventListener("click", (e) => { if (e.target === $("embed-overlay")) $("embed-overlay").classList.remove("open"); });
+      $("embed-copy").addEventListener("click", () => {
+        navigator.clipboard.writeText($("embed-code").value).then(() => { $("embed-overlay").classList.remove("open"); showToast("Copied to clipboard"); });
+      });
+
+      $("btn-csv").addEventListener("click", downloadCSV);
+      $("btn-share-img").addEventListener("click", exportImg);
+      $("btn-embed").addEventListener("click", showEmbedModal);
+      $("btn-go").addEventListener("click", explore);
+      const re = () => { if (getTerms().length) explore(); };
+    </script>
+  </body>
+</html>
