@@ -2,9 +2,11 @@ dist
 node_modules
 .env
 .DS_Store
-.cap.dbsample.duckdb
 update-sample.js
 update-sample.log
 bun.lock
 .cap.db
-sample.duckdb
+sample.sqlite
+sample.sqlite-wal
+sample.sqlite-shm
+build-sqlite.log
