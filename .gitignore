@@ -10,3 +10,4 @@ sample.sqlite
 sample.sqlite-wal
 sample.sqlite-shm
 build-sqlite.log
+sample.duckdb
