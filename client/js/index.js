@@ -911,7 +911,6 @@ const query = async (text, loadMore = false) => {
     const randomIntBetween = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
     if (currentSearchType === "media") {
-      // Ensure columns exist for skeletons
       if (!resultsEl.querySelector(".media-column")) {
         for (let i = 0; i < 3; i++) {
           const col = document.createElement("div");
@@ -1766,6 +1765,8 @@ const query = async (text, loadMore = false) => {
     }
   }
 };
+
+window.__tcatQuery = query;
 
 buttonElements.forEach((btn, i) => {
   const type = btn.getAttribute("data-toggle");

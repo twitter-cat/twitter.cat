@@ -378,13 +378,6 @@ export default new Elysia()
   .get(
     "/typeahead",
     async ({ query, headers }) => {
-      if (
-        headers["X-Twittercat-Client"] !==
-        "CzZS9RQdBqSfHQ2T4oZkXZBEbeszwPm53YtTHgWHz2cVzGavKq9mR2SoojD7CB7Y"
-      ) {
-        return [];
-      }
-
       return (
         await (
           await fetch(
