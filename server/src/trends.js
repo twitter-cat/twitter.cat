@@ -31,6 +31,14 @@ async function validateRequest(sessionToken) {
   return await validateSession(sessionToken, "search");
 }
 
+function ftsWhere(termParam) {
+  return `fts_main_tweet_sample.dict di
+  JOIN fts_main_tweet_sample.terms ft ON ft.termid = di.termid
+  JOIN fts_main_tweet_sample.docs fd ON fd.docid = ft.docid
+  JOIN tweet_sample ts ON ts.id = fd.name
+  WHERE di.term = lower(${termParam})`;
+}
+
 export default new Elysia({ prefix: "/trends" })
   .use(
     rateLimit({
@@ -79,7 +87,7 @@ export default new Elysia({ prefix: "/trends" })
       const to = q.to || now;
       const lang = q.lang || "";
       const granularity = getGranularity(from, to);
-      const langClause = lang ? `AND lang = '${lang.replace(/'/g, "''")}'` : "";
+      const langClause = lang ? `AND ts.lang = '${lang.replace(/'/g, "''")}'` : "";
 
       const stream = new ReadableStream({
         async start(controller) {
@@ -105,13 +113,12 @@ export default new Elysia({ prefix: "/trends" })
             const termPromises = terms.map((term, ti) =>
               queryOn(
                 pool[ti % POOL_SIZE],
-                `SELECT date_trunc('${granularity}', created_at)::DATE::VARCHAR as period, count(*)::INT as cnt
-                 FROM tweet_sample
-                 WHERE contains(body_lower, lower(?))
-                   AND created_at >= ?::timestamp AND created_at < ?::timestamp
+                `SELECT date_trunc('${granularity}', ts.created_at)::DATE::VARCHAR as period, count(*)::INT as cnt
+                 FROM ${ftsWhere("?")}
+                   AND ts.created_at >= ?::timestamp AND ts.created_at < ?::timestamp
                    ${langClause}
                  GROUP BY 1 ORDER BY 1`,
-                term, from, to,
+                term.toLowerCase(), from, to,
               ).then((rows) => {
                 const countMap = Object.fromEntries(rows.map((r) => [r.period, r.cnt]));
                 allResults[ti] = periods.map((p) => countMap[p] ?? 0);
@@ -180,13 +187,12 @@ export default new Elysia({ prefix: "/trends" })
         terms.map((term, ti) =>
           queryOn(
             pool[ti % POOL_SIZE],
-            `SELECT lang, count(*)::INT as cnt
-             FROM tweet_sample
-             WHERE contains(body_lower, lower(?))
-               AND created_at >= ?::timestamp AND created_at < ?::timestamp
-               AND lang IS NOT NULL AND lang != '' AND lang != 'und' AND lang != 'zxx' AND lang != 'qme'
+            `SELECT ts.lang, count(*)::INT as cnt
+             FROM ${ftsWhere("?")}
+               AND ts.created_at >= ?::timestamp AND ts.created_at < ?::timestamp
+               AND ts.lang IS NOT NULL AND ts.lang != '' AND ts.lang != 'und' AND ts.lang != 'zxx' AND ts.lang != 'qme'
              GROUP BY 1 ORDER BY 2 DESC LIMIT 10`,
-            term, from, to,
+            term.toLowerCase(), from, to,
           ),
         ),
       );
