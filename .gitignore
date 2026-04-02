@@ -6,3 +6,5 @@ node_modules
 update-sample.js
 update-sample.log
 bun.lock
+.cap.db
+sample.duckdb
