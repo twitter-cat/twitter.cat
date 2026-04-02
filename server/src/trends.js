@@ -22,6 +22,10 @@ function getGranularity(fromDate, toDate) {
   return "month";
 }
 
+function granularityInterval(g) {
+  return g === "day" ? "1 day" : g === "week" ? "1 week" : "1 month";
+}
+
 async function validateRequest(sessionToken) {
   if (!sessionToken) return { success: false };
   return await validateSession(sessionToken, "search");
@@ -88,7 +92,7 @@ export default new Elysia({ prefix: "/trends" })
               `SELECT unnest(generate_series(
                 date_trunc('${granularity}', ?::timestamp),
                 date_trunc('${granularity}', ?::timestamp),
-                interval '${granularity === "day" ? "1 day" : granularity === "week" ? "1 week" : "1 month"}'
+                interval '${granularityInterval(granularity)}'
               ))::DATE::VARCHAR as period`,
               from, to,
             );
@@ -101,13 +105,13 @@ export default new Elysia({ prefix: "/trends" })
             const termPromises = terms.map((term, ti) =>
               queryOn(
                 pool[ti % POOL_SIZE],
-                `SELECT date_trunc('${granularity}', day)::DATE::VARCHAR as period, sum(cnt)::INT as cnt
-                 FROM fts_daily
-                 WHERE term = ?
-                   AND day >= ?::DATE AND day < ?::DATE
+                `SELECT date_trunc('${granularity}', created_at)::DATE::VARCHAR as period, count(*)::INT as cnt
+                 FROM tweet_sample
+                 WHERE contains(body_lower, lower(?))
+                   AND created_at >= ?::timestamp AND created_at < ?::timestamp
                    ${langClause}
                  GROUP BY 1 ORDER BY 1`,
-                term.toLowerCase(), from, to,
+                term, from, to,
               ).then((rows) => {
                 const countMap = Object.fromEntries(rows.map((r) => [r.period, r.cnt]));
                 allResults[ti] = periods.map((p) => countMap[p] ?? 0);
@@ -176,13 +180,13 @@ export default new Elysia({ prefix: "/trends" })
         terms.map((term, ti) =>
           queryOn(
             pool[ti % POOL_SIZE],
-            `SELECT lang, sum(cnt)::INT as cnt
-             FROM fts_daily
-             WHERE term = ?
-               AND day >= ?::DATE AND day < ?::DATE
+            `SELECT lang, count(*)::INT as cnt
+             FROM tweet_sample
+             WHERE contains(body_lower, lower(?))
+               AND created_at >= ?::timestamp AND created_at < ?::timestamp
                AND lang IS NOT NULL AND lang != '' AND lang != 'und' AND lang != 'zxx' AND lang != 'qme'
              GROUP BY 1 ORDER BY 2 DESC LIMIT 10`,
-            term.toLowerCase(), from, to,
+            term, from, to,
           ),
         ),
       );
