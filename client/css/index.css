@@ -91,6 +91,9 @@ body {
   cursor: pointer;
   margin-bottom: 20px;
 }
+.center:has(.results) .trending {
+  display: none;
+}
 
 .center:not(:has(.results)) .buttons {
   display: none;
@@ -351,6 +354,79 @@ body {
 
 body:has(.results) .bottom {
   display: none;
+}
+.trending {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  gap: 6px;
+  color: #71767b;
+
+  .trend-text {
+    position: relative;
+    height: 2em;
+    overflow: hidden;
+    font-size: 14px;
+    user-select: none;
+    display: flex;
+    align-items: center;
+
+    &::before,
+    &::after {
+      content: "";
+      pointer-events: none;
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 0.6em;
+      z-index: 1;
+    }
+
+    &::before {
+      top: 0;
+      background: linear-gradient(to bottom, #14171a, transparent);
+    }
+
+    &::after {
+      bottom: 0;
+      background: linear-gradient(to top, #14171a, transparent);
+    }
+
+    a {
+      position: absolute;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateY(100%);
+      transition:
+        transform 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+        opacity 0.5s ease,
+        filter 0.5s ease, color .2s;
+      filter: blur(2px);
+
+      &:hover {
+        color: white;
+        cursor: pointer;
+      }
+
+      &:not(.active) {
+        pointer-events: none;
+      }
+
+      &.active {
+        opacity: 1;
+        transform: translateY(0);
+        filter: none;
+      }
+
+      &.exit {
+        opacity: 0;
+        transform: translateY(-100%);
+        filter: blur(2px);
+      }
+    }
+  }
 }
 
 :any-link {

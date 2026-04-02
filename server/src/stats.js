@@ -7,7 +7,7 @@ import { validateSession } from "./cap.js";
 const sseClients = new Set();
 
 const postgresReadOnly = new SQL(
-  `postgres://${process.env.POSTGRES_USER_READONLY}:${process.env.POSTGRES_PASSWORD_READONLY}@${process.env.POSTGRES_HOST}:5432/twitter`,
+  `postgres://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:5432/twitter`,
 );
 
 const CURSOR_SECRET = new TextEncoder().encode(process.env.CURSOR_SIGNING_KEY);
@@ -131,6 +131,40 @@ export default new Elysia({
     lastHourCacheTime = now;
 
     return lastHourCache;
+  })
+  .get("/trending", async () => {
+    const trend = (await postgresReadOnly`WITH latest_ww AS (
+        SELECT name, rank
+        FROM trends
+        WHERE country = 'WW'
+          AND timestamp >= (SELECT MAX(timestamp) - INTERVAL '30 seconds' FROM trends WHERE country = 'WW')
+    ),
+    latest_us AS (
+        SELECT name, rank
+        FROM trends
+        WHERE country = 'US'
+          AND timestamp >= (SELECT MAX(timestamp) - INTERVAL '30 seconds' FROM trends WHERE country = 'US')
+    ),
+    combined AS (
+        SELECT
+            name,
+            SUM(score) AS total_score
+        FROM (
+            SELECT name, (1.0 / rank) * 0.6 AS score FROM latest_ww
+            UNION ALL
+            SELECT name, (1.0 / rank) * 0.4 AS score FROM latest_us
+        ) weighted
+        WHERE name !~ '[぀-鿿｀-￮﹐-﹯！-￯]'
+        GROUP BY name
+    )
+    SELECT name
+    FROM combined
+    ORDER BY total_score DESC
+    LIMIT 10;`);
+
+    return [[...trend].map((trend) => {
+      return trend.name;
+    })]
   })
   .get(
     "/tweets",

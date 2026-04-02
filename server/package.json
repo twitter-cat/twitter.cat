@@ -5,7 +5,8 @@
   "scripts": {
     "start": "bun run ./src/index.js",
     "dev": "bun run --watch src/index.js",
-    "forever": "pm2 start src/index.js --name twittercat"
+    "forever": "pm2 start src/index.js --name twittercat",
+    "proxy": "ssh -N -L 5432:localhost:5432 -L 9308:localhost:9308 tiago@rpi5.local"
   },
   "devDependencies": {
     "@types/bun": "latest"
