@@ -22,21 +22,9 @@ function getGranularity(fromDate, toDate) {
   return "month";
 }
 
-function granularityInterval(g) {
-  return g === "day" ? "1 day" : g === "week" ? "1 week" : "1 month";
-}
-
 async function validateRequest(sessionToken) {
   if (!sessionToken) return { success: false };
   return await validateSession(sessionToken, "search");
-}
-
-function ftsWhere(termParam) {
-  return `fts_main_tweet_sample.dict di
-  JOIN fts_main_tweet_sample.terms ft ON ft.termid = di.termid
-  JOIN fts_main_tweet_sample.docs fd ON fd.docid = ft.docid
-  JOIN tweet_sample ts ON ts.id = fd.name
-  WHERE di.term = lower(${termParam})`;
 }
 
 export default new Elysia({ prefix: "/trends" })
@@ -87,7 +75,7 @@ export default new Elysia({ prefix: "/trends" })
       const to = q.to || now;
       const lang = q.lang || "";
       const granularity = getGranularity(from, to);
-      const langClause = lang ? `AND ts.lang = '${lang.replace(/'/g, "''")}'` : "";
+      const langClause = lang ? `AND lang = '${lang.replace(/'/g, "''")}'` : "";
 
       const stream = new ReadableStream({
         async start(controller) {
@@ -100,7 +88,7 @@ export default new Elysia({ prefix: "/trends" })
               `SELECT unnest(generate_series(
                 date_trunc('${granularity}', ?::timestamp),
                 date_trunc('${granularity}', ?::timestamp),
-                interval '${granularityInterval(granularity)}'
+                interval '${granularity === "day" ? "1 day" : granularity === "week" ? "1 week" : "1 month"}'
               ))::DATE::VARCHAR as period`,
               from, to,
             );
@@ -113,9 +101,10 @@ export default new Elysia({ prefix: "/trends" })
             const termPromises = terms.map((term, ti) =>
               queryOn(
                 pool[ti % POOL_SIZE],
-                `SELECT date_trunc('${granularity}', ts.created_at)::DATE::VARCHAR as period, count(*)::INT as cnt
-                 FROM ${ftsWhere("?")}
-                   AND ts.created_at >= ?::timestamp AND ts.created_at < ?::timestamp
+                `SELECT date_trunc('${granularity}', day)::DATE::VARCHAR as period, sum(cnt)::INT as cnt
+                 FROM fts_daily
+                 WHERE term = ?
+                   AND day >= ?::DATE AND day < ?::DATE
                    ${langClause}
                  GROUP BY 1 ORDER BY 1`,
                 term.toLowerCase(), from, to,
@@ -187,10 +176,11 @@ export default new Elysia({ prefix: "/trends" })
         terms.map((term, ti) =>
           queryOn(
             pool[ti % POOL_SIZE],
-            `SELECT ts.lang, count(*)::INT as cnt
-             FROM ${ftsWhere("?")}
-               AND ts.created_at >= ?::timestamp AND ts.created_at < ?::timestamp
-               AND ts.lang IS NOT NULL AND ts.lang != '' AND ts.lang != 'und' AND ts.lang != 'zxx' AND ts.lang != 'qme'
+            `SELECT lang, sum(cnt)::INT as cnt
+             FROM fts_daily
+             WHERE term = ?
+               AND day >= ?::DATE AND day < ?::DATE
+               AND lang IS NOT NULL AND lang != '' AND lang != 'und' AND lang != 'zxx' AND lang != 'qme'
              GROUP BY 1 ORDER BY 2 DESC LIMIT 10`,
             term.toLowerCase(), from, to,
           ),
