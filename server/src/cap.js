@@ -4,13 +4,15 @@ import * as jose from "jose";
 
 const db = new SQL("sqlite:../.cap.db");
 
-db`
+(async () => {
+await db`
   CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,
     expires INTEGER NOT NULL,
     search_count INTEGER NOT NULL DEFAULT 0
   );
 `;
+})();
 
 const SESSION_SECRET = new TextEncoder().encode(process.env.CURSOR_SIGNING_KEY);
 const SESSION_DURATION_MS = 60 * 60 * 1000;
