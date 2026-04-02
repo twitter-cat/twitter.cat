@@ -1,19 +1,12 @@
-import duckdb from "duckdb";
+import { Database } from "bun:sqlite";
 import { Elysia, t } from "elysia";
 import { rateLimit } from "elysia-rate-limit";
 import { validateSession } from "./cap.js";
 
-const DB_PATH = new URL("../../sample.duckdb", import.meta.url).pathname;
-const POOL_SIZE = 5;
-const db = new duckdb.Database(DB_PATH);
-const pool = Array.from({ length: POOL_SIZE }, () => db.connect());
-
-const queryOn = (conn, sql, ...params) =>
-  new Promise((res, rej) => {
-    conn.all(sql, ...params, (err, rows) => (err ? rej(err) : res(rows)));
-  });
-
-const query = (sql, ...params) => queryOn(pool[0], sql, ...params);
+const DB_PATH = new URL("../../sample.sqlite", import.meta.url).pathname;
+const db = new Database(DB_PATH, { readonly: true });
+db.exec("PRAGMA cache_size = -64000");
+db.exec("PRAGMA mmap_size = 4294967296");
 
 function getGranularity(fromDate, toDate) {
   const days = (new Date(toDate) - new Date(fromDate)) / 86400000;
@@ -22,13 +15,41 @@ function getGranularity(fromDate, toDate) {
   return "month";
 }
 
-function granularityInterval(g) {
-  return g === "day" ? "1 day" : g === "week" ? "1 week" : "1 month";
+function dateTrunc(granularity) {
+  if (granularity === "day") return "created_at";
+  if (granularity === "week") return "date(created_at, 'weekday 0', '-6 days')";
+  return "strftime('%Y-%m-01', created_at)";
+}
+
+function periodsSQL(from, to, granularity) {
+  if (granularity === "day") {
+    return `WITH RECURSIVE periods(d) AS (
+      VALUES(date(?))
+      UNION ALL
+      SELECT date(d, '+1 day') FROM periods WHERE d < date(?)
+    ) SELECT d as period FROM periods`;
+  }
+  if (granularity === "week") {
+    return `WITH RECURSIVE periods(d) AS (
+      VALUES(date(?, 'weekday 0', '-6 days'))
+      UNION ALL
+      SELECT date(d, '+7 days') FROM periods WHERE d < date(?)
+    ) SELECT d as period FROM periods`;
+  }
+  return `WITH RECURSIVE periods(d) AS (
+    VALUES(date(?, 'start of month'))
+    UNION ALL
+    SELECT date(d, '+1 month') FROM periods WHERE d < date(?)
+  ) SELECT d as period FROM periods`;
 }
 
 async function validateRequest(sessionToken) {
   if (!sessionToken) return { success: false };
   return await validateSession(sessionToken, "search");
+}
+
+function escapeMatch(term) {
+  return '"' + term.replace(/"/g, '""') + '"';
 }
 
 export default new Elysia({ prefix: "/trends" })
@@ -79,47 +100,39 @@ export default new Elysia({ prefix: "/trends" })
       const to = q.to || now;
       const lang = q.lang || "";
       const granularity = getGranularity(from, to);
-      const langClause = lang ? `AND lang = '${lang.replace(/'/g, "''")}'` : "";
+      const langClause = lang ? `AND t.lang = '${lang.replace(/'/g, "''")}'` : "";
+      const trunc = dateTrunc(granularity);
 
       const stream = new ReadableStream({
-        async start(controller) {
+        start(controller) {
           const send = (event, data) => {
             controller.enqueue(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
           };
 
           try {
-            const allPeriods = await query(
-              `SELECT unnest(generate_series(
-                date_trunc('${granularity}', ?::timestamp),
-                date_trunc('${granularity}', ?::timestamp),
-                interval '${granularityInterval(granularity)}'
-              ))::DATE::VARCHAR as period`,
-              from, to,
-            );
-            const periods = allPeriods.map((r) => r.period);
+            const periods = db.prepare(periodsSQL(from, to, granularity)).all(from, to).map(r => r.period);
 
-            send("init", { labels: periods.map((p) => p.slice(0, 10)), granularity, terms });
+            send("init", { labels: periods, granularity, terms });
 
             const allResults = new Array(terms.length);
 
-            const termPromises = terms.map((term, ti) =>
-              queryOn(
-                pool[ti % POOL_SIZE],
-                `SELECT date_trunc('${granularity}', created_at)::DATE::VARCHAR as period, count(*)::INT as cnt
-                 FROM tweet_sample
-                 WHERE contains(body_lower, lower(?))
-                   AND created_at >= ?::timestamp AND created_at < ?::timestamp
-                   ${langClause}
-                 GROUP BY 1 ORDER BY 1`,
-                term, from, to,
-              ).then((rows) => {
-                const countMap = Object.fromEntries(rows.map((r) => [r.period, r.cnt]));
-                allResults[ti] = periods.map((p) => countMap[p] ?? 0);
-                send("term", { index: ti, term });
-              }),
-            );
+            for (let ti = 0; ti < terms.length; ti++) {
+              const term = terms[ti];
+              const matchExpr = escapeMatch(term);
 
-            await Promise.all(termPromises);
+              const rows = db.prepare(`
+                SELECT ${trunc} as period, count(*) as cnt
+                FROM tweets t
+                WHERE t.id IN (SELECT rowid FROM tweets_fts WHERE tweets_fts MATCH ?)
+                  AND t.created_at >= ? AND t.created_at < ?
+                  ${langClause}
+                GROUP BY 1 ORDER BY 1
+              `).all(matchExpr, from, to);
+
+              const countMap = Object.fromEntries(rows.map((r) => [r.period, r.cnt]));
+              allResults[ti] = periods.map((p) => countMap[p] ?? 0);
+              send("term", { index: ti, term });
+            }
 
             const globalMax = Math.max(1, ...allResults.flat());
             const normalized = allResults.map((raw) =>
@@ -176,23 +189,18 @@ export default new Elysia({ prefix: "/trends" })
       const from = q.from || twoYearsAgo;
       const to = q.to || now;
 
-      const results = await Promise.all(
-        terms.map((term, ti) =>
-          queryOn(
-            pool[ti % POOL_SIZE],
-            `SELECT lang, count(*)::INT as cnt
-             FROM tweet_sample
-             WHERE contains(body_lower, lower(?))
-               AND created_at >= ?::timestamp AND created_at < ?::timestamp
-               AND lang IS NOT NULL AND lang != '' AND lang != 'und' AND lang != 'zxx' AND lang != 'qme'
-             GROUP BY 1 ORDER BY 2 DESC LIMIT 10`,
-            term, from, to,
-          ),
-        ),
-      );
+      return terms.map((term) => {
+        const matchExpr = escapeMatch(term);
 
-      return terms.map((term, ti) => {
-        const rows = results[ti];
+        const rows = db.prepare(`
+          SELECT t.lang, count(*) as cnt
+          FROM tweets t
+          WHERE t.id IN (SELECT rowid FROM tweets_fts WHERE tweets_fts MATCH ?)
+            AND t.created_at >= ? AND t.created_at < ?
+            AND t.lang IS NOT NULL AND t.lang != '' AND t.lang != 'und' AND t.lang != 'zxx' AND t.lang != 'qme'
+          GROUP BY 1 ORDER BY 2 DESC LIMIT 10
+        `).all(matchExpr, from, to);
+
         const total = rows.reduce((s, r) => s + r.cnt, 0);
         return {
           term,
@@ -227,9 +235,9 @@ export default new Elysia({ prefix: "/trends" })
         });
       }
 
-      return await query(
-        `SELECT lang, count(*)::INT as cnt FROM tweet_sample WHERE lang IS NOT NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 50`,
-      );
+      return db.prepare(
+        `SELECT lang, count(*) as cnt FROM tweets WHERE lang IS NOT NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 50`,
+      ).all();
     },
     {
       query: t.Object({
@@ -252,10 +260,10 @@ export default new Elysia({ prefix: "/trends" })
         });
       }
 
-      const [{ cnt }] = await query("SELECT count(*)::INT as cnt FROM tweet_sample");
-      const [{ min_d, max_d }] = await query(
-        "SELECT min(created_at)::VARCHAR as min_d, max(created_at)::VARCHAR as max_d FROM tweet_sample",
-      );
+      const { cnt } = db.prepare("SELECT count(*) as cnt FROM tweets").get();
+      const { min_d, max_d } = db.prepare(
+        "SELECT min(created_at) as min_d, max(created_at) as max_d FROM tweets",
+      ).get();
       return { totalTweets: cnt, from: min_d, to: max_d };
     },
     {
