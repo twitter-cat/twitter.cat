@@ -4,6 +4,8 @@
 [ ] lists
 [x] stores
 [x] trends
+[x] posts
+[x] profiles
 
 **features:**
 
