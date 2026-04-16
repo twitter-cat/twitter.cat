@@ -2,7 +2,6 @@
 
 [ ] ads (possibly through twitter's dsa compliance platform)    
 [x] lists    
-[x] stores    
 [x] trends    
 [x] posts    
 [x] profiles    
