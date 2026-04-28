@@ -57,6 +57,8 @@ body {
 }
 
 .results {
+  position: relative;
+  z-index: 1;
   width: 100%;
   text-align: left;
   margin-top: 0.8em;
@@ -262,6 +264,8 @@ body {
 }
 
 .results-meta {
+  position: relative;
+  z-index: 5;
   width: 100%;
   color: #919698;
   font-family: "chirp", sans-serif;
@@ -269,6 +273,10 @@ body {
   text-align: left;
   font-size: 0.875rem;
   line-height: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
 .results-meta .wallTime {
@@ -286,6 +294,29 @@ body {
   pointer-events: none;
   animation: skeleton-loading 1.4s infinite linear;
   margin-right: 4px;
+}
+
+.results-meta .search-stop {
+  position: relative;
+  z-index: 6;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  border: 1px solid rgb(83, 100, 113);
+  background: transparent;
+  color: #e7e9ea;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.results-meta .search-stop:hover {
+  background: rgba(239, 243, 244, 0.08);
+}
+
+.results-meta .search-stop:active {
+  background: rgba(239, 243, 244, 0.12);
 }
 
 .toggle[data-toggle="accounts"].pressed {

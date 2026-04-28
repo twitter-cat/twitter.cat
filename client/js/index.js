@@ -34,6 +34,9 @@ const buttonElements = document.querySelectorAll(".toggle");
 let searchQuery;
 let currentCursor = null;
 let isLoading = false;
+/** @type {AbortController | null} */
+let searchAbortController = null;
+let searchQueryEpoch = 0;
 let hasMore = true;
 let currentFilterString = "";
 let currentSearchType = "tweets";
@@ -856,8 +859,12 @@ const createTweetEl = (result) => {
   return el;
 };
 
+const releaseSearchLoading = (epoch) => {
+  if (epoch === searchQueryEpoch) isLoading = false;
+};
+
 const query = async (text, loadMore = false) => {
-  if (isLoading) return;
+  if (loadMore && isLoading) return;
 
   if (activeObserver) {
     activeObserver.disconnect();
@@ -875,6 +882,18 @@ const query = async (text, loadMore = false) => {
   }
 
   if (!text) return;
+
+  if (!loadMore) {
+    searchQueryEpoch++;
+    searchAbortController?.abort();
+    searchAbortController = new AbortController();
+  } else if (!searchAbortController) {
+    searchAbortController = new AbortController();
+  }
+
+  const myEpoch = searchQueryEpoch;
+  const signal = searchAbortController.signal;
+  const stopCtrl = searchAbortController;
 
   isLoading = true;
 
@@ -979,6 +998,21 @@ const query = async (text, loadMore = false) => {
 
   let skeletonMeta, skeletonMetaI;
 
+  const cleanupAfterAbortForThisRun = () => {
+    if (myEpoch !== searchQueryEpoch) return;
+    clearInterval(skeletonMetaI);
+    skeletonMeta?.remove();
+    document.querySelectorAll(".skeleton").forEach((el) => el.remove());
+    document.querySelector(".load-more")?.remove();
+    document.querySelector(".results")?.remove();
+    document.querySelectorAll(".results-meta").forEach((el) => el.remove());
+    if (activeObserver) {
+      activeObserver.disconnect();
+      activeObserver = null;
+    }
+    releaseSearchLoading(myEpoch);
+  };
+
   if (loadMore) {
     const existingLoadMore = document.querySelector(".load-more");
     if (existingLoadMore) existingLoadMore.remove();
@@ -1002,18 +1036,36 @@ const query = async (text, loadMore = false) => {
 
     skeletonMeta = document.createElement("div");
     skeletonMeta.className = "results-meta";
-    skeletonMeta.innerHTML = `<span class="searching">Searching index…</span> <span class="wallTime">— 0.00s</span>`;
+    skeletonMeta.innerHTML = `<span class="searching">Searching index…</span><span class="wallTime">— 0.00s</span><button type="button" class="search-stop" aria-label="Stop search">Stop</button>`;
 
     resultsEl.parentNode.insertBefore(skeletonMeta, resultsEl);
 
+    const stopBtn = skeletonMeta.querySelector(".search-stop");
+    if (stopBtn) {
+      stopBtn.addEventListener(
+        "click",
+        (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (myEpoch !== searchQueryEpoch) return;
+          stopCtrl.abort();
+          cleanupAfterAbortForThisRun();
+        },
+        true,
+      );
+    }
+
     skeletonMetaI = setInterval(() => {
       const elapsed = (performance.now() - start) / 1000;
-
-      skeletonMeta.querySelector(".wallTime").innerText = `— ${elapsed.toFixed(2)}s`;
+      const wall = skeletonMeta.querySelector(".wallTime");
+      if (wall) wall.innerText = `— ${elapsed.toFixed(2)}s`;
     }, 100);
   }
 
   let sessionToken = await ensureSession(API_URL);
+
+  if (myEpoch !== searchQueryEpoch) return;
+  if (signal.aborted) throw new DOMException("Aborted", "AbortError");
 
   const bodyCursor = currentCursor;
   const bodyFilter = currentFilterString || null;
@@ -1022,9 +1074,13 @@ const query = async (text, loadMore = false) => {
 
   const integrity = await signRequest(text, bodyType, bodyCursor, bodyFilter, bodySort);
 
+  if (myEpoch !== searchQueryEpoch) return;
+  if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+
   try {
     let _results = await (
       await fetch(`${API_URL}/query`, {
+        signal,
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1124,6 +1180,8 @@ const query = async (text, loadMore = false) => {
     clearInterval(skeletonMetaI);
     if (skeletonMeta) skeletonMeta.remove();
 
+    if (myEpoch !== searchQueryEpoch) return;
+
     if (
       _results.error === "session_exhausted" ||
       _results.error === "integrity check failed" ||
@@ -1138,6 +1196,9 @@ const query = async (text, loadMore = false) => {
 
       invalidateSession();
       sessionToken = await ensureSession(API_URL);
+      if (myEpoch !== searchQueryEpoch) return;
+      if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+
       skeletonMeta.style.display = "block";
       metaEl.remove();
 
@@ -1151,8 +1212,12 @@ const query = async (text, loadMore = false) => {
         currentSort,
       );
 
+      if (myEpoch !== searchQueryEpoch) return;
+      if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+
       _results = await (
         await fetch(`${API_URL}/query`, {
+          signal,
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1247,9 +1312,13 @@ const query = async (text, loadMore = false) => {
           }),
         })
       ).json();
+
+      if (myEpoch !== searchQueryEpoch) return;
     }
 
     if (_results.error) throw new Error(_results.error);
+
+    if (myEpoch !== searchQueryEpoch) return;
 
     await incrementSearchCount();
 
@@ -1280,7 +1349,7 @@ const query = async (text, loadMore = false) => {
     <img src="/assets/svgs/woozy.svg">
     <p>no results found</p>
     <small>try different keywords or check your spelling. some accounts may also not be indexed yet.</small></div>`;
-      isLoading = false;
+      releaseSearchLoading(myEpoch);
       return;
     }
 
@@ -1646,7 +1715,7 @@ const query = async (text, loadMore = false) => {
     <img src="/assets/svgs/woozy.svg">
     <p>no media found</p>
     <small>try a different search query. tweets without images are not shown in media view.</small></div>`;
-      isLoading = false;
+      releaseSearchLoading(myEpoch);
       return;
     }
 
@@ -1739,12 +1808,22 @@ const query = async (text, loadMore = false) => {
       }, 100);
     }
 
-    isLoading = false;
+    releaseSearchLoading(myEpoch);
   } catch (e) {
+    if (e?.name === "AbortError") {
+      if (myEpoch !== searchQueryEpoch) return;
+      cleanupAfterAbortForThisRun();
+      return;
+    }
+
+    clearInterval(skeletonMetaI);
+    skeletonMeta?.remove();
+
     console.error(e);
-    isLoading = false;
-    document.querySelectorAll(".skeleton").forEach((e) => {
-      e.remove();
+    if (myEpoch !== searchQueryEpoch) return;
+
+    document.querySelectorAll(".skeleton").forEach((el) => {
+      el.remove();
     });
     if (!loadMore) {
       resultsEl.innerHTML = `<div class="error-zone">
@@ -1755,14 +1834,13 @@ const query = async (text, loadMore = false) => {
         : e.message.replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br>")
     }</p>
     <small>${e.message.includes("filter") ? "check your filter values and try again" : "an error occurred. please try again later"}</small></div>`;
-      clearInterval(skeletonMetaI);
-      if (skeletonMeta) skeletonMeta.remove();
 
       if (resultsEl.querySelector(".error-zone p").innerText.length > 230) {
         resultsEl.querySelector(".error-zone p").style.fontSize = "16px";
         resultsEl.querySelector(".error-zone p").style.fontWeight = "400";
       }
     }
+    releaseSearchLoading(myEpoch);
   }
 };
 
