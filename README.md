@@ -29,7 +29,7 @@ this should be deployed to your preferred cdn.
 
 1. `cd server`
 2. rename `.env.example` to `.env` and fill in your credentials
-3. `bun install` & `bun run dev
+3. `bun install` & `bun run dev`
 
 ## crawling
 
