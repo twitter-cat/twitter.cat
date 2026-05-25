@@ -398,7 +398,7 @@ const linkifyTweetBody = (text) => {
   return text;
 };
 
-const createTweetEl = (result) => {
+export const createTweetEl = (result) => {
   const el = document.createElement("a");
   el.className = "result tweet";
   el.href = `https://x.com/i/status/${result.id}`;

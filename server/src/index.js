@@ -4,6 +4,7 @@ import { Elysia, file } from "elysia";
 import api from "./api.js";
 import cap from "./cap.js";
 import { compression } from "./compress.js";
+import home from "./home.js";
 import proxy from "./proxy.js";
 import stats from "./stats.js";
 import trends from "./trends.js";
@@ -17,6 +18,7 @@ new Elysia()
   )
   .use(compression)
   .use(api)
+  .use(home)
   .use(stats)
   .use(trends)
   .use(proxy)

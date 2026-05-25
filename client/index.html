@@ -42,6 +42,7 @@
     <link rel="stylesheet" href="/css/skeleton.css" />
     <link rel="stylesheet" href="/css/filters.css" />
     <link rel="stylesheet" href="/css/typeahead.css" />
+    <link rel="stylesheet" href="/css/home.css" />
 
     <!-- <link rel="stylesheet" href="/css/youretooearly.css" /> -->
   </head>
@@ -64,6 +65,18 @@
             autofocus
             autocorrect="off"
           />
+        </div>
+
+        <div id="home-meta">
+          <div class="hm-counts">
+            <span class="hs-num" data-count="tweets">—</span> tweets
+            <span class="hm-dot">·</span>
+            <span class="hs-num" data-count="accounts">—</span> accounts
+          </div>
+          <nav class="hm-links">
+            <a href="https://github.com/twitter-cat/twitter.cat" target="_blank" rel="noopener">gh</a>
+            <a href="https://x.twitter.cat" target="_blank" rel="noopener">fxembed</a>
+          </nav>
         </div>
 
         <!-- these aren't linked as normal files because i can't get them to recolor otherwise 😭 god dammit -->
@@ -173,6 +186,10 @@
           <span class="trend-text"></span>
         </div>
 
+        <div id="home-controls"></div>
+        <div id="home-feed"></div>
+        <div id="story-page"></div>
+
         <div class="counter">
           <a href="/live">
             <div class="count tweets">
@@ -201,9 +218,11 @@
         not affiliated with 𝕏
       </a>
     </div>
+
   </body>
 
   <script src="/js/index.js" type="module" defer></script>
+  <script src="/js/home.js" type="module" defer></script>
   <script src="/js/typeahead.js" type="module" defer></script>
   <script src="/js/stats.js" defer></script>
   <script
