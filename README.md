@@ -12,10 +12,10 @@ twitter search engine & crawler.
 
 ### requirements
 
-- postgres db with the required tables and indexes
-- manticore instance with the required indexes
-- bun installed
+- a clickhouse db with the required tables and indexes
 - a server accessible from the internet
+- the data
+- bun
 
 ### client
 
@@ -33,14 +33,6 @@ this should be deployed to your preferred cdn.
 
 ## crawling
 
-in order for you to have any tweets to search, you'll need to manage crawlers that ingest tweet data to the postgres db, along with a sync script to push the data to manticore.
+in order for you to have any tweets to search, you'll need to manage crawlers that ingest tweet data to your clickhouse.
 
 these crawlers are not open-source. the production twitter.cat instance uses many crawlers running in parallel on different machines.
-
-### biases
-
-the current crawlers have the following biases:
-
-* none (most of the index)
-* community noted tweets (small amount of the index)
-* popular tweets (small amount of the index)
