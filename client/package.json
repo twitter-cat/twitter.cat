@@ -6,7 +6,8 @@
     "deploy": "vite build && wrangler deploy",
     "admin": "bash admin.sh",
     "admin:api": "bash admin.sh api",
-    "admin:web": "vite --config admin/vite.config.js"
+    "admin:web": "vite --config admin/vite.config.js",
+    "publish": "bash publish.sh"
   },
   "dependencies": {
     "cap-widget": "^0.1.56",
