@@ -108,12 +108,12 @@ export const clearSession = () => {
   window.dispatchEvent(new Event("tcat:unauthorized"))
 }
 
-export function useDashboard({ view, q, from, to, author, session }) {
+export function useDashboard({ q, from, to, author, session }) {
   const [state, setState] = useState({ manifest: null, panes: {}, loading: true })
   const tok = useRef(0)
   const fromT = from.getTime()
   const toT = to.getTime()
-  const idle = (!q && view !== "trends" && view !== "stories") || !session
+  const idle = !q || !session
   useEffect(() => {
     const id = ++tok.current
     if (idle) {
@@ -132,7 +132,6 @@ export function useDashboard({ view, q, from, to, author, session }) {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            view,
             q,
             from: fromT,
             to: toT + DAY,
@@ -157,10 +156,10 @@ export function useDashboard({ view, q, from, to, author, session }) {
       stop()
     })()
     return () => ac.abort()
-  }, [view, q, fromT, toT, author, session])
+  }, [q, fromT, toT, author, session])
   return state
 }
 
-export function paneUrl(view, paneId, base, extra) {
-  return `${API_BASE}/api/pane?${new URLSearchParams({ view, pane: paneId, ...base, ...extra }).toString()}`
+export function paneUrl(paneId, base, extra) {
+  return `${API_BASE}/api/pane?${new URLSearchParams({ pane: paneId, ...base, ...extra }).toString()}`
 }

@@ -47,13 +47,6 @@ const PANE_PALETTE = [
   CAT.maroon,
   CAT.lavender,
 ]
-const VIEWS = [
-  { value: "tweets", label: "tweets" },
-  { value: "profiles", label: "profiles" },
-  { value: "lists", label: "lists" },
-  { value: "trends", label: "trends" },
-  { value: "stories", label: "stories" },
-]
 const fmt = {
   num: fmtNum,
   sent: (v) => `${v > 0 ? "+" : ""}${v}%`,
@@ -463,35 +456,6 @@ const BarsSkel = ({ n = 7 }) => (
   <div class="skel-rows">
     {Array.from({ length: n }, (_, i) => (
       <Skel key={i} h={32} />
-    ))}
-  </div>
-)
-const ProfilesSkel = () => (
-  <div class="profile-grid">
-    {Array.from({ length: 6 }, (_, i) => (
-      <div class="profile-card skel-card" key={i}>
-        <div class="pc-head">
-          <Skel cls="avatar" w="40px" h={40} r={20} />
-          <div class="pc-nm">
-            <Skel w="65%" h={13} />
-            <Skel w="42%" h={11} m="6px 0 0" />
-          </div>
-        </div>
-        <Skel h={11} m="12px 0 0" />
-        <Skel w="84%" h={11} m="6px 0 0" />
-      </div>
-    ))}
-  </div>
-)
-const StoriesSkel = () => (
-  <div class="story-grid">
-    {Array.from({ length: 4 }, (_, i) => (
-      <div class="story-card skel-card" key={i}>
-        <Skel w="38%" h={11} />
-        <Skel h={15} m="12px 0 0" />
-        <Skel w="92%" h={11} m="10px 0 0" />
-        <Skel w="70%" h={11} m="6px 0 0" />
-      </div>
     ))}
   </div>
 )
@@ -1569,73 +1533,6 @@ function Feed({ p, base, streamFeed, streamLoading }) {
   )
 }
 
-function Profiles({ items, loading, onAction }) {
-  if (!items) return loading ? <ProfilesSkel /> : <p class="empty">no data</p>
-  if (!items.length) return <p class="empty">no profiles found</p>
-  return (
-    <div class="profile-grid">
-      {items.map((a) => (
-        <div
-          class="profile-card"
-          key={a.username}
-          {...clickProps(() => onAction?.("filterAuthor", { username: a.username }))}
-        >
-          <div class="pc-head">
-            <Avatar src={a.avatar} name={a.name} username={a.username} />
-            <div class="pc-nm">
-              <b>{a.name}</b>
-              <em>@{a.username}</em>
-            </div>
-          </div>
-          {a.bio ? <p class="pc-bio">{a.bio}</p> : null}
-          <div class="pc-meta">
-            <span>
-              <b>{fmtNum(a.followers)}</b> followers
-            </span>
-            <span>
-              <b>{fmtNum(a.posts)}</b> posts
-            </span>
-            {a.location ? <span class="pc-loc">{a.location}</span> : null}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function Stories({ items, loading }) {
-  if (!items) return loading ? <StoriesSkel /> : <p class="empty">no data</p>
-  if (!items.length) return <p class="empty">no stories</p>
-  return (
-    <div class="story-grid">
-      {items.map((s) => (
-        <div class="story-card" key={s.id}>
-          <div class="story-top">
-            <span class="story-cat">{s.category || s.region}</span>
-            {s.tweet_count ? <span class="story-ct">{fmtNum(s.tweet_count)} tweets</span> : null}
-          </div>
-          <h4>{s.title}</h4>
-          {s.summary ? <p class="story-sum">{s.summary}</p> : null}
-          <div class="story-pfps">
-            {(s.pfps || []).map((u, i) => (
-              <img
-                key={i}
-                src={u}
-                alt="participant avatar"
-                loading="lazy"
-                referrerpolicy="no-referrer"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none"
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function Sparkline({ values, color }) {
   if (!values) return null
   const valid = values.filter((v) => v != null && Number.isFinite(v))
@@ -1838,7 +1735,7 @@ function LangMap({ data }) {
   )
 }
 
-function PanedView({ p, initial, base, view, loading, onAction }) {
+function PanedView({ p, initial, base, loading, onAction }) {
   const [ctrl, setCtrl] = useState(() =>
     Object.fromEntries((p.controls || []).map((c) => [c.param, c.value])),
   )
@@ -1857,7 +1754,7 @@ function PanedView({ p, initial, base, view, loading, onAction }) {
     setLmode(mode)
     if (mode === "series" && !lseries) {
       setLbusy(true)
-      fetch(paneUrl(view, "languages", base, { mode: "series" }), { headers: authHeaders() })
+      fetch(paneUrl("languages", base, { mode: "series" }), { headers: authHeaders() })
         .then((r) => {
           if (r.status === 401) {
             clearSession()
@@ -1879,7 +1776,7 @@ function PanedView({ p, initial, base, view, loading, onAction }) {
     setCtrl((c) => ({ ...c, [param]: value }))
     const id = ++tok.current
     setBusy(true)
-    fetch(paneUrl(view, p.id, base, { ...ctrl, [param]: value }), { headers: authHeaders() })
+    fetch(paneUrl(p.id, base, { ...ctrl, [param]: value }), { headers: authHeaders() })
       .then((r) => {
         if (r.status === 401) {
           clearSession()
@@ -1921,10 +1818,6 @@ function PanedView({ p, initial, base, view, loading, onAction }) {
       <Compass data={data} loading={loading} />
     ) : p.type === "donut" ? (
       <Donut p={p} data={data} loading={loading} />
-    ) : p.type === "profiles" ? (
-      <Profiles items={data} loading={loading || busy} onAction={onAction} />
-    ) : p.type === "cards" ? (
-      <Stories items={data} loading={loading || busy} />
     ) : p.type === "trending" ? (
       <Trending items={data} loading={loading} onAction={onAction} />
     ) : null
@@ -2493,11 +2386,9 @@ function Landing({ onSearch }) {
 export function App() {
   const url = new URLSearchParams(window.location.search)
   const urlQ = (url.get("q") || "").trim()
-  const urlView = url.get("view")
   const urlFrom = +url.get("from")
   const urlTo = +url.get("to")
   const urlLabel = url.get("label")
-  const [view, setView] = useState(VIEWS.some((v) => v.value === urlView) ? urlView : "tweets")
   const [pending, setPending] = useState(urlQ)
   const [q, setQ] = useState(urlQ)
   const [terms, setTerms] = useState([])
@@ -2598,7 +2489,6 @@ export function App() {
 
   const fullQ = [q, ...terms].join(" ").trim()
   const { manifest, panes, loading } = useDashboard({
-    view,
     q: fullQ,
     from: range.from,
     to: range.to,
@@ -2607,7 +2497,7 @@ export function App() {
   })
 
   useEffect(() => {
-    if (!fullQ && view !== "trends" && view !== "stories") {
+    if (!fullQ) {
       window.history.replaceState(null, "", window.location.pathname)
       return
     }
@@ -2616,9 +2506,8 @@ export function App() {
     p.set("from", range.from.getTime())
     p.set("to", range.to.getTime())
     p.set("label", range.label)
-    if (view !== "tweets") p.set("view", view)
     window.history.replaceState(null, "", `${window.location.pathname}?${p}`)
-  }, [view, fullQ, range.from.getTime(), range.to.getTime(), range.label])
+  }, [fullQ, range.from.getTime(), range.to.getTime(), range.label])
 
   window.__tcatSelect = (fromMs, toMs) => {
     const f = new Date(new Date(fromMs).setHours(0, 0, 0, 0))
@@ -2651,19 +2540,12 @@ export function App() {
       if (t && !terms.includes(t) && t !== q.toLowerCase()) setTerms((ts) => [...ts, t])
     } else if (action === "filterAuthor") setAuthor({ id: row.authorId, label: row.username })
   }
-  const switchView = (v) => {
-    setView(v)
-    setAuthor(null)
-    setTerms([])
-    clearCmp()
-  }
   const goHome = () => {
     setQ("")
     setPending("")
     setTerms([])
     setAuthor(null)
     clearCmp()
-    setView("tweets")
   }
 
   const base = {
@@ -2674,9 +2556,7 @@ export function App() {
     collected: panes.metrics ? panes.metrics.collected : 0,
   }
   const region = (r) =>
-    manifest && manifest.view === view
-      ? manifest.panes.filter((p) => p.region === r && p.id !== "types")
-      : []
+    manifest ? manifest.panes.filter((p) => p.region === r && p.id !== "types") : []
   const chips = [
     ...terms.map((t) => ({
       kind: "term",
@@ -2699,14 +2579,13 @@ export function App() {
       p={p}
       initial={panes[p.id]}
       base={base}
-      view={view}
       loading={ldng}
       onAction={onAction}
     />
   )
   const gridTiles = region("grid").filter((p) => p.span !== "full")
   const gridFull = region("grid").filter((p) => p.span === "full")
-  const showLanding = !fullQ && view !== "trends" && view !== "stories"
+  const showLanding = !fullQ
 
   return (
     <>
@@ -2716,9 +2595,7 @@ export function App() {
         <CaptchaWall phase={capPhase} progress={capProgress} err={capErr} onRetry={solveCaptcha} />
       ) : (
         <>
-          <div
-            class={`loadbar${loading && (view === "tweets" ? !panes.trend : !Object.keys(panes).length) ? " on" : ""}`}
-          />
+          <div class={`loadbar${loading && !panes.trend ? " on" : ""}`} />
           <header>
             <div class="input-zone">
               <div class="home-btn" {...clickProps(goHome)}>
@@ -2743,7 +2620,6 @@ export function App() {
               </div>
               <DatePicker from={range.from} to={range.to} label={range.label} onPick={onPick} />
             </div>
-            <Seg cls="type-rows" value={view} onChange={switchView} options={VIEWS} />
           </header>
 
           {chips.length ? (
@@ -2756,56 +2632,52 @@ export function App() {
             </div>
           ) : null}
 
-          {view === "tweets" ? (
-            <main>
-              <div class="stats">
-                <section class="main-charts">
-                  {region("main")
-                    .filter((p) => p.type === "stats")
-                    .map((p) => (
-                      <StatTiles
-                        key={p.id}
-                        p={p}
-                        data={panes.metrics}
-                        trend={panes.trend}
-                        sentiment={panes.sentiment}
-                        metric={metric}
-                        onMetric={setMetric}
-                        loading={loading}
-                      />
-                    ))}
-                  {region("main").some((p) => p.type === "timeseries") ? (
-                    <CompareBar
-                      primary={q}
-                      compares={compares}
-                      onAdd={addCompare}
-                      onRemove={removeCompare}
+          <main>
+            <div class="stats">
+              <section class="main-charts">
+                {region("main")
+                  .filter((p) => p.type === "stats")
+                  .map((p) => (
+                    <StatTiles
+                      key={p.id}
+                      p={p}
+                      data={panes.metrics}
+                      trend={panes.trend}
+                      sentiment={panes.sentiment}
+                      metric={metric}
+                      onMetric={setMetric}
+                      loading={loading}
                     />
-                  ) : null}
-                  {region("main")
-                    .filter((p) => p.type === "timeseries")
-                    .map((p) => (
-                      <Trend
-                        key={p.id}
-                        q={q}
-                        compares={compares}
-                        compareData={compareData}
-                        trend={panes.trend}
-                        sentiment={panes.sentiment}
-                        metric={metric}
-                      />
-                    ))}
-                </section>
-                <section class="grid">
-                  <div class="masonry">{gridTiles.map((p) => renderPane(p))}</div>
-                  {gridFull.map((p) => renderPane(p))}
-                </section>
-              </div>
-              {region("side").map((p) => renderPane(p))}
-            </main>
-          ) : (
-            <main class="single">{region("full").map((p) => renderPane(p))}</main>
-          )}
+                  ))}
+                {region("main").some((p) => p.type === "timeseries") ? (
+                  <CompareBar
+                    primary={q}
+                    compares={compares}
+                    onAdd={addCompare}
+                    onRemove={removeCompare}
+                  />
+                ) : null}
+                {region("main")
+                  .filter((p) => p.type === "timeseries")
+                  .map((p) => (
+                    <Trend
+                      key={p.id}
+                      q={q}
+                      compares={compares}
+                      compareData={compareData}
+                      trend={panes.trend}
+                      sentiment={panes.sentiment}
+                      metric={metric}
+                    />
+                  ))}
+              </section>
+              <section class="grid">
+                <div class="masonry">{gridTiles.map((p) => renderPane(p))}</div>
+                {gridFull.map((p) => renderPane(p))}
+              </section>
+            </div>
+            {region("side").map((p) => renderPane(p))}
+          </main>
         </>
       )}
     </>
