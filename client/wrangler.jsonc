@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "twittercat-web",
+  "compatibility_date": "2026-07-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    { "pattern": "twitter.cat", "custom_domain": true },
+    { "pattern": "www.twitter.cat", "custom_domain": true }
+  ],
+  "workers_dev": false
+}
