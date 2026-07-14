@@ -1,3 +1,4 @@
+import { decodeMultiStream } from "@msgpack/msgpack"
 import { useEffect, useRef, useState } from "preact/hooks"
 
 export const DAY = 86400000
@@ -113,20 +114,6 @@ export function useDashboard({ view, q, from, to, author, session }) {
   const fromT = from.getTime()
   const toT = to.getTime()
   const idle = (!q && view !== "trends" && view !== "stories") || !session
-  const buildQs = () =>
-    new URLSearchParams({
-      view,
-      q,
-      from: fromT,
-      to: toT + DAY,
-      session: sessionToken(),
-      ...(author ? { author } : {}),
-    }).toString()
-  const mergePane = (id, e) => {
-    if (id !== tok.current) return
-    const { id: pid, data } = JSON.parse(e.data)
-    setState((s) => ({ ...s, panes: { ...s.panes, [pid]: data } }))
-  }
   useEffect(() => {
     const id = ++tok.current
     if (idle) {
@@ -134,23 +121,42 @@ export function useDashboard({ view, q, from, to, author, session }) {
       return
     }
     setState({ manifest: null, panes: {}, loading: true })
-    const es = new EventSource(`${API_BASE}/api/stream?${buildQs()}`)
-    let gotManifest = false
-    es.addEventListener("manifest", (e) => {
-      gotManifest = true
-      if (id === tok.current) setState((s) => ({ ...s, manifest: JSON.parse(e.data) }))
-    })
-    es.addEventListener("pane", (e) => mergePane(id, e))
+    const ac = new AbortController()
     const stop = () => {
       if (id === tok.current) setState((s) => ({ ...s, loading: false }))
-      es.close()
+      ac.abort()
     }
-    es.addEventListener("done", stop)
-    es.addEventListener("error", (e) => {
-      if (!gotManifest && !e?.data) clearSession()
+    ;(async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/stream`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            view,
+            q,
+            from: fromT,
+            to: toT + DAY,
+            session: sessionToken(),
+            ...(author ? { author } : {}),
+          }),
+          signal: ac.signal,
+        })
+        if (!res.ok || !res.body) {
+          if (res.status === 401) clearSession()
+          stop()
+          return
+        }
+        for await (const msg of decodeMultiStream(res.body)) {
+          if (id !== tok.current) break
+          if (msg.ev === "manifest") setState((s) => ({ ...s, manifest: msg.data }))
+          else if (msg.ev === "pane")
+            setState((s) => ({ ...s, panes: { ...s.panes, [msg.data.id]: msg.data.data } }))
+          else if (msg.ev === "done" || msg.ev === "error") break
+        }
+      } catch {}
       stop()
-    })
-    return () => es.close()
+    })()
+    return () => ac.abort()
   }, [view, q, fromT, toT, author, session])
   return state
 }

@@ -10,6 +10,7 @@
     "publish": "bash publish.sh"
   },
   "dependencies": {
+    "@msgpack/msgpack": "^3.1.3",
     "cap-widget": "^0.1.56",
     "chart.js": "4.4.9",
     "preact": "^10.29.2",
