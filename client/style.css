@@ -175,7 +175,7 @@ header {
       top: -1px;
       padding-right: 5px;
       border-radius: 4px;
-      background-color: rgba(32, 35, 39, 0.29);
+      background-color: rgba(32, 35, 39, 0.16);
       transition:
         transform 0.28s cubic-bezier(0.4, 0, 0.2, 1),
         width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2040,7 +2040,7 @@ main.single {
   display: block;
 }
 .full-pane {
-  background-color: rgba(32, 35, 39, 0.29);
+  background-color: rgba(32, 35, 39, 0.16);
   border: 1px solid rgba(62, 65, 68, 0.3);
   border-radius: var(--radius);
   padding: 16px 18px 18px;
