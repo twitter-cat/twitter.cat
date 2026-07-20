@@ -237,7 +237,45 @@ const LANG_FLAG = {
   ta: "in",
   ur: "pk",
   ms: "my",
+  te: "in",
+  mr: "in",
+  gu: "in",
+  kn: "in",
+  ml: "in",
+  pa: "in",
+  or: "in",
+  ne: "np",
+  si: "lk",
+  et: "ee",
+  lv: "lv",
+  lt: "lt",
+  bg: "bg",
+  sr: "rs",
+  is: "is",
+  am: "et",
+  km: "kh",
+  eu: "eu",
+  gl: "es",
+  cy: "gb",
 }
+const I_MEDIA_SYM = (
+  <svg
+    viewBox="0 0 24 24"
+    width="11"
+    height="11"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2.4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <rect x="3" y="3" width="18" height="18" rx="3" />
+    <circle cx="8.5" cy="8.5" r="1.5" />
+    <path d="M21 15l-5-5L5 21" />
+  </svg>
+)
+const LANG_SYM = { und: "?", qst: "…", zxx: "∅", qht: "#", qam: "@", qct: "$", qme: I_MEDIA_SYM }
 const CODE_BY_NAME = {
   English: "en",
   Spanish: "es",
@@ -277,6 +315,13 @@ const CODE_BY_NAME = {
 }
 const langCode = (item) => item.code || CODE_BY_NAME[item.lang]
 const Flag = ({ code }) => {
+  const sym = LANG_SYM[code]
+  if (sym)
+    return (
+      <span class="row-flag row-flag-sym" aria-hidden="true">
+        {sym}
+      </span>
+    )
   const cc = LANG_FLAG[code]
   if (!cc) return <span class="row-flag row-flag-none" aria-hidden="true" />
   return <img class="row-flag" src={`/assets/flags/${cc}.svg`} alt="" loading="lazy" />
@@ -360,6 +405,37 @@ const LANG_COUNTRIES = {
   ta: ["LK"],
   ur: ["PK"],
   ms: ["MY", "BN"],
+  et: ["EE"],
+  lv: ["LV"],
+  lt: ["LT"],
+  bg: ["BG"],
+  sr: ["RS"],
+  is: ["IS"],
+  ne: ["NP"],
+  si: ["LK"],
+  am: ["ET"],
+  km: ["KH"],
+  te: ["IN"],
+  mr: ["IN"],
+  gu: ["IN"],
+  kn: ["IN"],
+  ml: ["IN"],
+  pa: ["IN"],
+  or: ["IN"],
+  hr: ["HR"],
+  sk: ["SK"],
+  sl: ["SI"],
+  mk: ["MK"],
+  sq: ["AL"],
+  bs: ["BA"],
+  ka: ["GE"],
+  hy: ["AM"],
+  az: ["AZ"],
+  kk: ["KZ"],
+  uz: ["UZ"],
+  my: ["MM"],
+  lo: ["LA"],
+  ga: ["IE"],
 }
 
 let MAP_CACHE = null
@@ -452,14 +528,15 @@ const Skel = ({ w = "100%", h = 12, r = 6, m, cls }) => (
     style={`width:${w};height:${h}px;border-radius:${r}px${m ? `;margin:${m}` : ""}`}
   />
 )
-const BarsSkel = ({ n = 7 }) => (
+const BarsSkel = ({ n = 7, h = 34 }) => (
   <div class="skel-rows">
     {Array.from({ length: n }, (_, i) => (
-      <Skel key={i} h={32} />
+      <Skel key={i} h={h} />
     ))}
   </div>
 )
-const TILE_SKEL = <Skel w="58px" h={26} r={7} m="5px 0" />
+const SKEL_ROWS = { topics: 14, languages: 9, sources: 10, communities: 12 }
+const TILE_SKEL = <Skel w="58px" h={26} r={7} m="8px 0" />
 const FEED_SKEL_W = ["96%", "78%", "62%"]
 const FeedSkel = () => (
   <>
@@ -654,7 +731,7 @@ function Trend({ trend, sentiment, metric, q, compares, compareData }) {
         lines={lines}
         beginZero={!isSent}
         valFmt={isSent ? fmt.sent : isBots ? fmtPct : fmtNum}
-        yRange={isSent ? [-100, 100] : null}
+        yRange={isSent ? [-100, 100] : isBots ? [0, 100] : null}
         onSelect={window.__tcatSelect}
       />
     </div>
@@ -853,7 +930,7 @@ function AuthorRows({ p, rows, loading, onAction }) {
           <span class="atable-h">tweets</span>
           <span class="atable-h">likes</span>
         </div>
-        {Array.from({ length: 8 }, (_, i) => (
+        {Array.from({ length: 10 }, (_, i) => (
           <div class="atable-row" key={i}>
             <div class="atable-who">
               <Skel cls="avatar" w="40px" h={40} r={20} />
@@ -927,51 +1004,55 @@ function AuthorRows({ p, rows, loading, onAction }) {
 function Bars({ p, items, loading, onAction }) {
   const tabs = p.tabs
   const [tab, setTab] = useState(tabs ? tabs[0].value : "")
-  if (!items) return loading ? <BarsSkel /> : <p class="empty">no data</p>
+  if (!items)
+    return loading ? (
+      <>
+        {tabs ? <Skel w="170px" h={21} m="0 0 14px" /> : null}
+        <BarsSkel n={SKEL_ROWS[p.id] || 7} />
+      </>
+    ) : (
+      <p class="empty">no data</p>
+    )
   const list = (tabs ? items[tab] : items) || []
   const act = p.itemAction
   const max = Math.max(1, ...list.map((t) => t[p.valueKey]))
-  const maxRows = tabs ? Math.max(0, ...tabs.map((t) => (items[t.value] || []).length)) : 0
-  const listStyle = maxRows ? `min-height:${maxRows * 34 + (maxRows - 1) * 4}px` : undefined
   const colored = p.id === "communities"
   return (
     <>
       {tabs ? <Seg cls="seg topic-tabs" value={tab} onChange={setTab} options={tabs} /> : null}
       {list.length ? (
-        <>
-          <div class="term-list" style={listStyle}>
-            {list.map((t, i) => {
-              const label = t[p.labelKey]
-              const handle = typeof label === "string" && label[0] === "@" ? label.slice(1) : null
-              const color = colored ? PANE_PALETTE[i % PANE_PALETTE.length] : null
-              const lead =
-                p.id === "languages" ? (
-                  <Flag code={langCode(t)} />
-                ) : p.id === "sources" ? (
-                  sourceIcon(label)
-                ) : handle ? (
-                  <Avatar username={handle} name={label} />
-                ) : null
-              return (
-                <div
-                  class={`term-row${act ? " clickable" : ""}`}
-                  key={t.code || label}
-                  {...(act ? clickProps(() => onAction(act.action, t[act.valueKey])) : {})}
-                >
-                  <i
-                    class="fill"
-                    style={`width:${Math.round((t[p.valueKey] / max) * 100)}%${color ? `;background-color:${color}2e` : ""}`}
-                  />
-                  <span class="term-left">
-                    {lead}
-                    <span class="t">{label}</span>
-                  </span>
-                  <span class="n">{fmtNum(t[p.valueKey])}</span>
-                </div>
-              )
-            })}
-          </div>
-        </>
+        <div class="term-list">
+          {list.map((t, i) => {
+            const label = t[p.labelKey]
+            const handle = typeof label === "string" && label[0] === "@" ? label.slice(1) : null
+            const color = colored ? PANE_PALETTE[i % PANE_PALETTE.length] : null
+            const lead =
+              p.id === "languages" ? (
+                <Flag code={langCode(t)} />
+              ) : p.id === "sources" ? (
+                sourceIcon(label)
+              ) : handle ? (
+                <Avatar username={handle} name={label} />
+              ) : null
+            return (
+              <div
+                class={`term-row${act ? " clickable" : ""}`}
+                key={t.code || label}
+                {...(act ? clickProps(() => onAction(act.action, t[act.valueKey])) : {})}
+              >
+                <i
+                  class="fill"
+                  style={`width:${Math.round((t[p.valueKey] / max) * 100)}%${color ? `;background-color:${color}2e` : ""}`}
+                />
+                <span class="term-left">
+                  {lead}
+                  <span class="t">{label}</span>
+                </span>
+                <span class="n">{fmtNum(t[p.valueKey])}</span>
+              </div>
+            )
+          })}
+        </div>
       ) : (
         <p class="empty">nothing here</p>
       )}
@@ -981,16 +1062,18 @@ function Bars({ p, items, loading, onAction }) {
 
 const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 function Heatmap({ cells, loading }) {
-  if (!cells) return loading ? <Skel h={132} /> : <p class="empty">no data</p>
-  const max = Math.max(1, ...cells.map((c) => c.count))
-  const m = new Map(cells.map((c) => [c.dow * 100 + c.h, c.count]))
+  if (!cells && !loading) return <p class="empty">no data</p>
+  const skel = !cells
+  const max = skel ? 1 : Math.max(1, ...cells.map((c) => c.count))
+  const m = new Map(skel ? [] : cells.map((c) => [c.dow * 100 + c.h, c.count]))
   return (
-    <div class="heatmap">
+    <div class={`heatmap${skel ? " hm-skel" : ""}`}>
       {DOW.map((d, di) => (
         <div class="hm-row" key={d}>
           <span class="hm-lbl">{d}</span>
           <div class="hm-cells">
             {Array.from({ length: 24 }, (_, h) => {
+              if (skel) return <i key={h} />
               const c = m.get((di + 1) * 100 + h) || 0
               const a = c ? (0.14 + 0.86 * (c / max)).toFixed(3) : 0
               return (
@@ -1198,7 +1281,7 @@ function Compass({ data, loading }) {
     ro.observe(wrap)
     return () => ro.disconnect()
   }, [data, mode])
-  if (!data) return loading ? <Skel h={280} /> : <p class="empty">no data</p>
+  if (!data && !loading) return <p class="empty">no data</p>
   const M = CP_MODES[mode]
   const onMove = (e) => {
     const rect = canvasRef.current.getBoundingClientRect()
@@ -1229,8 +1312,11 @@ function Compass({ data, loading }) {
         onChange={setMode}
         options={Object.entries(CP_MODES).map(([value, m]) => ({ value, label: m.label }))}
       />
-      <canvas ref={canvasRef} onMouseMove={onMove} onMouseLeave={() => setTip(null)} />
-      <div class="compass-foot">{fmtNum(data.authors)} analyzed authors</div>
+      {data ? (
+        <canvas ref={canvasRef} onMouseMove={onMove} onMouseLeave={() => setTip(null)} />
+      ) : (
+        <span class="skel cp-skel" />
+      )}
       {tip ? (
         <div class="lm-tip" style={`left:${tip.x}px;top:${tip.y}px`}>
           {tip.label} <b>{fmtNum(tip.n)}</b>
@@ -1573,7 +1659,7 @@ function Trending({ items, loading, onAction }) {
       .sort((a, b) => b.cur - b.prev - (a.cur - a.prev) || b.count - a.count)
       .slice(0, 12)
   }, [items])
-  if (!ranked) return loading ? <BarsSkel /> : <p class="empty">no data</p>
+  if (!ranked) return loading ? <BarsSkel n={12} h={36} /> : <p class="empty">no data</p>
   if (!ranked.length) return <p class="empty">nothing accelerating in this window</p>
   return (
     <div class="trend-list">
@@ -1597,7 +1683,7 @@ function Trending({ items, loading, onAction }) {
   )
 }
 
-function Carded({ p, children, ctrl, onCtrl, headerExtra, bodyMinH }) {
+function Carded({ p, children, ctrl, onCtrl, headerExtra }) {
   return (
     <div class={`card card-${p.id}${p.span === "full" ? " span-full" : ""}`}>
       <div class="card-head">
@@ -1620,9 +1706,7 @@ function Carded({ p, children, ctrl, onCtrl, headerExtra, bodyMinH }) {
           ) : null,
         )}
       </div>
-      <div class="card-body" style={bodyMinH ? `min-height:${bodyMinH}px` : undefined}>
-        {children}
-      </div>
+      <div class="card-body">{children}</div>
     </div>
   )
 }
@@ -1638,18 +1722,13 @@ const LANG_PALETTE = [
   CAT.maroon,
   CAT.lavender,
 ]
-function LangTrend({ data, loading, minH }) {
-  const style = minH ? `min-height:${minH}px` : undefined
+function LangTrend({ data, loading }) {
   if (!data?.cats?.length)
-    return (
-      <div class="lang-trend" style={style}>
-        {loading ? <BarsSkel /> : <p class="empty">no data</p>}
-      </div>
-    )
+    return <div class="lang-trend">{loading ? <BarsSkel /> : <p class="empty">no data</p>}</div>
   const cats = data.cats.slice(0, 5)
   const lines = cats.map((c, i) => ({ label: c, color: LANG_PALETTE[i], values: data.series[c] }))
   return (
-    <div class="lang-trend" style={style}>
+    <div class="lang-trend">
       <TimeChart labels={data.labels} lines={lines} valFmt={fmtNum} />
       <div class="lang-legend">
         {cats.map((c, i) => (
@@ -1795,8 +1874,6 @@ function PanedView({ p, initial, base, loading, onAction }) {
       })
   }
   if (p.type === "feed") return <Feed p={p} base={base} streamFeed={data} streamLoading={loading} />
-  const langCount = isLang && Array.isArray(data) ? data.length : 0
-  const langContentH = langCount ? Math.max(168, langCount * 34 + (langCount - 1) * 4) : 0
   const body =
     p.type === "table" ? (
       p.id === "authors" ? (
@@ -1806,7 +1883,7 @@ function PanedView({ p, initial, base, loading, onAction }) {
       )
     ) : p.type === "bars" ? (
       isLang && lmode === "series" ? (
-        <LangTrend data={lseries} loading={lbusy} minH={langContentH || undefined} />
+        <LangTrend data={lseries} loading={lbusy} />
       ) : isLang && lmode === "map" ? (
         <LangMap data={data} />
       ) : (
@@ -1846,10 +1923,11 @@ function PanedView({ p, initial, base, loading, onAction }) {
         <div class="card-body">{body}</div>
       </div>
     )
-  const settled = !loading && !busy && data != null
+  const settled = !loading && !busy
   let cardEmpty = false
   if (settled) {
-    if (p.type === "bars")
+    if (data == null) cardEmpty = true
+    else if (p.type === "bars")
       cardEmpty = p.tabs ? p.tabs.every((t) => !(data[t.value] || []).length) : !(data || []).length
     else if (p.type === "donut") cardEmpty = (p.keys || []).every((k) => !data[k])
     else if (p.type === "compass") cardEmpty = !data || (data.authors || 0) < 25
@@ -1861,7 +1939,6 @@ function PanedView({ p, initial, base, loading, onAction }) {
       p={p}
       ctrl={ctrl}
       onCtrl={onCtrl}
-      bodyMinH={isLang && langContentH && lmode !== "map" ? langContentH + 24 : null}
       headerExtra={
         isLang ? (
           <Seg
@@ -2364,6 +2441,9 @@ function Landing({ onSearch }) {
         <Firehose open={fhOpen} onClose={() => setFhOpen(false)} />
       </div>
       <div class="lfooter">
+        <a href="https://api.twitter.cat" target="_blank" rel="noopener noreferrer">
+          api
+        </a>
         <a
           href="https://github.com/twitter-cat/twitter.cat"
           target="_blank"
@@ -2684,7 +2764,7 @@ export function App() {
   )
 }
 
-const CAP_ENDPOINT = `${API_BASE}/api/cap/`
+const CAP_ENDPOINT = `${API_BASE}/cap/`
 const jwtExp = (tok) => {
   try {
     const b = tok.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")

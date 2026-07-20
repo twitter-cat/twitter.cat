@@ -474,6 +474,79 @@ main .stats .grid {
       border-radius: calc(var(--radius) - 2px);
     }
   }
+
+  .masonry .card .card-body {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 147, 152, 0.28) transparent;
+  }
+
+  .masonry .card .card-body::-webkit-scrollbar {
+    width: 5px;
+    background: transparent;
+  }
+
+  .masonry .card .card-body::-webkit-scrollbar-thumb {
+    background: rgba(139, 147, 152, 0.28);
+    border-radius: 99px;
+  }
+
+  .masonry .card .card-body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .card-authors .card-body:not(:has(> .empty)) {
+    height: 610px;
+  }
+
+  .card-topics .card-body:not(:has(> .empty)) {
+    height: 596px;
+  }
+
+  .card-trending .card-body:not(:has(> .empty)) {
+    height: 510px;
+  }
+
+  .card-languages .card-body:not(:has(> .empty)) {
+    height: 370px;
+  }
+
+  .card-sources .card-body:not(:has(> .empty)) {
+    height: 408px;
+  }
+
+  .card-communities .card-body:not(:has(> .empty)) {
+    height: 484px;
+  }
+
+  .card-languages .lang-trend,
+  .card-languages .lang-map {
+    height: 100%;
+    min-height: 0;
+  }
+}
+
+.cp-skel {
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+}
+
+.hm-skel .hm-cells i {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.035) 25%,
+    rgba(255, 255, 255, 0.08) 37%,
+    rgba(255, 255, 255, 0.035) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.hm-skel .hm-axis .hm-cells i {
+  background: none;
+  animation: none;
 }
 
 .lang-trend,
@@ -872,6 +945,18 @@ main .stats .grid {
       .row-flag-none {
         background: #2a2f37;
         box-shadow: none;
+      }
+
+      .row-flag-sym {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #2a2f37;
+        border-radius: 2.5px;
+        color: #8b9398;
+        font-size: 10px;
+        font-weight: 500;
+        line-height: 1;
       }
 
       .src-icon {

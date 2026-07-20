@@ -30,7 +30,9 @@ export const MONTHS_FULL = [
   "November",
   "December",
 ]
-export const API_BASE = import.meta.env.PROD ? "https://kite.twitter.cat" : ""
+export const API_BASE = import.meta.env.PROD
+  ? "https://kite.twitter.cat"
+  : import.meta.env.VITE_API_BASE || "http://localhost:3399"
 export const BLUE = "#1ea1f1"
 export const GREEN = "#33cc66"
 export const RED = "#ed5ea6"
