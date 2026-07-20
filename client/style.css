@@ -1039,6 +1039,7 @@ main .stats .grid {
     padding: 5px 8px;
     border-radius: var(--radius-sm);
     transition: background-color 0.15s;
+    margin-bottom: 3px;
 
     &.clickable {
       cursor: pointer;
@@ -1057,8 +1058,8 @@ main .stats .grid {
     min-width: 0;
 
     .avatar {
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
     }
   }
 
@@ -1076,7 +1077,7 @@ main .stats .grid {
 
     b {
       min-width: 0;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
@@ -1084,7 +1085,7 @@ main .stats .grid {
     }
 
     em {
-      font-size: 12px;
+      font-size: 13px;
       font-style: normal;
       color: #71767b;
       white-space: nowrap;
