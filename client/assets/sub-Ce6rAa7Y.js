@@ -1,1 +1,0 @@
-import{l as e,pt as t}from"./index-J8EsoGmM.js";function n({title:n,desc:r,aside:i,width:a,back:o={label:`explore`,path:`/explore`},onNavigate:s,onBack:c,tabs:l,controls:u,updated:d,cls:f=``,children:p}){return t(e,{title:n,desc:r,aside:i,width:a,back:o,onBack:c,onNavigate:s,tabs:l,controls:u,updated:d,cls:`ex-sub ${f}`,children:p})}export{n as t};
