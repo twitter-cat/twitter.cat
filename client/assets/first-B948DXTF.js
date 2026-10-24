@@ -1,0 +1,1 @@
+import{i as e}from"./pending-DQSyawc5.js";var t=e;export{t as pendingComponent};
