@@ -1,0 +1,1 @@
+import{i as e}from"./pending-CldV5N5x.js";var t=e;export{t as pendingComponent};
