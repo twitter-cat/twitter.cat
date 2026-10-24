@@ -1,1 +1,0 @@
-import{o as e}from"./pending-BrX-y6L7.js";var t=e;export{t as pendingComponent};

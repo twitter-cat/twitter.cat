@@ -1,0 +1,1 @@
+import{o as e}from"./pending-ClN-2GN1.js";var t=e;export{t as pendingComponent};
