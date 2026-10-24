@@ -1,1 +1,0 @@
-import{t as e}from"./pending-CNKOGAyd.js";var t=e;export{t as pendingComponent};
