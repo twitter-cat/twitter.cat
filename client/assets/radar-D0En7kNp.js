@@ -1,0 +1,1 @@
+import{o as e}from"./pending-ChTvlfvv.js";var t=e;export{t as pendingComponent};

@@ -1,1 +1,0 @@
-import{t as e}from"./pending-BtODmAsh.js";var t=e;export{t as pendingComponent};
