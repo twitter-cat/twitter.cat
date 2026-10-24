@@ -1,0 +1,1 @@
+import{a as e}from"./rolldown-runtime-BWaJ3C7D.js";import{a as t}from"./rolldown-runtime-hi7ti5xiuxsegr96-CrWY8lUu.js";var n=e(t(),1),r=n.createContext(void 0);r.displayName=`CSPContext`;var i={disableStyleElements:!1};function a(){return n.useContext(r)??i}export{a as t};

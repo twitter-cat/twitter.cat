@@ -1,0 +1,1 @@
+import{a as e}from"./rolldown-runtime-BWaJ3C7D.js";import{a as t}from"./rolldown-runtime-hi7ti5xiuxsegr96-CrWY8lUu.js";var n=e(t(),1),r=n.createContext(void 0);r.displayName=`ToolbarRootContext`;function i(e){let t=n.useContext(r);if(t===void 0&&!e)throw Error(`Base UI: ToolbarRootContext is missing. Toolbar parts must be placed within <Toolbar.Root>.`);return t}export{i as t};

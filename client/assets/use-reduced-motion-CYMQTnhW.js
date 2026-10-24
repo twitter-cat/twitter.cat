@@ -1,0 +1,1 @@
+import{a as e}from"./rolldown-runtime-BWaJ3C7D.js";import{a as t}from"./rolldown-runtime-hi7ti5xiuxsegr96-CrWY8lUu.js";import{c as n,l as r,u as i}from"./react-Bns4IdaH.js";var a=e(t(),1);function o(){!r.current&&n();let[e]=(0,a.useState)(i.current);return e}export{o as t};
