@@ -1,1 +1,0 @@
-import{n as e}from"./pending-DtXJwIn7.js";var t=e;export{t as pendingComponent};
