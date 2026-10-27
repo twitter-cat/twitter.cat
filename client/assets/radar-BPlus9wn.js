@@ -1,0 +1,1 @@
+import{o as e}from"./pending-DQpvtZFl.js";var t=e;export{t as pendingComponent};

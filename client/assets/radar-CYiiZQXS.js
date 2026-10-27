@@ -1,1 +1,0 @@
-import{o as e}from"./pending-CLCl9gbR.js";var t=e;export{t as pendingComponent};
