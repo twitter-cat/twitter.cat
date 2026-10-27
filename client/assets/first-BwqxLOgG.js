@@ -1,0 +1,1 @@
+import{i as e}from"./pending-aiFomw3T.js";var t=e;export{t as pendingComponent};
