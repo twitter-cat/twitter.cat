@@ -1,1 +1,0 @@
-import{St as e}from"./index-BsDq1Z9b.js";var t=e=>/^https?:/.test(e??``)?{target:`_blank`,rel:`noopener noreferrer`}:{};function n(){let t=e();return e=>t({href:e})}function r(){let e=n();return t=>n=>{n.defaultPrevented||n.button!==0||n.metaKey||n.ctrlKey||n.shiftKey||n.altKey||(n.preventDefault(),e(t))}}export{n,r,t};

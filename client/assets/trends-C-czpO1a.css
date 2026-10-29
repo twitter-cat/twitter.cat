@@ -1,0 +1,1 @@
+@keyframes trend-row-enter{0%{opacity:0;transform:translateY(6px)}}@media (prefers-reduced-motion:no-preference){.trend-row-enter{animation:.24s cubic-bezier(.22,1,.36,1) both trend-row-enter;animation-delay:calc(min(var(--g,0), 5) * 45ms)}}

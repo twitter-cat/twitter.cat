@@ -1,1 +1,0 @@
-import{l as e}from"./pending-ClHa7Btw.js";var t=e;export{t as pendingComponent};

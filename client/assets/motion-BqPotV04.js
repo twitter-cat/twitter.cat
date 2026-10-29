@@ -1,0 +1,1 @@
+var e=.05,t=[.22,1,.36,1],n={type:`spring`,visualDuration:.2,bounce:0},r=(t,n)=>({initial:n?{opacity:0,transform:`translateY(8px)`}:!1,animate:{opacity:1,transform:`translateY(0px)`,transitionEnd:{transform:`none`}},transition:{type:`spring`,duration:.45,bounce:0,delay:Math.min(Math.max(0,t),4)*e}});export{r as i,t as n,n as r,e as t};
