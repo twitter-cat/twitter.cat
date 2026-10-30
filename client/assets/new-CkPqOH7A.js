@@ -1,0 +1,1 @@
+import{a as e}from"./pending-Cg-mwmNm.js";var t=e;export{t as pendingComponent};

@@ -1,0 +1,1 @@
+import{Lr as e}from"./format-Dd641QIw.js";function t(t,n){let r=(n??e(t).getComputedStyle(t)).transform,i=0,a=0,o=1;if(r&&r!==`none`){let e=r.match(/matrix(?:3d)?\(([^)]+)\)/);if(e){let t=e[1].split(`, `).map(parseFloat);t.length===6?(i=t[4],a=t[5],o=Math.sqrt(t[0]*t[0]+t[1]*t[1])):t.length===16&&(i=t[12],a=t[13],o=t[0])}}return{x:i,y:a,scale:o}}export{t};

@@ -1,1 +1,0 @@
-import{i as e}from"./rolldown-runtime-hi7ti5xiuxsegr96-CrWY8lUu.js";import{s as t}from"./index-CctSTd6x.js";import{n}from"./pending-Cb6CYy6F.js";var r=e(),i=()=>(0,r.jsx)(n,{title:t.name});export{i as pendingComponent};

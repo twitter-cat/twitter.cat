@@ -1,0 +1,1 @@
+import{d as e}from"./pending-CNsaoVcM.js";var t=e;export{t as pendingComponent};

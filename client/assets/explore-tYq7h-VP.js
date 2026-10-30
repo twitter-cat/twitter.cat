@@ -1,0 +1,1 @@
+import{a as e}from"./extra-xVxCAdnp.js";var t=e;export{t as pendingComponent};

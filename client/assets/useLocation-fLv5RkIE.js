@@ -1,0 +1,1 @@
+import{Qr as e}from"./format-Dd641QIw.js";import{n as t,r as n}from"./useMatch-l0MHVc1Q.js";function r(r){let i=e();return n(i.stores.location,t(r,i))}export{r as t};
