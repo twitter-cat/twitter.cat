@@ -1,0 +1,1 @@
+import{o as e}from"./pending-C1VEC-J3.js";var t=e;export{t as pendingComponent};

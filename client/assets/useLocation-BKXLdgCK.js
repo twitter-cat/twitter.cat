@@ -1,0 +1,1 @@
+import{$r as e}from"./format-V_OvoVIJ.js";import{n as t,r as n}from"./useMatch-D3rGOp3p.js";function r(r){let i=e();return n(i.stores.location,t(r,i))}export{r as t};

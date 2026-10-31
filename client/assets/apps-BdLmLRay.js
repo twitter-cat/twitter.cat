@@ -1,0 +1,1 @@
+import{t as e}from"./pending-DwnLY5DB.js";var t=e;export{t as pendingComponent};

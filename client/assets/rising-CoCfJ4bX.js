@@ -1,0 +1,1 @@
+import{a as e}from"./pending-DhQL2YqL.js";var t=e;export{t as pendingComponent};

@@ -1,0 +1,1 @@
+import{t as e}from"./pending-BUxoiXt3.js";var t=e;export{t as pendingComponent};

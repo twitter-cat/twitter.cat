@@ -1,1 +1,0 @@
-import{n as e}from"./pending-Dpgumz5p.js";var t=e;export{t as pendingComponent};
