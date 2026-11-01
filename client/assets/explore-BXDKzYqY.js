@@ -1,1 +1,0 @@
-import{a as e}from"./extra-BUPDIVGc.js";var t=e;export{t as pendingComponent};

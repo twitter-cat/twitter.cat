@@ -1,0 +1,1 @@
+import{n as e}from"./browse-BQaz4GTH.js";var t=e;export{t as pendingComponent};

@@ -1,0 +1,1 @@
+import{p as e}from"./bits-DAKYAmT_.js";var t=e;export{t as pendingComponent};

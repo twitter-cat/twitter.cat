@@ -1,0 +1,1 @@
+import{h as e}from"./campaigns-RpxL9-x4.js";var t=e;export{t as pendingComponent};
