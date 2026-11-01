@@ -1,0 +1,1 @@
+import{n as e}from"./browse-BgeW755U.js";var t=e;export{t as pendingComponent};

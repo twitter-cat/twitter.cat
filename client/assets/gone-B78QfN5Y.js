@@ -1,0 +1,1 @@
+import{z as e}from"./index-CQZEf28z.js";var t=e;export{t as pendingComponent};

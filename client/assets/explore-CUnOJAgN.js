@@ -1,0 +1,1 @@
+import{n as e}from"./grid-BIn3vU5I.js";var t=e;export{t as pendingComponent};

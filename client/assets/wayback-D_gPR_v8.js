@@ -1,1 +1,0 @@
-import{t as e}from"./index-C-JM61ib.js";var t=e;export{t as pendingComponent};
