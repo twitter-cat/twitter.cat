@@ -1,0 +1,1 @@
+import{t as e}from"./page-C9O_huso.js";var t=e;export{t as component};

@@ -1,0 +1,1 @@
+import{z as e}from"./index-BMMFwDwe.js";var t=e;export{t as pendingComponent};

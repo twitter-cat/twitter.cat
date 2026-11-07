@@ -1,0 +1,1 @@
+import{i as e}from"./rolldown-runtime-hi7ti5xiuxsegr96-CrWY8lUu.js";import{r as t,t as n}from"./browse-DwdRTMh_.js";import{tt as r}from"./index-BMMFwDwe.js";var i=e();function a(){let{c:e}=r.useSearch();return e?(0,i.jsx)(t,{name:e},e):(0,i.jsx)(n,{})}export{a as component};
