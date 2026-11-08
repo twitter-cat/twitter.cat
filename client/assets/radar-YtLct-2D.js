@@ -1,1 +1,0 @@
-import{h as e}from"./campaigns-BF7wuflW.js";var t=e;export{t as pendingComponent};
