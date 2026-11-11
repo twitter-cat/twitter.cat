@@ -1,1 +1,0 @@
-import{n as e}from"./pending-Dw25ewLs.js";var t=e;export{t as pendingComponent};

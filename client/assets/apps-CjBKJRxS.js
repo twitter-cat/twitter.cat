@@ -1,1 +1,0 @@
-import{n as e}from"./page-bMLRNDCc.js";var t=e;export{t as pendingComponent};
