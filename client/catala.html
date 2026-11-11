@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8" />
+    <title>català / twitter.cat</title>
+    <meta name="description" content="sobre la llengua catalana i el domini .cat" />
+
+    <meta property="og:type" content="image" />
+    <link rel="icon" type="image/x-icon" href="/assets/svgs/face.svg" />
+
+    <meta itemprop="name" content="twitter (dot) cat" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="twitter (dot) cat" />
+    <meta name="twitter:site" content="@cvsilly_" />
+    <meta name="twitter:description" content="small tools for twitter" />
+    <meta name="twitter:image" content="https://twitter.cat/assets/images/bouncing.gif" />
+    <style>
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      html {
+        scrollbar-width: thin;
+        scrollbar-color: hsla(255 0 255 / 15%) #14171a;
+        scrollbar-gutter: stable;
+        color-scheme: dark;
+      }
+
+      body {
+        background-color: #14171a;
+        color: white;
+        margin: 0;
+        font-size: 20px;
+        font-family:
+          "chirp",
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Oxygen,
+          Ubuntu,
+          Cantarell,
+          "Open Sans",
+          "Helvetica Neue",
+          sans-serif;
+      }
+
+      .decor {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0px;
+        width: 100%;
+        z-index: -1;
+      }
+
+      main {
+        color: #ffffffd9;
+        max-width: 650px;
+        margin: 40px auto;
+        padding: 0 20px;
+        font-size: 16px;
+        line-height: 1.8;
+      }
+
+      .logo {
+        margin-bottom: 1.5em;
+        display: block;
+        width: fit-content;
+        text-decoration: none;
+        transition:
+          opacity 0.2s,
+          transform 0.1s;
+      }
+
+      .logo:hover {
+        opacity: 0.8;
+      }
+
+      .logo:active {
+        transform: scale(0.95);
+      }
+
+      .logo img {
+        width: 50px;
+        height: 50px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 0px;
+        margin-bottom: 1em;
+        background-color: #13171a;
+        position: sticky;
+        top: 0;
+      }
+
+      .tabs button {
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.8);
+        padding: 0;
+        cursor: pointer;
+        width: 100%;
+        font-family: inherit;
+        font-size: 16px;
+        padding-bottom: 12px;
+        padding-top: 20px;
+        position: relative;
+      }
+
+      .tabs button:hover {
+        color: white;
+      }
+
+      .tabs button.active {
+        font-weight: 500;
+        color: white;
+      }
+
+      .tabs button::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: white;
+        transform: scaleX(0);
+        border-radius: 8px;
+      }
+
+      .tabs button.active::after {
+        transform: scaleX(1);
+      }
+
+      .tabs::after {
+        content: "";
+        z-index: 5;
+        --background: 20, 23, 26;
+        background: linear-gradient(to bottom, transparent, rgb(var(--background), 0.7));
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+        pointer-events: none;
+        width: 100%;
+        height: 56px;
+        mask-image: linear-gradient(to top, rgb(var(--background), 0.7) 25%, transparent);
+        -webkit-mask-image: linear-gradient(to top, rgb(var(--background)) 25%, transparent);
+        position: absolute;
+        bottom: -56px;
+        left: 0;
+        transform: rotate(180deg);
+      }
+
+      h1,
+      h2 {
+        color: #fff;
+        text-transform: lowercase;
+        margin-top: 2em;
+        user-select: none;
+      }
+      h2 {
+        font-size: 17px;
+        margin-top: 3rem;
+        font-weight: 500;
+        margin-bottom: 10px;
+        line-height: 1;
+      }
+      h2:not(:first-child) {
+        margin-top: 1.8rem;
+      }
+      h1 {
+        font-size: 1.8em;
+        margin-top: 0;
+      }
+      a {
+        color: #9cf;
+        text-underline-offset: 3px;
+      }
+      b {
+        color: white;
+        font-weight: 500;
+      }
+
+      ::marker {
+        color: #4b5563;
+      }
+      li {
+        padding-inline-start: 0.375em;
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+      }
+      ul {
+        list-style-type: disc;
+        margin-top: 12px;
+        margin-bottom: 0px;
+        padding-inline-start: 1.625em;
+        padding-left: 14px;
+      }
+      p {
+        margin-top: 0px;
+        margin-bottom: 1.25em;
+      }
+      .tab:not(.active) {
+        display: none;
+      }
+      @font-face {
+        font-family: "chirp";
+        src: url("./assets/fonts/chirp.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "chirp";
+        src: url("./assets/fonts/chirpmedium.woff2") format("woff2");
+        font-weight: 500;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "chirp";
+        src: url("./assets/fonts/chirpbold.woff2") format("woff2");
+        font-weight: 600;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "chirp";
+        src: url("./assets/fonts/chirpheavy.woff2") format("woff2");
+        font-weight: 900;
+        font-style: normal;
+        font-display: swap;
+      }
+    </style>
+
+    <script
+      defer
+      data-domain="twitter.cat"
+      src="https://palantir.estrogen.delivery/Pn7xQk2.js"
+    ></script>
+  </head>
+  <body>
+    <svg class="decor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1519 200">
+      <defs></defs>
+      <path
+        d="M708 103l9-5 13 1 2-2 5 1h8l1-1 42-5h7l7 3v1l12-2a9368 9368 0 0129-6l2-5 12 1 6-2 3 1 2 1v-2l13-2v1l4 2 7-1h1l17-3 1 2 4-1 18-7 3-1 4-1h9l13-1 1-4 3-2 13 1v2l22-2 10-3h6l10 5 16-5 15-3 2-1 8-4 6-2 12-1 7-2 8 5 7 1 22-9h7l5-1v-1l25-3 1 2 5 2v1h11l2 1 8-4h3l-1 1h11l10-6 6 3 9-1 4-1 1 1 1-2 6-1 1-1 10-2h2l7-5v1h4l3-1c11 0 23 2 34-3 2-2 7 0 10 0l12 1 4 1 9 2 12-1 11-3 11 1h4l10-6 17 1 2 1c9 2 19-3 22-11l1-1 9 1 15-5c3-1 9 4 9-5 5 0 5 3 5 7l2 3 4-1 4-2 9-4 3-3h3l8-4 6-3 26 2 7-4h18l7 1c10 3 13-6 17-12l8 4 3-1 14-3 15-2a38 38 0 01-5-1l-8-4 7-8 8-4-10-136-922 71 16 205z"
+      ></path>
+      <path
+        d="M-36 193l9-5 13 1 2-2 5 1h8l1-1 42-5h7l7 3v1l12-2a9328 9328 0 0129-6l2-5 12 1 6-2 3 1 2 1v-2l13-2v1l4 2 7-1h1l17-3 1 2 4-1 18-7 3-1 4-1h9l13-1 1-4 3-2 13 1v2l22-2 10-3h6l10 5 16-5 15-3 2-1 8-4 6-2 12-1 7-2 8 5 7 1 22-9h7l5-1v-1l25-3 1 2 5 2v1h11l2 1 8-4h3l-1 1h9a6 6 0 002 0l10-6 6 3 9-1 4-1a6 6 0 001 1l1-2 6-1 1-1 10-2h2l7-5v1h4l3-1c11 0 23 2 34-3 2-2 7 0 10 0l12 1 4 1 9 2 12-1 11-3 11 1h4l10-6 17 1 2 1c9 2 19-3 22-11l1-1 9 1 15-5c3-1 9 4 9-5 5 0 5 3 5 7l2 3 4-1 4-2 9-4 3-3h3l8-4 6-3 26 2 7-4h18l7 1c10 3 13-6 17-12l8 4 3-1 14-3 15-2a37 37 0 01-5-1l-8-4 7-8 8-4-10-136-922 71 16 205z"
+      ></path>
+    </svg>
+    <main>
+      <a href="/" class="logo" draggable="false">
+        <img src="assets/svgs/kitty.svg" alt="twitter.cat" draggable="false" />
+      </a>
+      <div class="content">
+        <h2>sobre la llengua catalana</h2>
+        <p>
+          el català és una llengua romànica que es parla a Catalunya, al País Valencià, on també
+          s'anomena valencià, a les Illes Balears, a Andorra, a la Franja de Ponent, a la Catalunya
+          del Nord i a la ciutat de l'Alguer, a Sardenya. és l'única llengua oficial d'Andorra i
+          la parlen uns deu milions de persones.
+        </p>
+        <p>
+          té literatura escrita des de l'edat mitjana. Ramon Llull hi va escriure filosofia,
+          poesia i novel·la al segle XIII, i el Tirant lo Blanc, de Joanot Martorell, es va
+          publicar a València el 1490. la normativa moderna parteix de la gramàtica que Pompeu
+          Fabra va publicar el 1918, i avui en té cura l'Institut d'Estudis Catalans.
+        </p>
+
+        <h2>el domini .cat</h2>
+        <p>
+          la ICANN va aprovar el domini .cat el 2005. va ser el primer domini de primer nivell
+          creat per a una comunitat lingüística i cultural, i no per a un país. el gestiona la
+          Fundació puntCAT, i cada web que l'usa ha de tenir continguts en català o sobre la
+          cultura catalana.
+        </p>
+
+        <h2>i twitter.cat?</h2>
+        <p>
+          twitter.cat és un arxiu i cercador de tuits. el nom ve de l'anglès, on "cat" vol dir
+          gat, però la llengua que dona nom al domini també hi té lloc: pots
+          <a href="/?q=lang%3Aca">cercar els tuits escrits en català</a>.
+        </p>
+      </div>
+
+      <p style="margin-top: 3rem">
+        <a href="/legal" lang="en">legal</a>
+      </p>
+
+      <div class="made-by"></div>
+    </main>
+  </body>
+</html>
